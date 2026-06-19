@@ -1,893 +1,1452 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Spotify Playlist Organizer</title>
-<style>
-:root { --green: #1DB954; --black: #191414; --base: #121212; --gray: #b3b3b3; --white: #ffffff; --elevated: #282828; --hover: #333333; --danger: #ff5555; }
-body { margin: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--base); color: var(--white); overflow-x: hidden; }
-button { cursor: pointer; border: none; outline: none; background: transparent; color: inherit; font-family: inherit; }
-input, select { font-family: inherit; }
-#app { padding: 24px; padding-bottom: 120px; max-width: 1400px; margin: 0 auto; }
-.hidden { display: none !important; }
-.btn-primary { background: var(--green); color: var(--black); font-weight: 700; border-radius: 500px; padding: 14px 32px; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; transition: transform 0.1s; }
-.btn-primary:active { transform: scale(0.95); }
-.btn-secondary { border: 1px solid var(--gray); border-radius: 500px; padding: 8px 16px; font-size: 14px; color: var(--white); transition: border-color 0.2s; }
-.btn-secondary:hover { border-color: var(--white); }
-.btn-icon { color: var(--gray); font-size: 20px; transition: color 0.2s; display: flex; align-items: center; justify-content: center; }
-.btn-icon:hover { color: var(--white); }
-.view { animation: fadeIn 0.3s ease; }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; border-bottom: 1px solid var(--elevated); padding-bottom: 16px; }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 24px; }
-.card { background: var(--elevated); border-radius: 8px; padding: 16px; transition: background 0.2s; cursor: pointer; position: relative; }
-.card:hover { background: var(--hover); }
-.card img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; margin-bottom: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
-.card h3 { margin: 0 0 8px 0; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.card p { margin: 0; color: var(--gray); font-size: 14px; }
-.edit-icon { position: absolute; top: 24px; right: 24px; background: rgba(0,0,0,0.7); border-radius: 50%; width: 32px; height: 32px; display: none; align-items: center; justify-content: center; }
-.card:hover .edit-icon { display: flex; }
-.track-list { display: flex; flex-direction: column; }
-.track-header { display: grid; grid-template-columns: 40px 60px 1fr 200px 120px 60px 40px; align-items: center; padding: 0 16px 8px 16px; border-bottom: 1px solid var(--elevated); color: var(--gray); font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-.track-item { display: grid; grid-template-columns: 40px 60px 1fr 200px 120px 60px 40px; align-items: center; padding: 8px 16px; border-radius: 4px; transition: background 0.2s; user-select: none; }
-.track-item:hover { background: var(--elevated); }
-.track-item.dragging { opacity: 0.5; background: var(--hover); }
-.handle { cursor: grab; color: var(--gray); font-size: 20px; display: flex; align-items: center; }
-.track-number { width: 40px; background: transparent; border: none; color: var(--gray); font-size: 16px; text-align: center; }
-.track-number:focus { color: var(--white); outline: 1px solid var(--gray); border-radius: 4px; }
-.track-img { width: 40px; height: 40px; border-radius: 4px; object-fit: cover; }
-.track-info { display: flex; flex-direction: column; overflow: hidden; padding-right: 16px; }
-.track-name { font-size: 16px; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
-.track-artist { font-size: 14px; color: var(--gray); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.track-album { font-size: 14px; color: var(--gray); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 16px; }
-.track-date, .track-duration { font-size: 14px; color: var(--gray); }
-.explicit-badge { background: var(--gray); color: var(--base); font-size: 10px; padding: 2px 4px; border-radius: 2px; margin-right: 6px; display: inline-block; }
-.pill-menu { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--elevated); padding: 12px 24px; border-radius: 500px; display: flex; gap: 8px; box-shadow: 0 12px 40px rgba(0,0,0,0.8); z-index: 100; flex-wrap: wrap; justify-content: center; width: max-content; max-width: 90vw; }
-.pill-btn { background: #3e3e3e; color: var(--white); border-radius: 500px; padding: 8px 16px; font-size: 14px; transition: background 0.2s, color 0.2s; white-space: nowrap; }
-.pill-btn:hover { background: #4a4a4a; }
-.pill-btn.active { background: var(--green); color: var(--black); font-weight: 600; }
-.pill-btn.danger { color: var(--danger); }
-.pill-btn.danger:hover { background: var(--danger); color: var(--white); }
-.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-.modal { background: var(--elevated); padding: 32px; border-radius: 12px; width: 90%; max-width: 600px; max-height: 85vh; display: flex; flex-direction: column; }
-.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-.modal-header h2 { margin: 0; }
-.modal-body { overflow-y: auto; flex-grow: 1; padding-right: 8px; }
-.modal-body::-webkit-scrollbar { width: 8px; }
-.modal-body::-webkit-scrollbar-thumb { background: var(--gray); border-radius: 4px; }
-.modal-footer { margin-top: 24px; display: flex; justify-content: flex-end; gap: 12px; padding-top: 16px; border-top: 1px solid var(--hover); }
-.input-group { margin-bottom: 20px; }
-.input-group label { display: block; margin-bottom: 8px; color: var(--gray); font-size: 14px; }
-.input-group input[type="text"], .input-group input[type="number"], .input-group select { background: var(--hover); border: 1px solid transparent; color: var(--white); padding: 12px 16px; border-radius: 4px; width: 100%; box-sizing: border-box; font-size: 16px; transition: border-color 0.2s; }
-.input-group input:focus, .input-group select:focus { outline: none; border-color: var(--gray); }
-.list-item { display: flex; justify-content: space-between; align-items: center; background: var(--hover); padding: 12px 16px; border-radius: 4px; margin-bottom: 8px; }
-.list-item-info { display: flex; flex-direction: column; overflow: hidden; padding-right: 16px; }
-#login-view { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; max-width: 600px; margin: 0 auto; }
-#login-view h1 { font-size: 48px; margin-bottom: 16px; }
-#login-view p { color: var(--gray); margin-bottom: 40px; line-height: 1.6; font-size: 18px; }
-.top-controls { display: flex; gap: 16px; align-items: center; }
-.checkbox-group { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; background: var(--hover); padding: 12px; border-radius: 4px; }
-.checkbox-group input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--green); }
-.dupe-block { margin-bottom: 24px; border: 1px solid var(--hover); border-radius: 8px; overflow: hidden; }
-.dupe-header { background: var(--hover); padding: 8px 16px; font-weight: bold; font-size: 14px; }
-.dupe-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; border-top: 1px solid var(--hover); }
-.toast { position: fixed; top: 24px; left: 50%; transform: translateX(-50%); background: var(--green); color: var(--black); padding: 12px 24px; border-radius: 4px; font-weight: bold; z-index: 2000; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playlist Organizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #121212;
+            color: #e5e7eb;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        .spotify-green { color: #1DB954; }
+        .bg-spotify-green { background-color: #1DB954; }
+        .bg-spotify-green:hover { background-color: #1ed760; }
+        .bg-spotify-dark { background-color: #181818; }
+        .bg-spotify-card { background-color: #282828; }
+        .bg-spotify-card:hover { background-color: #3e3e3e; }
+        .border-spotify { border-color: #282828; }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #121212;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #3e3e3e;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        .pill-active {
+            background-color: #1DB954;
+            color: #000000;
+            font-weight: 600;
+        }
+        .drag-ghost {
+            opacity: 0.4;
+            background: #282828;
+        }
+    </style>
 </head>
-<body>
-<div id="toast" class="toast"></div>
-<div id="app">
-  <div id="login-view" class="view">
-    <h1>Organize Your Sound</h1>
-    <p>Connect your Spotify account to seamlessly sort, filter, and organize your playlists. Rearrange tracks, remove duplicates, apply bulk rules, and save your perfect order.</p>
-    <button class="btn-primary" onclick="login()">Connect Spotify</button>
-  </div>
+<body class="h-screen flex flex-col overflow-hidden selection:bg-emerald-500 selection:text-black">
 
-  <div id="playlists-view" class="view hidden">
-    <div class="header">
-      <div style="display: flex; align-items: center; gap: 16px;">
-        <img id="user-avatar" src="" style="width: 48px; height: 48px; border-radius: 50%; display: none;">
-        <h2 style="margin: 0;">Your Playlists</h2>
-      </div>
-      <button class="btn-secondary" onclick="logout()">Disconnect</button>
+    <div id="app" class="flex-1 flex flex-col overflow-hidden">
+        <header class="h-16 bg-black flex items-center justify-between px-6 border-b border-neutral-900 shrink-0">
+            <div class="flex items-center space-x-3 cursor-pointer" id="nav-brand">
+                <i class="fab fa-spotify text-3xl spotify-green"></i>
+                <span class="text-white font-bold text-xl tracking-tight">Playlist Organizer</span>
+            </div>
+            <div id="user-profile" class="hidden flex items-center space-x-4">
+                <div class="flex items-center space-x-2 bg-neutral-900 py-1.5 px-3 rounded-full border border-neutral-800">
+                    <img id="user-avatar" class="w-6 h-6 rounded-full object-cover" src="" alt="">
+                    <span id="user-name" class="text-sm font-medium text-white"></span>
+                </div>
+                <button id="btn-logout" class="text-xs text-neutral-400 hover:text-white font-medium tracking-wide uppercase">Disconnect</button>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto custom-scrollbar relative bg-gradient-to-b from-neutral-900 to-black">
+            
+            <div id="view-intro" class="max-w-xl mx-auto pt-32 px-6 text-center space-y-8">
+                <h1 class="text-4xl sm:text-5xl font-black text-white tracking-tight leading-tight">Organize your music instantly.</h1>
+                <p class="text-neutral-400 text-lg leading-relaxed">Connect your account to fetch your playlists, reorder songs down to precise arrangements, filter profiles automatically, and update Spotify directly.</p>
+                <div class="pt-4">
+                    <button id="btn-connect" class="bg-spotify-green text-black font-bold px-8 py-4 rounded-full text-base tracking-wide hover:scale-105 transition-transform duration-200 shadow-xl">
+                        CONNECT SPOTIFY ACCOUNT
+                    </button>
+                </div>
+            </div>
+
+            <div id="view-playlists" class="hidden max-w-7xl mx-auto px-6 py-10 space-y-8">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-3xl font-extrabold text-white tracking-tight">Your Playlists</h2>
+                        <p class="text-neutral-400 text-sm mt-1">Select a playlist to start sorting, filtering, and reordering tracks.</p>
+                    </div>
+                </div>
+                <div id="playlists-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"></div>
+            </div>
+
+            <div id="view-details" class="hidden flex flex-col h-full">
+                <div class="p-6 md:p-8 flex flex-col md:flex-row items-end gap-6 bg-gradient-to-b from-neutral-800 to-neutral-900/40 border-b border-neutral-900 shrink-0">
+                    <div id="detail-art-container" class="w-40 h-40 md:w-52 md:h-52 shrink-0 bg-neutral-800 shadow-2xl relative group rounded-md overflow-hidden">
+                        <img id="detail-art" class="w-full h-full object-cover" src="" alt="">
+                    </div>
+                    <div class="flex-1 space-y-2">
+                        <span class="text-xs font-bold uppercase tracking-wider text-neutral-400">PLAYLIST</span>
+                        <div class="flex items-center gap-3 group">
+                            <h1 id="detail-name" class="text-3xl md:text-5xl lg:text-6xl font-black text-white tracking-tight break-words"></h1>
+                            <button id="btn-edit-playlist" class="text-neutral-400 hover:text-white p-2 text-xl opacity-0 group-hover:opacity-100 transition-opacity">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>
+                        </div>
+                        <p id="detail-meta" class="text-sm text-neutral-400 font-medium"></p>
+                        <div class="flex items-center gap-3 pt-3">
+                            <button id="btn-back" class="bg-neutral-800 text-white font-bold px-5 py-2.5 rounded-full text-xs tracking-wider uppercase border border-neutral-700 hover:bg-neutral-700 transition-colors">
+                                Back to Lists
+                            </button>
+                            <button id="btn-undo" class="bg-neutral-800 text-neutral-400 p-2.5 rounded-full text-sm border border-neutral-700 hover:bg-neutral-700 hover:text-white transition-colors disabled:opacity-40 disabled:pointer-events-none" disabled>
+                                <i class="fas fa-undo"></i>
+                            </button>
+                            <button id="btn-redo" class="bg-neutral-800 text-neutral-400 p-2.5 rounded-full text-sm border border-neutral-700 hover:bg-neutral-700 hover:text-white transition-colors disabled:opacity-40 disabled:pointer-events-none" disabled>
+                                <i class="fas fa-redo"></i>
+                            </button>
+                            <button id="btn-open-removed" class="bg-neutral-800 text-white font-semibold px-4 py-2.5 rounded-full text-xs border border-neutral-700 hover:bg-neutral-700 transition-colors relative">
+                                Removed Tracks <span id="badge-removed" class="ml-1 bg-red-600 text-white text-[10px] px-1.5 py-0.5 rounded-full hidden">0</span>
+                            </button>
+                            <button id="btn-open-artists" class="bg-neutral-800 text-white font-semibold px-4 py-2.5 rounded-full text-xs border border-neutral-700 hover:bg-neutral-700 transition-colors">
+                                Rules & Exclusions
+                            </button>
+                            <button id="btn-save-playlist" class="bg-spotify-green text-black font-bold px-6 py-2.5 rounded-full text-xs tracking-wider uppercase transition-transform hover:scale-105 ml-auto">
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-y-auto custom-scrollbar px-6 py-4 pb-32">
+                    <div class="w-full text-left text-xs uppercase tracking-wider text-neutral-400 font-bold border-b border-neutral-800 pb-2 grid grid-cols-[40px_50px_1fr_1fr_1fr_80px_40px] gap-4 items-center px-4">
+                        <div></div>
+                        <div>#</div>
+                        <div>Title</div>
+                        <div>Album</div>
+                        <div>Genre</div>
+                        <div class="text-right"><i class="far fa-clock text-sm"></i></div>
+                        <div></div>
+                    </div>
+                    <div id="tracks-container" class="divide-y divide-neutral-900/50 mt-1"></div>
+                </div>
+            </div>
+        </main>
+
+        <div id="pill-menu" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-neutral-900/95 backdrop-blur-md border border-neutral-800 py-3 px-4 rounded-full shadow-2xl z-40 max-w-[92vw] overflow-x-auto custom-scrollbar flex items-center space-x-2 whitespace-nowrap">
+            <button data-sort="az" class="pill-btn px-3.5 py-1.5 rounded-full text-xs font-bold text-neutral-300 bg-neutral-800 hover:bg-neutral-700 transition-colors">A - Z</button>
+            <button data-sort="za" class="pill-btn px-3.5 py-1.5 rounded-full text-xs font-bold text-neutral-300 bg-neutral-800 hover:bg-neutral-700 transition-colors">Z - A</button>
+            <button data-sort="artist" class="pill-btn px-3.5 py-1.5 rounded-full text-xs font-bold text-neutral-300 bg-neutral-800 hover:bg-neutral-700 transition-colors">Artist</button>
+            <button data-sort="album" class="pill-btn px-3.5 py-1.5 rounded-full text-xs font-bold text-neutral-300 bg-neutral-800 hover:bg-neutral-700 transition-colors">Album Order</button>
+            <button data-sort="genre" class="pill-btn px-3.5 py-1.5 rounded-full text-xs font-bold text-neutral-300 bg-neutral-800 hover:bg-neutral-700 transition-colors">Genre</button>
+            <div class="w-[1px] h-4 bg-neutral-700 mx-1"></div>
+            <button data-sort="release-early" class="pill-btn px-3.5 py-1.5 rounded-full text-xs font-bold text-neutral-300 bg-neutral-800 hover:bg-neutral-700 transition-colors">Earliest Release</button>
+            <button data-sort="release-latest" class="pill-btn px-3.5 py-1.5 rounded-full text-xs font-bold text-neutral-300 bg-neutral-800 hover:bg-neutral-700 transition-colors">Latest Release</button>
+            <div class="w-[1px] h-4 bg-neutral-700 mx-1"></div>
+            <button data-sort="duration-short" class="pill-btn px-3.5 py-1.5 rounded-full text-xs font-bold text-neutral-300 bg-neutral-800 hover:bg-neutral-700 transition-colors">Shortest</button>
+            <button data-sort="duration-long" class="pill-btn px-3.5 py-1.5 rounded-full text-xs font-bold text-neutral-300 bg-neutral-800 hover:bg-neutral-700 transition-colors">Longest</button>
+            <div class="w-[1px] h-4 bg-neutral-700 mx-1"></div>
+            <button data-sort="added-early" class="pill-btn px-3.5 py-1.5 rounded-full text-xs font-bold text-neutral-300 bg-neutral-800 hover:bg-neutral-700 transition-colors">Early Added</button>
+            <button data-sort="added-latest" class="pill-btn px-3.5 py-1.5 rounded-full text-xs font-bold text-neutral-300 bg-neutral-800 hover:bg-neutral-700 transition-colors">Latest Added</button>
+            <div class="w-[1px] h-4 bg-neutral-700 mx-1"></div>
+            <button id="pill-btn-explicit" class="px-3.5 py-1.5 rounded-full text-xs font-bold text-neutral-300 bg-neutral-800 hover:bg-neutral-700 transition-colors flex items-center gap-1">Explicit <i class="fas fa-chevron-up text-[10px]"></i></button>
+            <button id="pill-btn-duplicates" class="px-3.5 py-1.5 rounded-full text-xs font-bold text-red-400 bg-neutral-800 hover:bg-neutral-700 transition-colors">Clean Duplicates</button>
+        </div>
     </div>
-    <div class="grid" id="playlists-grid"></div>
-  </div>
 
-  <div id="tracks-view" class="view hidden">
-    <div class="header">
-      <div style="display: flex; align-items: center; gap: 16px;">
-        <button class="btn-icon" onclick="showPlaylists()" title="Back">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-        </button>
-        <img id="current-playlist-img" src="" style="width: 80px; height: 80px; border-radius: 4px; object-fit: cover;">
-        <div>
-          <h2 id="current-playlist-name" style="margin: 0 0 4px 0;"></h2>
-          <p id="current-playlist-info" style="margin: 0; color: var(--gray); font-size: 14px;"></p>
+    <div id="modal-edit-playlist" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+        <div class="bg-neutral-900 border border-neutral-800 w-full max-w-md rounded-lg overflow-hidden shadow-2xl p-6 space-y-6">
+            <h3 class="text-xl font-bold text-white">Edit Playlist Details</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">Name</label>
+                    <input type="text" id="input-edit-name" class="w-full bg-neutral-800 border border-neutral-700 rounded p-2.5 text-white focus:outline-none focus:border-emerald-500 text-sm">
+                </div>
+            </div>
+            <div class="flex items-center justify-end space-x-3 pt-2">
+                <button id="btn-close-edit" class="px-4 py-2 rounded text-sm font-semibold text-neutral-400 hover:text-white">Cancel</button>
+                <button id="btn-save-edit" class="bg-spotify-green text-black font-bold px-5 py-2 rounded text-sm">Apply</button>
+            </div>
         </div>
-      </div>
-      <div class="top-controls">
-        <button class="btn-icon" onclick="undo()" title="Undo" id="btn-undo" style="opacity: 0.5;">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
-        </button>
-        <button class="btn-icon" onclick="redo()" title="Redo" id="btn-redo" style="opacity: 0.5;">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 019-9 9 9 0 016 2.3l3 2.7"/></svg>
-        </button>
-        <button class="btn-secondary" onclick="openRemovedWindow()">Removed (<span id="removed-count">0</span>)</button>
-        <button class="btn-secondary" onclick="openExcludedWindow()">Excluded Artists</button>
-        <button class="btn-primary" onclick="openSaveModal()">Save Playlist</button>
-      </div>
     </div>
-    <div class="track-header">
-      <div></div>
-      <div>#</div>
-      <div>Title</div>
-      <div>Album</div>
-      <div>Date Added</div>
-      <div><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-      <div></div>
+
+    <div id="modal-removed" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-neutral-900 border border-neutral-800 w-full max-w-2xl rounded-lg overflow-hidden shadow-2xl flex flex-col max-h-[80vh]">
+            <div class="p-6 border-b border-neutral-800 flex items-center justify-between">
+                <h3 class="text-xl font-bold text-white">Removed Tracks Buffer</h3>
+                <button id="btn-close-removed" class="text-neutral-400 hover:text-white"><i class="fas fa-times text-lg"></i></button>
+            </div>
+            <div id="removed-list" class="flex-1 overflow-y-auto custom-scrollbar p-6 divide-y divide-neutral-800"></div>
+            <div class="p-4 bg-neutral-950 border-t border-neutral-800 flex justify-end">
+                <button id="btn-restore-all" class="bg-neutral-800 text-white font-semibold text-xs px-4 py-2 rounded hover:bg-neutral-700">Restore All</button>
+            </div>
+        </div>
     </div>
-    <div class="track-list" id="track-list"></div>
-    <div class="pill-menu">
-      <button class="pill-btn" id="sort-az" onclick="toggleSort('az')">A - Z</button>
-      <button class="pill-btn" id="sort-za" onclick="toggleSort('za')">Z - A</button>
-      <button class="pill-btn" id="sort-artist" onclick="toggleSort('artist')">Artists</button>
-      <button class="pill-btn" id="sort-releaseFirst" onclick="toggleSort('releaseFirst')">Oldest Release</button>
-      <button class="pill-btn" id="sort-releaseLatest" onclick="toggleSort('releaseLatest')">Newest Release</button>
-      <button class="pill-btn" id="sort-short" onclick="toggleSort('short')">Shortest</button>
-      <button class="pill-btn" id="sort-long" onclick="toggleSort('long')">Longest</button>
-      <button class="pill-btn" id="sort-album" onclick="toggleSort('album')">Album Order</button>
-      <button class="pill-btn" id="sort-addedLatest" onclick="toggleSort('addedLatest')">Added Latest</button>
-      <button class="pill-btn" id="sort-addedEarly" onclick="toggleSort('addedEarly')">Added Early</button>
-      <button class="pill-btn" onclick="openExplicitModal()">Explicit Options</button>
-      <button class="pill-btn" onclick="openRulesModal()">Rules</button>
-      <button class="pill-btn danger" onclick="openDuplicatesModal()">Find Duplicates</button>
+
+    <div id="modal-rules" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-neutral-900 border border-neutral-800 w-full max-w-2xl rounded-lg overflow-hidden shadow-2xl flex flex-col max-h-[80vh]">
+            <div class="p-6 border-b border-neutral-800 flex items-center justify-between">
+                <h3 class="text-xl font-bold text-white">Rules & Artist Exclusions</h3>
+                <button id="btn-close-rules" class="text-neutral-400 hover:text-white"><i class="fas fa-times text-lg"></i></button>
+            </div>
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
+                <div class="space-y-4">
+                    <h4 class="text-xs font-bold text-neutral-400 uppercase tracking-wider border-b border-neutral-800 pb-1">Duration Rules</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-neutral-400 mb-1">Exclude tracks shorter than (seconds)</label>
+                            <input type="number" id="rule-min-duration" min="0" class="w-full bg-neutral-800 border border-neutral-700 rounded p-2 text-white text-sm focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-neutral-400 mb-1">Exclude tracks longer than (seconds)</label>
+                            <input type="number" id="rule-max-duration" min="0" class="w-full bg-neutral-800 border border-neutral-700 rounded p-2 text-white text-sm focus:outline-none focus:border-emerald-500">
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <h4 class="text-xs font-bold text-neutral-400 uppercase tracking-wider border-b border-neutral-800 pb-1">Exclude Specific Artists</h4>
+                    <p class="text-xs text-neutral-500">Uncheck an artist to exclude all of their tracks from the primary view. Re-checking restores them instantly.</p>
+                    <div id="artists-exclusion-list" class="space-y-1 pt-1 max-h-48 overflow-y-auto custom-scrollbar pr-2"></div>
+                </div>
+            </div>
+            <div class="p-4 bg-neutral-950 border-t border-neutral-800 flex justify-end">
+                <button id="btn-apply-rules" class="bg-spotify-green text-black font-bold text-xs px-5 py-2.5 rounded-full uppercase tracking-wider">Save Configuration</button>
+            </div>
+        </div>
     </div>
-  </div>
-</div>
 
-<div id="modal-container"></div>
-
-<script>
-const CLIENT_ID = 'fcc60831d3974fec8770b2f9af452de8';
-const REDIRECT_URI = 'https://dccxvii.github.io';
-const SCOPES = 'playlist-read-private playlist-read-collaborative playlist-modify-public playlist-modify-private user-read-private';
-
-let token = null;
-let currentUser = null;
-let userPlaylists = [];
-let currentPlaylist = null;
-let tracks = [];
-let historyStack = [];
-let redoStack = [];
-let removedTracks = [];
-let excludedArtistsList = [];
-let currentSort = null;
-let draggedItemIndex = null;
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.style.opacity = '1';
-  setTimeout(() => t.style.opacity = '0', 3000);
-}
-
-function login() {
-  const url = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(SCOPES)}&response_type=token&show_dialog=true`;
-  window.location.href = url;
-}
-
-function logout() {
-  window.location.hash = '';
-  window.location.reload();
-}
-
-function getHashParams() {
-  const hashParams = {};
-  let e, r = /([^&;=]+)=?([^&;]*)/g, q = window.location.hash.substring(1);
-  while (e = r.exec(q)) {
-    hashParams[e] = decodeURIComponent(e);
-  }
-  return hashParams;
-}
-
-async function fetchAPI(endpoint, method = 'GET', body = null) {
-  const options = {
-    method,
-    headers: { 'Authorization': `Bearer ${token}` }
-  };
-  if (body) {
-    options.headers['Content-Type'] = 'application/json';
-    options.body = JSON.stringify(body);
-  }
-  const res = await fetch(`https://api.spotify.com/v1${endpoint}`, options);
-  if (res.status === 204) return null;
-  if (!res.ok) {
-    if (res.status === 401) logout();
-    throw new Error('API Error');
-  }
-  return res.json();
-}
-
-function init() {
-  const params = getHashParams();
-  if (params.access_token) {
-    token = params.access_token;
-    window.location.hash = '';
-    loadInitialData();
-  } else {
-    document.getElementById('login-view').classList.remove('hidden');
-  }
-}
-
-async function loadInitialData() {
-  try {
-    document.getElementById('login-view').classList.add('hidden');
-    currentUser = await fetchAPI('/me');
-    if (currentUser.images && currentUser.images.length > 0) {
-      const av = document.getElementById('user-avatar');
-      av.src = currentUser.images.url;
-      av.style.display = 'block';
-    }
-    await loadPlaylists();
-    document.getElementById('playlists-view').classList.remove('hidden');
-  } catch (e) {
-    logout();
-  }
-}
-
-async function loadPlaylists() {
-  userPlaylists = [];
-  let url = `/me/playlists?limit=50`;
-  while (url) {
-    const data = await fetchAPI(url.replace('https://api.spotify.com/v1', ''));
-    userPlaylists = userPlaylists.concat(data.items);
-    url = data.next;
-  }
-  renderPlaylists();
-}
-
-function renderPlaylists() {
-  const grid = document.getElementById('playlists-grid');
-  grid.innerHTML = '';
-  userPlaylists.forEach(p => {
-    if (!p) return;
-    const div = document.createElement('div');
-    div.className = 'card';
-    const imgUrl = p.images && p.images.length > 0 ? p.images.url : 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" background="%23282828"></svg>';
-    div.innerHTML = `
-      <img src="${imgUrl}" alt="${p.name}">
-      <h3>${p.name}</h3>
-      <p>${p.tracks.total} tracks</p>
-      <div class="edit-icon" onclick="openEditPlaylistModal(event, '${p.id}')">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
-      </div>
-    `;
-    div.onclick = () => selectPlaylist(p);
-    grid.appendChild(div);
-  });
-}
-
-function openEditPlaylistModal(e, id) {
-  e.stopPropagation();
-  const p = userPlaylists.find(x => x && x.id === id);
-  if (!p) return;
-  const modalHTML = `
-    <div class="modal-overlay" onclick="closeModal(event)">
-      <div class="modal" onclick="event.stopPropagation()">
-        <div class="modal-header">
-          <h2>Edit Playlist Details</h2>
-          <button class="btn-icon" onclick="closeModal(true)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <div id="modal-explicit" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-neutral-900 border border-neutral-800 w-full max-w-md rounded-lg overflow-hidden shadow-2xl p-6 space-y-6">
+            <h3 class="text-xl font-bold text-white">Explicit Tracks Configuration</h3>
+            <div class="space-y-3">
+                <button data-action="first" class="w-full text-left bg-neutral-800 hover:bg-neutral-700 p-3 rounded flex items-center justify-between text-sm group">
+                    <span class="text-white font-medium">Position Explicit Tracks First</span>
+                    <i class="fas fa-chevron-right text-neutral-500 group-hover:text-white text-xs"></i>
+                </button>
+                <button data-action="last" class="w-full text-left bg-neutral-800 hover:bg-neutral-700 p-3 rounded flex items-center justify-between text-sm group">
+                    <span class="text-white font-medium">Position Explicit Tracks Last</span>
+                    <i class="fas fa-chevron-right text-neutral-500 group-hover:text-white text-xs"></i>
+                </button>
+                <button data-action="filter" class="w-full text-left bg-neutral-800 hover:bg-neutral-700 p-3 rounded flex items-center justify-between text-sm group">
+                    <span class="text-red-400 font-medium">Review and Strip Selected Explicit Tracks</span>
+                    <i class="fas fa-chevron-right text-neutral-500 group-hover:text-white text-xs"></i>
+                </button>
+            </div>
+            <div class="flex justify-end pt-2">
+                <button id="btn-close-explicit" class="px-4 py-2 rounded text-sm font-semibold text-neutral-400 hover:text-white">Cancel</button>
+            </div>
         </div>
-        <div class="modal-body">
-          <div class="input-group">
-            <label>Name</label>
-            <input type="text" id="edit-p-name" value="${p.name}">
-          </div>
-          <div class="input-group">
-            <label>Description</label>
-            <input type="text" id="edit-p-desc" value="${p.description || ''}">
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn-secondary" onclick="closeModal(true)">Cancel</button>
-          <button class="btn-primary" onclick="savePlaylistDetails('${p.id}')">Save</button>
-        </div>
-      </div>
     </div>
-  `;
-  document.getElementById('modal-container').innerHTML = modalHTML;
-}
 
-async function savePlaylistDetails(id) {
-  const name = document.getElementById('edit-p-name').value;
-  const desc = document.getElementById('edit-p-desc').value;
-  if (!name) return;
-  try {
-    await fetchAPI(`/playlists/${id}`, 'PUT', { name, description: desc });
-    showToast('Playlist details updated');
-    closeModal(true);
-    loadPlaylists();
-  } catch (e) {
-    showToast('Failed to update details');
-  }
-}
-
-async function selectPlaylist(p) {
-  document.getElementById('playlists-view').classList.add('hidden');
-  document.getElementById('tracks-view').classList.remove('hidden');
-  currentPlaylist = p;
-  document.getElementById('current-playlist-name').textContent = p.name;
-  document.getElementById('current-playlist-info').textContent = `${p.owner.display_name} • ${p.tracks.total} tracks`;
-  document.getElementById('current-playlist-img').src = p.images && p.images.length > 0 ? p.images.url : '';
-  
-  tracks = [];
-  historyStack = [];
-  redoStack = [];
-  removedTracks = [];
-  excludedArtistsList = [];
-  currentSort = null;
-  updateUndoRedoUI();
-  updateRemovedCount();
-  resetPillButtons();
-  
-  let url = `/playlists/${p.id}/tracks?limit=100`;
-  while (url) {
-    const data = await fetchAPI(url.replace('https://api.spotify.com/v1', ''));
-    tracks = tracks.concat(data.items.filter(item => item && item.track && !item.is_local));
-    url = data.next;
-  }
-  
-  saveState(true);
-  renderTracks();
-}
-
-function showPlaylists() {
-  document.getElementById('tracks-view').classList.add('hidden');
-  document.getElementById('playlists-view').classList.remove('hidden');
-}
-
-function saveState(initial = false) {
-  if (!initial) {
-    historyStack.push({
-      tracks: JSON.parse(JSON.stringify(tracks)),
-      removed: JSON.parse(JSON.stringify(removedTracks)),
-      excluded: JSON.parse(JSON.stringify(excludedArtistsList))
-    });
-    redoStack = [];
-  }
-  updateUndoRedoUI();
-}
-
-function undo() {
-  if (historyStack.length === 0) return;
-  redoStack.push({
-    tracks: JSON.parse(JSON.stringify(tracks)),
-    removed: JSON.parse(JSON.stringify(removedTracks)),
-    excluded: JSON.parse(JSON.stringify(excludedArtistsList))
-  });
-  const state = historyStack.pop();
-  tracks = state.tracks;
-  removedTracks = state.removed;
-  excludedArtistsList = state.excluded;
-  updateUndoRedoUI();
-  updateRemovedCount();
-  renderTracks();
-}
-
-function redo() {
-  if (redoStack.length === 0) return;
-  historyStack.push({
-    tracks: JSON.parse(JSON.stringify(tracks)),
-    removed: JSON.parse(JSON.stringify(removedTracks)),
-    excluded: JSON.parse(JSON.stringify(excludedArtistsList))
-  });
-  const state = redoStack.pop();
-  tracks = state.tracks;
-  removedTracks = state.removed;
-  excludedArtistsList = state.excluded;
-  updateUndoRedoUI();
-  updateRemovedCount();
-  renderTracks();
-}
-
-function updateUndoRedoUI() {
-  document.getElementById('btn-undo').style.opacity = historyStack.length > 0 ? '1' : '0.5';
-  document.getElementById('btn-redo').style.opacity = redoStack.length > 0 ? '1' : '0.5';
-}
-
-function updateRemovedCount() {
-  document.getElementById('removed-count').textContent = removedTracks.length;
-}
-
-function formatDuration(ms) {
-  const minutes = Math.floor(ms / 60000);
-  const seconds = ((ms % 60000) / 1000).toFixed(0);
-  return minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
-}
-
-function formatDate(isoString) {
-  const date = new Date(isoString);
-  return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-}
-
-function renderTracks() {
-  const list = document.getElementById('track-list');
-  list.innerHTML = '';
-  tracks.forEach((item, index) => {
-    const t = item.track;
-    const div = document.createElement('div');
-    div.className = 'track-item';
-    div.draggable = true;
-    div.dataset.index = index;
-    div.ondragstart = handleDragStart;
-    div.ondragover = handleDragOver;
-    div.ondrop = handleDrop;
-    div.ondragend = handleDragEnd;
-
-    const img = t.album.images && t.album.images.length > 0 ? t.album.images[t.album.images.length-1].url : '';
-    const explicit = t.explicit ? `<span class="explicit-badge">E</span>` : '';
-    const artists = t.artists.map(a => a.name).join(', ');
-
-    div.innerHTML = `
-      <div class="handle"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/></svg></div>
-      <input type="number" class="track-number" value="${index + 1}" onchange="changeTrackPosition(${index}, this.value)">
-      <img src="${img}" class="track-img">
-      <div class="track-info">
-        <div class="track-name">${explicit}${t.name}</div>
-        <div class="track-artist">${artists}</div>
-      </div>
-      <div class="track-album">${t.album.name}</div>
-      <div class="track-date">${formatDate(item.added_at)}</div>
-      <div class="track-duration">${formatDuration(t.duration_ms)}</div>
-      <button class="btn-icon" onclick="removeTrack(${index})"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
-    `;
-    list.appendChild(div);
-  });
-}
-
-function changeTrackPosition(oldIndex, newPos) {
-  let newIndex = parseInt(newPos) - 1;
-  if (isNaN(newIndex) || newIndex < 0) newIndex = 0;
-  if (newIndex >= tracks.length) newIndex = tracks.length - 1;
-  if (oldIndex === newIndex) return renderTracks();
-  saveState();
-  const item = tracks.splice(oldIndex, 1);
-  tracks.splice(newIndex, 0, item);
-  renderTracks();
-}
-
-function handleDragStart(e) {
-  draggedItemIndex = parseInt(e.currentTarget.dataset.index);
-  e.currentTarget.classList.add('dragging');
-  e.dataTransfer.effectAllowed = 'move';
-}
-
-function handleDragOver(e) {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'move';
-}
-
-function handleDrop(e) {
-  e.preventDefault();
-  const targetElement = e.target.closest('.track-item');
-  if (!targetElement) return;
-  const targetIndex = parseInt(targetElement.dataset.index);
-  if (draggedItemIndex !== null && draggedItemIndex !== targetIndex) {
-    saveState();
-    const item = tracks.splice(draggedItemIndex, 1);
-    tracks.splice(targetIndex, 0, item);
-    renderTracks();
-  }
-}
-
-function handleDragEnd(e) {
-  e.currentTarget.classList.remove('dragging');
-  draggedItemIndex = null;
-}
-
-function removeTrack(index) {
-  saveState();
-  const item = tracks.splice(index, 1);
-  removedTracks.push(item);
-  updateRemovedCount();
-  renderTracks();
-}
-
-function closeModal(force = false) {
-  if (force || event.target.className === 'modal-overlay') {
-    document.getElementById('modal-container').innerHTML = '';
-  }
-}
-
-function openRemovedWindow() {
-  let listHTML = removedTracks.map((item, i) => `
-    <div class="list-item">
-      <div class="list-item-info">
-        <div class="track-name">${item.track.name}</div>
-        <div class="track-artist">${item.track.artists.map(a=>a.name).join(', ')}</div>
-      </div>
-      <button class="btn-secondary" onclick="restoreRemoved(${i})">Add Back</button>
+    <div id="modal-explicit-strip" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-neutral-900 border border-neutral-800 w-full max-w-xl rounded-lg overflow-hidden shadow-2xl flex flex-col max-h-[80vh]">
+            <div class="p-6 border-b border-neutral-800">
+                <h3 class="text-xl font-bold text-white">Review Explicit Tracks</h3>
+                <p class="text-xs text-neutral-400 mt-1">Checked items will be stripped from the working layout. Uncheck any tracks you wish to preserve.</p>
+            </div>
+            <div id="explicit-strip-list" class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-2"></div>
+            <div class="p-4 bg-neutral-950 border-t border-neutral-800 flex justify-end space-x-3">
+                <button id="btn-close-strip" class="px-4 py-2 text-sm font-semibold text-neutral-400 hover:text-white">Cancel</button>
+                <button id="btn-confirm-strip" class="bg-red-600 text-white font-bold text-xs px-5 py-2.5 rounded-full uppercase tracking-wider">Strip Selected Tracks</button>
+            </div>
+        </div>
     </div>
-  `).join('') || '<p style="color:var(--gray);">No tracks removed.</p>';
 
-  const modalHTML = `
-    <div class="modal-overlay" onclick="closeModal(event)">
-      <div class="modal" onclick="event.stopPropagation()">
-        <div class="modal-header">
-          <h2>Removed Tracks</h2>
-          <button class="btn-icon" onclick="closeModal(true)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <div id="modal-duplicates" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-neutral-900 border border-neutral-800 w-full max-w-xl rounded-lg overflow-hidden shadow-2xl flex flex-col max-h-[80vh]">
+            <div class="p-6 border-b border-neutral-800">
+                <h3 class="text-xl font-bold text-white">Analyze & Remove Duplicates</h3>
+                <p class="text-xs text-neutral-400 mt-1">Matching profiles found across Track ID, Name, or Duration configuration. Keep items checked to process deletion.</p>
+            </div>
+            <div id="duplicates-list" class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-2"></div>
+            <div class="p-4 bg-neutral-950 border-t border-neutral-800 flex justify-end space-x-3">
+                <button id="btn-close-duplicates" class="px-4 py-2 text-sm font-semibold text-neutral-400 hover:text-white">Cancel</button>
+                <button id="btn-confirm-duplicates" class="bg-red-600 text-white font-bold text-xs px-5 py-2.5 rounded-full uppercase tracking-wider">Remove Duplicates</button>
+            </div>
         </div>
-        <div class="modal-body">${listHTML}</div>
-        <div class="modal-footer"><button class="btn-primary" onclick="closeModal(true)">Done</button></div>
-      </div>
     </div>
-  `;
-  document.getElementById('modal-container').innerHTML = modalHTML;
-}
 
-function restoreRemoved(index) {
-  saveState();
-  const item = removedTracks.splice(index, 1);
-  tracks.push(item);
-  updateRemovedCount();
-  renderTracks();
-  openRemovedWindow();
-}
-
-function openExcludedWindow() {
-  let listHTML = excludedArtistsList.map((item, i) => `
-    <div class="list-item">
-      <div class="list-item-info">
-        <div class="track-name">${item.track.name}</div>
-        <div class="track-artist">${item.track.artists.map(a=>a.name).join(', ')}</div>
-      </div>
-      <button class="btn-secondary" onclick="restoreExcludedArtist(${i})">Add Back</button>
+    <div id="modal-save" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-neutral-900 border border-neutral-800 w-full max-w-md rounded-lg overflow-hidden shadow-2xl p-6 space-y-6">
+            <h3 class="text-xl font-bold text-white">Save Playlist Configurations</h3>
+            <div class="space-y-3">
+                <button id="save-option-overwrite" class="w-full text-left bg-neutral-800 hover:bg-neutral-700 p-4 rounded border border-neutral-700 flex flex-col gap-1">
+                    <span class="text-white font-bold text-sm">Overwrite Current Selected Playlist</span>
+                    <span class="text-xs text-neutral-400">This modifies the active remote Spotify playlist in place.</span>
+                </button>
+                <button id="save-option-overwrite-other" class="w-full text-left bg-neutral-800 hover:bg-neutral-700 p-4 rounded border border-neutral-700 flex flex-col gap-1">
+                    <span class="text-white font-bold text-sm">Overwrite Another Existing Playlist</span>
+                    <span class="text-xs text-neutral-400">Select another destination container from your collection to replace.</span>
+                </button>
+                <button id="save-option-create" class="w-full text-left bg-neutral-800 hover:bg-neutral-700 p-4 rounded border border-neutral-700 flex flex-col gap-1">
+                    <span class="text-emerald-400 font-bold text-sm">Create New Custom Playlist Container</span>
+                    <span class="text-xs text-neutral-400">Generate a pristine target structure with these contents.</span>
+                </button>
+            </div>
+            <div class="flex justify-end pt-2">
+                <button id="btn-close-save" class="px-4 py-2 rounded text-sm font-semibold text-neutral-400 hover:text-white">Cancel</button>
+            </div>
+        </div>
     </div>
-  `).join('') || '<p style="color:var(--gray);">No artists excluded.</p>';
 
-  const modalHTML = `
-    <div class="modal-overlay" onclick="closeModal(event)">
-      <div class="modal" onclick="event.stopPropagation()">
-        <div class="modal-header">
-          <h2>Excluded Artists / Tracks</h2>
-          <button class="btn-icon" onclick="closeModal(true)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <div id="modal-select-other" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-neutral-900 border border-neutral-800 w-full max-w-md rounded-lg overflow-hidden shadow-2xl flex flex-col max-h-[70vh]">
+            <div class="p-6 border-b border-neutral-800">
+                <h3 class="text-xl font-bold text-white">Select Target Playlist</h3>
+            </div>
+            <div id="select-other-list" class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-1"></div>
+            <div class="p-4 bg-neutral-950 border-t border-neutral-800 flex justify-end">
+                <button id="btn-close-other" class="px-4 py-2 text-sm font-semibold text-neutral-400 hover:text-white">Cancel</button>
+            </div>
         </div>
-        <div class="modal-body">${listHTML}</div>
-        <div class="modal-footer"><button class="btn-primary" onclick="closeModal(true)">Done</button></div>
-      </div>
     </div>
-  `;
-  document.getElementById('modal-container').innerHTML = modalHTML;
-}
 
-function restoreExcludedArtist(index) {
-  saveState();
-  const item = excludedArtistsList.splice(index, 1);
-  tracks.push(item);
-  renderTracks();
-  openExcludedWindow();
-}
-
-function openRulesModal() {
-  const modalHTML = `
-    <div class="modal-overlay" onclick="closeModal(event)">
-      <div class="modal" onclick="event.stopPropagation()">
-        <div class="modal-header">
-          <h2>Filter Rules</h2>
-          <button class="btn-icon" onclick="closeModal(true)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <div id="modal-create-name" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-neutral-900 border border-neutral-800 w-full max-w-md rounded-lg overflow-hidden shadow-2xl p-6 space-y-6">
+            <h3 class="text-xl font-bold text-white">Create New Playlist Container</h3>
+            <div>
+                <label class="block text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">Playlist Name</label>
+                <input type="text" id="input-create-name" placeholder="My Organized Playlist" class="w-full bg-neutral-800 border border-neutral-700 rounded p-2.5 text-white focus:outline-none focus:border-emerald-500 text-sm">
+            </div>
+            <div class="flex items-center justify-end space-x-3 pt-2">
+                <button id="btn-close-create-name" class="px-4 py-2 rounded text-sm font-semibold text-neutral-400 hover:text-white">Cancel</button>
+                <button id="btn-confirm-create" class="bg-spotify-green text-black font-bold px-5 py-2 rounded text-sm">Create & Save</button>
+            </div>
         </div>
-        <div class="modal-body">
-          <div class="input-group">
-            <label>Exclude Artist (Keyword)</label>
-            <input type="text" id="rule-artist" placeholder="e.g. Drake">
-          </div>
-          <div class="input-group">
-            <label>Remove Tracks Shorter Than (Seconds)</label>
-            <input type="number" id="rule-short" placeholder="e.g. 120">
-          </div>
-          <div class="input-group">
-            <label>Remove Tracks Longer Than (Seconds)</label>
-            <input type="number" id="rule-long" placeholder="e.g. 360">
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn-secondary" onclick="closeModal(true)">Cancel</button>
-          <button class="btn-primary" onclick="applyRules()">Apply Rules</button>
-        </div>
-      </div>
     </div>
-  `;
-  document.getElementById('modal-container').innerHTML = modalHTML;
-}
 
-function applyRules() {
-  saveState();
-  const artist = document.getElementById('rule-artist').value.toLowerCase();
-  const shortSec = parseInt(document.getElementById('rule-short').value);
-  const longSec = parseInt(document.getElementById('rule-long').value);
-  
-  let remaining = [];
-  tracks.forEach(item => {
-    let exclude = false;
-    let toArtistsList = false;
-
-    if (artist && item.track.artists.some(a => a.name.toLowerCase().includes(artist))) {
-      exclude = true;
-      toArtistsList = true;
-    }
-    
-    const duration = item.track.duration_ms / 1000;
-    if (!isNaN(shortSec) && duration < shortSec) exclude = true;
-    if (!isNaN(longSec) && duration > longSec) exclude = true;
-
-    if (exclude) {
-      if (toArtistsList) excludedArtistsList.push(item);
-      else removedTracks.push(item);
-    } else {
-      remaining.push(item);
-    }
-  });
-
-  tracks = remaining;
-  updateRemovedCount();
-  renderTracks();
-  closeModal(true);
-}
-
-function openExplicitModal() {
-  const modalHTML = `
-    <div class="modal-overlay" onclick="closeModal(event)">
-      <div class="modal" onclick="event.stopPropagation()">
-        <div class="modal-header">
-          <h2>Explicit Tracks Configuration</h2>
-          <button class="btn-icon" onclick="closeModal(true)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-        </div>
-        <div class="modal-body">
-          <div class="list-item" style="cursor:pointer;" onclick="sortExplicit('first')">
-            <div class="list-item-info"><div class="track-name">Move Explicit Tracks to Top</div></div>
-          </div>
-          <div class="list-item" style="cursor:pointer;" onclick="sortExplicit('last')">
-            <div class="list-item-info"><div class="track-name">Move Explicit Tracks to Bottom</div></div>
-          </div>
-          <div class="list-item" style="cursor:pointer; background:var(--danger); color:var(--white);" onclick="sortExplicit('remove')">
-            <div class="list-item-info"><div class="track-name">Remove All Explicit Tracks</div><p style="margin:0;font-size:12px;">(Moves to Removed List)</p></div>
-          </div>
-        </div>
-      </div>
+    <div id="global-toast" class="fixed top-6 left-1/2 -translate-x-1/2 bg-neutral-800 border border-neutral-700 text-white px-5 py-3 rounded-md shadow-2xl transform translate-y-20 opacity-0 pointer-events-none transition-all duration-300 z-50 flex items-center space-x-3">
+        <span id="toast-message" class="text-sm font-medium"></span>
     </div>
-  `;
-  document.getElementById('modal-container').innerHTML = modalHTML;
-}
 
-function sortExplicit(action) {
-  saveState();
-  if (action === 'remove') {
-    let remaining = [];
-    tracks.forEach(t => t.track.explicit ? removedTracks.push(t) : remaining.push(t));
-    tracks = remaining;
-    updateRemovedCount();
-  } else {
-    tracks.sort((a, b) => {
-      if (a.track.explicit === b.track.explicit) return 0;
-      if (action === 'first') return a.track.explicit ? -1 : 1;
-      return a.track.explicit ? 1 : -1;
-    });
-  }
-  renderTracks();
-  closeModal(true);
-}
-
-function resetPillButtons() {
-  document.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
-}
-
-function toggleSort(type) {
-  if (currentSort === type) {
-    currentSort = null;
-    resetPillButtons();
-    return;
-  }
-  saveState();
-  currentSort = type;
-  resetPillButtons();
-  document.getElementById(`sort-${type}`).classList.add('active');
-
-  const collator = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });
-
-  switch(type) {
-    case 'az': tracks.sort((a,b) => collator.compare(a.track.name, b.track.name)); break;
-    case 'za': tracks.sort((a,b) => collator.compare(b.track.name, a.track.name)); break;
-    case 'artist': tracks.sort((a,b) => collator.compare(a.track.artists.name, b.track.artists.name)); break;
-    case 'releaseFirst': tracks.sort((a,b) => (a.track.album.release_date || '').localeCompare(b.track.album.release_date || '')); break;
-    case 'releaseLatest': tracks.sort((a,b) => (b.track.album.release_date || '').localeCompare(a.track.album.release_date || '')); break;
-    case 'short': tracks.sort((a,b) => a.track.duration_ms - b.track.duration_ms); break;
-    case 'long': tracks.sort((a,b) => b.track.duration_ms - a.track.duration_ms); break;
-    case 'addedLatest': tracks.sort((a,b) => new Date(b.added_at) - new Date(a.added_at)); break;
-    case 'addedEarly': tracks.sort((a,b) => new Date(a.added_at) - new Date(b.added_at)); break;
-    case 'album': 
-      tracks.sort((a,b) => {
-        let cmp = collator.compare(a.track.album.name, b.track.album.name);
-        if (cmp !== 0) return cmp;
-        if (a.track.disc_number !== b.track.disc_number) return a.track.disc_number - b.track.disc_number;
-        return a.track.track_number - b.track.track_number;
-      });
-      break;
-  }
-  renderTracks();
-}
-
-function openDuplicatesModal() {
-  const map = new Map();
-  tracks.forEach((item, index) => {
-    const t = item.track;
-    const key = t.id || `${t.name}-${t.artists.name}-${t.duration_ms}`;
-    if (!map.has(key)) map.set(key, []);
-    map.get(key).push({ item, index });
-  });
-
-  const dupesArr = Array.from(map.values()).filter(arr => arr.length > 1);
-
-  if (dupesArr.length === 0) {
-    showToast('No duplicates found!');
-    return;
-  }
-
-  window.currentDupes = dupesArr;
-
-  let content = dupesArr.map((group, groupIdx) => {
-    let itemsHtml = group.map((g, i) => `
-      <div class="dupe-item">
-        <input type="checkbox" id="dupe-${groupIdx}-${i}" ${i === 0 ? 'checked' : ''}>
-        <div class="list-item-info">
-          <div class="track-name">${g.item.track.name}</div>
-          <div class="track-artist">${g.item.track.artists.name} • ${formatDuration(g.item.track.duration_ms)}</div>
+    <div id="global-loader" class="hidden fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center z-50">
+        <div class="flex flex-col items-center space-y-4">
+            <div class="w-12 h-12 border-4 border-neutral-800 border-t-emerald-500 rounded-full animate-spin"></div>
+            <p id="loader-message" class="text-neutral-300 text-xs tracking-widest uppercase font-bold"></p>
         </div>
-      </div>
-    `).join('');
-    return `
-      <div class="dupe-block">
-        <div class="dupe-header">Found ${group.length} copies of ${group.item.track.name}</div>
-        ${itemsHtml}
-      </div>
-    `;
-  }).join('');
-
-  const modalHTML = `
-    <div class="modal-overlay" onclick="closeModal(event)">
-      <div class="modal" onclick="event.stopPropagation()">
-        <div class="modal-header">
-          <h2>Resolve Duplicates</h2>
-          <button class="btn-icon" onclick="closeModal(true)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-        </div>
-        <p style="color:var(--gray);margin-top:0;">Select the versions you want to KEEP. Unchecked tracks will be removed.</p>
-        <div class="modal-body">${content}</div>
-        <div class="modal-footer">
-          <button class="btn-secondary" onclick="closeModal(true)">Cancel</button>
-          <button class="btn-primary" onclick="executeDuplicatesRemoval()">Confirm Removal</button>
-        </div>
-      </div>
     </div>
-  `;
-  document.getElementById('modal-container').innerHTML = modalHTML;
-}
 
-function executeDuplicatesRemoval() {
-  saveState();
-  const toKeepIndices = new Set();
-  const toRemoveIndices = new Set();
+    <script>
+        const CONFIG = {
+            clientId: 'fcc60831d3974fec8770b2f9af452de8',
+            redirectUri: 'https://dccxvii.github.io',
+            scopes: [
+                'playlist-read-private',
+                'playlist-read-collaborative',
+                'playlist-modify-public',
+                'playlist-modify-private'
+            ].join(' ')
+        };
 
-  window.currentDupes.forEach((group, groupIdx) => {
-    group.forEach((g, i) => {
-      const isChecked = document.getElementById(`dupe-${groupIdx}-${i}`).checked;
-      if (isChecked) toKeepIndices.add(g.index);
-      else toRemoveIndices.add(g.index);
-    });
-  });
+        let STATE = {
+            accessToken: null,
+            user: null,
+            playlists: [],
+            selectedPlaylist: null,
+            tracks: [], 
+            removedTracks: [], 
+            artistExclusions: {}, 
+            genres: {}, 
+            rules: { minDuration: null, maxDuration: null },
+            undoStack: [],
+            redoStack: [],
+            activeSorts: new Set()
+        };
 
-  let remaining = [];
-  tracks.forEach((item, index) => {
-    if (toRemoveIndices.has(index)) {
-      removedTracks.push(item);
-    } else {
-      remaining.push(item);
-    }
-  });
+        let sortableInstance = null;
 
-  tracks = remaining;
-  updateRemovedCount();
-  renderTracks();
-  closeModal(true);
-  showToast('Duplicates removed.');
-}
+        function showToast(msg) {
+            const toast = document.getElementById('global-toast');
+            document.getElementById('toast-message').textContent = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+            }, 3000);
+        }
 
-function openSaveModal() {
-  let options = userPlaylists.filter(p => p && p.owner.id === currentUser.id).map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-  
-  const modalHTML = `
-    <div class="modal-overlay" onclick="closeModal(event)">
-      <div class="modal" onclick="event.stopPropagation()">
-        <div class="modal-header">
-          <h2>Save Playlist</h2>
-          <button class="btn-icon" onclick="closeModal(true)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-        </div>
-        <div class="modal-body">
-          <div class="input-group">
-            <label>Save Method</label>
-            <select id="save-method" onchange="toggleSaveMethod()">
-              <option value="overwrite-current">Overwrite Current Playlist (${currentPlaylist.name})</option>
-              <option value="overwrite-other">Overwrite Another Playlist</option>
-              <option value="create-new">Create New Playlist</option>
-            </select>
-          </div>
-          <div class="input-group hidden" id="group-other">
-            <label>Select Playlist to Overwrite</label>
-            <select id="save-other-id">${options}</select>
-          </div>
-          <div class="input-group hidden" id="group-new">
-            <label>New Playlist Name</label>
-            <input type="text" id="save-new-name" placeholder="My Organized Playlist">
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn-secondary" onclick="closeModal(true)">Cancel</button>
-          <button class="btn-primary" id="btn-execute-save" onclick="executeSave()">Save to Spotify</button>
-        </div>
-      </div>
-    </div>
-  `;
-  document.getElementById('modal-container').innerHTML = modalHTML;
-}
+        function toggleLoader(show, msg = 'Processing') {
+            const loader = document.getElementById('global-loader');
+            document.getElementById('loader-message').textContent = msg;
+            if (show) loader.classList.remove('hidden');
+            else loader.classList.add('hidden');
+        }
 
-function toggleSaveMethod() {
-  const method = document.getElementById('save-method').value;
-  document.getElementById('group-other').classList.toggle('hidden', method !== 'overwrite-other');
-  document.getElementById('group-new').classList.toggle('hidden', method !== 'create-new');
-}
+        function initAuth() {
+            const hash = window.location.hash.substring(1);
+            const params = new URLSearchParams(hash);
+            let token = params.get('access_token');
+            
+            if (!token) {
+                token = localStorage.getItem('spotify_token');
+            } else {
+                localStorage.setItem('spotify_token', token);
+                window.history.replaceState(null, null, ' ');
+            }
 
-async function executeSave() {
-  const method = document.getElementById('save-method').value;
-  const btn = document.getElementById('btn-execute-save');
-  btn.textContent = 'Saving...';
-  btn.disabled = true;
+            if (token) {
+                STATE.accessToken = token;
+                bootstrapApp();
+            } else {
+                switchView('intro');
+            }
+        }
 
-  try {
-    let targetId = currentPlaylist.id;
-    if (method === 'overwrite-other') {
-      targetId = document.getElementById('save-other-id').value;
-    } else if (method === 'create-new') {
-      const name = document.getElementById('save-new-name').value || 'New Organized Playlist';
-      const created = await fetchAPI(`/users/${currentUser.id}/playlists`, 'POST', { name, description: 'Organized with Sound Organizer' });
-      targetId = created.id;
-    }
+        document.getElementById('btn-connect').addEventListener('click', () => {
+            const url = `https://accounts.spotify.com/authorize?client_id=${CONFIG.clientId}&redirect_uri=${encodeURIComponent(CONFIG.redirectUri)}&scope=${encodeURIComponent(CONFIG.scopes)}&response_type=token&show_dialog=true`;
+            window.location.href = url;
+        });
 
-    const uris = tracks.map(t => t.track.uri).filter(Boolean);
-    
-    if (method !== 'create-new') {
-      await fetchAPI(`/playlists/${targetId}/tracks`, 'PUT', { uris: uris.slice(0, 100) });
-      for (let i = 100; i < uris.length; i += 100) {
-        await fetchAPI(`/playlists/${targetId}/tracks`, 'POST', { uris: uris.slice(i, i + 100) });
-      }
-    } else {
-      for (let i = 0; i < uris.length; i += 100) {
-        await fetchAPI(`/playlists/${targetId}/tracks`, 'POST', { uris: uris.slice(i, i + 100) });
-      }
-    }
+        document.getElementById('btn-logout').addEventListener('click', () => {
+            localStorage.removeItem('spotify_token');
+            window.location.reload();
+        });
 
-    showToast('Playlist Saved Successfully!');
-    closeModal(true);
-    await loadPlaylists();
-  } catch (e) {
-    showToast('Error saving playlist. Check console.');
-    console.error(e);
-  } finally {
-    btn.textContent = 'Save to Spotify';
-    btn.disabled = false;
-  }
-}
+        function switchView(view) {
+            document.getElementById('view-intro').classList.add('hidden');
+            document.getElementById('view-playlists').classList.add('hidden');
+            document.getElementById('view-details').classList.add('hidden');
+            document.getElementById('pill-menu').classList.add('hidden');
 
-window.onload = init;
-</script>
+            if (view === 'intro') {
+                document.getElementById('view-intro').classList.remove('hidden');
+            } else if (view === 'playlists') {
+                document.getElementById('view-playlists').classList.remove('hidden');
+            } else if (view === 'details') {
+                document.getElementById('view-details').classList.remove('hidden');
+                document.getElementById('pill-menu').classList.remove('hidden');
+            }
+        }
+
+        async function apiFetch(endpoint, options = {}) {
+            if (!options.headers) options.headers = {};
+            options.headers['Authorization'] = `Bearer ${STATE.accessToken}`;
+            
+            let response = await fetch(`https://api.spotify.com/v1${endpoint}`, options);
+            if (response.status === 401) {
+                localStorage.removeItem('spotify_token');
+                window.location.reload();
+                return;
+            }
+            return response;
+        }
+
+        async function bootstrapApp() {
+            toggleLoader(true, 'Loading Profile');
+            try {
+                let userRes = await apiFetch('/me');
+                if (!userRes) return;
+                STATE.user = await userRes.json();
+                
+                document.getElementById('user-name').textContent = STATE.user.display_name;
+                if (STATE.user.images && STATE.user.images.length > 0) {
+                    document.getElementById('user-avatar').src = STATE.user.images[0].url;
+                } else {
+                    document.getElementById('user-avatar').classList.add('hidden');
+                }
+                document.getElementById('user-profile').classList.remove('hidden');
+
+                await loadPlaylists();
+                switchView('playlists');
+            } catch (err) {
+                showToast('Authentication initialization failed.');
+            } finally {
+                toggleLoader(false);
+            }
+        }
+
+        async function loadPlaylists() {
+            toggleLoader(true, 'Fetching Playlists');
+            let items = [];
+            let url = '/me/playlists?limit=50';
+            
+            while (url) {
+                let endpoint = url.includes('https://api.spotify.com/v1') ? url.split('https://api.spotify.com/v1')[1] : url;
+                let res = await apiFetch(endpoint);
+                let data = await res.json();
+                items = items.concat(data.items);
+                url = data.next;
+            }
+            
+            STATE.playlists = items.filter(p => p !== null);
+            renderPlaylistsGrid();
+        }
+
+        function renderPlaylistsGrid() {
+            const grid = document.getElementById('playlists-grid');
+            grid.innerHTML = '';
+
+            STATE.playlists.forEach(pl => {
+                const card = document.createElement('div');
+                card.className = 'bg-spotify-dark p-4 rounded-md bg-spotify-card cursor-pointer transition-all duration-200 flex flex-col space-y-3 shadow-md relative group';
+                
+                let imgUrl = 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=300&auto=format&fit=crop';
+                if (pl.images && pl.images.length > 0) imgUrl = pl.images[0].url;
+
+                card.innerHTML = `
+                    <div class="aspect-square w-full bg-neutral-800 relative rounded overflow-hidden shadow-lg">
+                        <img class="w-full h-full object-cover" src="${imgUrl}" alt="">
+                    </div>
+                    <div class="flex flex-col min-w-0 pr-6">
+                        <span class="text-white font-bold text-sm truncate tracking-wide">${pl.name}</span>
+                        <span class="text-neutral-400 text-xs font-medium truncate mt-0.5">By ${pl.owner.display_name}</span>
+                    </div>
+                    <button data-id="${pl.id}" class="btn-grid-edit absolute bottom-4 right-4 text-neutral-400 hover:text-white opacity-0 group-hover:opacity-100 p-1 text-sm transition-all">
+                        <i class="fas fa-pencil-alt"></i>
+                    </button>
+                `;
+
+                card.addEventListener('click', (e) => {
+                    if (e.target.closest('.btn-grid-edit') || e.target.closest('button')) return;
+                    loadPlaylistDetails(pl.id);
+                });
+
+                grid.appendChild(card);
+            });
+
+            document.querySelectorAll('.btn-grid-edit').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = btn.getAttribute('data-id');
+                    openEditPlaylistModal(id);
+                });
+            });
+        }
+
+        async function loadPlaylistDetails(playlistId) {
+            toggleLoader(true, 'Gathering tracks');
+            try {
+                let pl = STATE.playlists.find(p => p.id === playlistId);
+                STATE.selectedPlaylist = JSON.parse(JSON.stringify(pl));
+
+                let tracks = [];
+                let url = `/playlists/${playlistId}/tracks?limit=100`;
+                while (url) {
+                    let endpoint = url.includes('https://api.spotify.com/v1') ? url.split('https://api.spotify.com/v1')[1] : url;
+                    let res = await apiFetch(endpoint);
+                    let data = await res.json();
+                    tracks = tracks.concat(data.items);
+                    url = data.next;
+                }
+
+                STATE.tracks = tracks
+                    .filter(item => item && item.track)
+                    .map((item, idx) => ({
+                        uniqueId: `${item.track.id || 'local'}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                        id: item.track.id,
+                        name: item.track.name,
+                        album: item.track.album ? item.track.album.name : 'Unknown Album',
+                        albumId: item.track.album ? item.track.album.id : null,
+                        albumTrackNumber: item.track.track_number || 0,
+                        artists: item.track.artists ? item.track.artists.map(a => ({ name: a.name, id: a.id })) : [],
+                        duration_ms: item.track.duration_ms,
+                        explicit: item.track.explicit || false,
+                        added_at: item.added_at,
+                        release_date: item.track.album ? item.track.album.release_date : '0000-00-00',
+                        raw: item
+                    }));
+
+                STATE.removedTracks = [];
+                STATE.artistExclusions = {};
+                STATE.rules = { minDuration: null, maxDuration: null };
+                STATE.undoStack = [];
+                STATE.redoStack = [];
+                STATE.activeSorts.clear();
+
+                STATE.tracks.forEach(t => {
+                    t.artists.forEach(a => {
+                        if (!(a.id in STATE.artistExclusions)) {
+                            STATE.artistExclusions[a.id] = { name: a.name, enabled: true };
+                        }
+                    });
+                });
+
+                await fetchGenresForTracks();
+                pushState();
+                syncDetailsHeader();
+                renderTracks();
+                clearPillActiveStates();
+                switchView('details');
+            } catch (err) {
+                showToast('Failed tracking downstream components.');
+            } finally {
+                toggleLoader(false);
+            }
+        }
+
+        async function fetchGenresForTracks() {
+            let artistIds = new Set();
+            STATE.tracks.forEach(t => t.artists.forEach(a => { if (a.id) artistIds.add(a.id); }));
+            let arrayIds = Array.from(artistIds);
+            
+            let chunks = [];
+            for (let i = 0; i < arrayIds.length; i += 50) {
+                chunks.push(arrayIds.slice(i, i + 50));
+            }
+
+            for (let chunk of chunks) {
+                try {
+                    let res = await apiFetch(`/artists?ids=${chunk.join(',')}`);
+                    let data = await res.json();
+                    if (data && data.artists) {
+                        data.artists.forEach(art => {
+                            if (art) STATE.genres[art.id] = art.genres || [];
+                        });
+                    }
+                } catch (e) {}
+            }
+        }
+
+        function getTrackGenreDisplay(track) {
+            let matches = [];
+            track.artists.forEach(a => {
+                if (STATE.genres[a.id]) matches = matches.concat(STATE.genres[a.id]);
+            });
+            if (matches.length === 0) return '-';
+            return matches[0];
+        }
+
+        function syncDetailsHeader() {
+            let pl = STATE.selectedPlaylist;
+            let imgUrl = 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=300&auto=format&fit=crop';
+            if (pl.images && pl.images.length > 0) imgUrl = pl.images[0].url;
+
+            document.getElementById('detail-art').src = imgUrl;
+            document.getElementById('detail-name').textContent = pl.name;
+            
+            let visible = getFilteredTracks();
+            document.getElementById('detail-meta').textContent = `${STATE.user.display_name} • ${visible.length} songs visible (${STATE.tracks.length} total managed)`;
+            document.getElementById('badge-removed').textContent = STATE.removedTracks.length;
+            if (STATE.removedTracks.length > 0) {
+                document.getElementById('badge-removed').classList.remove('hidden');
+            } else {
+                document.getElementById('badge-removed').classList.add('hidden');
+            }
+        }
+
+        function pushState() {
+            STATE.undoStack.push({
+                tracks: JSON.parse(JSON.stringify(STATE.tracks)),
+                removedTracks: JSON.parse(JSON.stringify(STATE.removedTracks)),
+                artistExclusions: JSON.parse(JSON.stringify(STATE.artistExclusions)),
+                rules: JSON.parse(JSON.stringify(STATE.rules))
+            });
+            STATE.redoStack = [];
+            updateUndoRedoButtons();
+        }
+
+        function updateUndoRedoButtons() {
+            document.getElementById('btn-undo').disabled = STATE.undoStack.length <= 1;
+            document.getElementById('btn-redo').disabled = STATE.redoStack.length === 0;
+        }
+
+        function handleUndo() {
+            if (STATE.undoStack.length <= 1) return;
+            let current = STATE.undoStack.pop();
+            STATE.redoStack.push(current);
+            
+            let previous = STATE.undoStack[STATE.undoStack.length - 1];
+            STATE.tracks = JSON.parse(JSON.stringify(previous.tracks));
+            STATE.removedTracks = JSON.parse(JSON.stringify(previous.removedTracks));
+            STATE.artistExclusions = JSON.parse(JSON.stringify(previous.artistExclusions));
+            STATE.rules = JSON.parse(JSON.stringify(previous.rules));
+
+            updateUndoRedoButtons();
+            syncDetailsHeader();
+            renderTracks();
+        }
+
+        function handleRedo() {
+            if (STATE.redoStack.length === 0) return;
+            let next = STATE.redoStack.pop();
+            STATE.undoStack.push(next);
+
+            STATE.tracks = JSON.parse(JSON.stringify(next.tracks));
+            STATE.removedTracks = JSON.parse(JSON.stringify(next.removedTracks));
+            STATE.artistExclusions = JSON.parse(JSON.stringify(next.artistExclusions));
+            STATE.rules = JSON.parse(JSON.stringify(next.rules));
+
+            updateUndoRedoButtons();
+            syncDetailsHeader();
+            renderTracks();
+        }
+
+        function getFilteredTracks() {
+            return STATE.tracks.filter(t => {
+                let durationSec = t.duration_ms / 1000;
+                if (STATE.rules.minDuration !== null && durationSec < STATE.rules.minDuration) return false;
+                if (STATE.rules.maxDuration !== null && durationSec > STATE.rules.maxDuration) return false;
+
+                let artistAllowed = true;
+                t.artists.forEach(a => {
+                    if (STATE.artistExclusions[a.id] && !STATE.artistExclusions[a.id].enabled) {
+                        artistAllowed = false;
+                    }
+                });
+                return artistAllowed;
+            });
+        }
+
+        function formatDuration(ms) {
+            let s = Math.floor(ms / 1000);
+            let m = Math.floor(s / 60);
+            s = s % 60;
+            return `${m}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function renderTracks() {
+            const container = document.getElementById('tracks-container');
+            container.innerHTML = '';
+
+            if (sortableInstance) {
+                sortableInstance.destroy();
+                sortableInstance = null;
+            }
+
+            let visibleTracks = getFilteredTracks();
+
+            visibleTracks.forEach((t, index) => {
+                const row = document.createElement('div');
+                row.className = 'w-full grid grid-cols-[40px_50px_1fr_1fr_1fr_80px_40px] gap-4 items-center px-4 py-2 hover:bg-neutral-800/60 rounded group transition-colors text-sm text-neutral-300';
+                row.setAttribute('data-uid', t.uniqueId);
+
+                let explicitBadge = t.explicit ? '<span class="bg-neutral-700 text-neutral-300 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide shrink-0">E</span>' : '';
+                let genreDisplay = getTrackGenreDisplay(t);
+
+                row.innerHTML = `
+                    <div class="drag-handle cursor-grab text-neutral-600 hover:text-neutral-300 transition-colors text-center">
+                        <i class="fas fa-grip-lines"></i>
+                    </div>
+                    <div>
+                        <input type="number" value="${index + 1}" min="1" max="${visibleTracks.length}" class="input-track-index w-11 bg-neutral-900 border border-neutral-700 text-center rounded text-xs py-0.5 focus:outline-none focus:border-emerald-500 font-medium">
+                    </div>
+                    <div class="flex flex-col min-w-0 pr-2">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-white font-semibold truncate">${t.name}</span>
+                            ${explicitBadge}
+                        </div>
+                        <span class="text-neutral-400 text-xs truncate mt-0.5">${t.artists.map(a => a.name).join(', ')}</span>
+                    </div>
+                    <div class="truncate text-neutral-400 font-medium pr-2">${t.album}</div>
+                    <div class="truncate text-neutral-400 font-medium pr-2 capitalize">${genreDisplay}</div>
+                    <div class="text-right text-neutral-400 font-medium font-mono text-xs">${formatDuration(t.duration_ms)}</div>
+                    <div class="text-right">
+                        <button class="btn-delete-track text-neutral-500 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 p-1">
+                            <i class="far fa-trash-alt"></i>
+                        </button>
+                    </div>
+                `;
+
+                container.appendChild(row);
+            });
+
+            sortableInstance = new Sortable(container, {
+                handle: '.drag-handle',
+                animation: 150,
+                ghostClass: 'drag-ghost',
+                onEnd: function (evt) {
+                    if (evt.oldIndex === evt.newIndex) return;
+                    
+                    let visible = getFilteredTracks();
+                    let fullWorking = [...STATE.tracks];
+
+                    let movedItem = visible[evt.oldIndex];
+                    
+                    let globalOldIdx = fullWorking.findIndex(x => x.uniqueId === movedItem.uniqueId);
+                    fullWorking.splice(globalOldIdx, 1);
+
+                    if (evt.newIndex >= visible.length - 1) {
+                        let targetItem = visible[visible.length - 1];
+                        let globalTargetIdx = fullWorking.findIndex(x => x.uniqueId === targetItem.uniqueId);
+                        fullWorking.splice(globalTargetIdx + 1, 0, movedItem);
+                    } else {
+                        let targetItem = visible[evt.newIndex];
+                        let globalTargetIdx = fullWorking.findIndex(x => x.uniqueId === targetItem.uniqueId);
+                        fullWorking.splice(globalTargetIdx, 0, movedItem);
+                    }
+
+                    STATE.tracks = fullWorking;
+                    pushState();
+                    renderTracks();
+                }
+            });
+
+            document.querySelectorAll('.input-track-index').forEach(input => {
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        let targetPos = parseInt(input.value) - 1;
+                        let row = input.closest('[data-uid]');
+                        let uid = row.getAttribute('data-uid');
+                        
+                        let visible = getFilteredTracks();
+                        let currentPos = visible.findIndex(x => x.uniqueId === uid);
+
+                        if (!isNaN(targetPos) && targetPos >= 0 && targetPos < visible.length && targetPos !== currentPos) {
+                            let fullWorking = [...STATE.tracks];
+                            let movedItem = visible[currentPos];
+                            let targetItem = visible[targetPos];
+
+                            let globalOldIdx = fullWorking.findIndex(x => x.uniqueId === movedItem.uniqueId);
+                            let globalTargetIdx = fullWorking.findIndex(x => x.uniqueId === targetItem.uniqueId);
+
+                            fullWorking[globalOldIdx] = targetItem;
+                            fullWorking[globalTargetIdx] = movedItem;
+
+                            STATE.tracks = fullWorking;
+                            pushState();
+                            renderTracks();
+                        } else {
+                            input.value = currentPos + 1;
+                        }
+                    }
+                });
+            });
+
+            document.querySelectorAll('.btn-delete-track').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    let row = btn.closest('[data-uid]');
+                    let uid = row.getAttribute('data-uid');
+                    
+                    let targetIdx = STATE.tracks.findIndex(x => x.uniqueId === uid);
+                    if (targetIdx !== -1) {
+                        let removed = STATE.tracks.splice(targetIdx, 1)[0];
+                        STATE.removedTracks.push(removed);
+                        pushState();
+                        syncDetailsHeader();
+                        renderTracks();
+                    }
+                });
+            });
+        }
+
+        document.getElementById('btn-back').addEventListener('click', () => {
+            switchView('playlists');
+        });
+
+        document.getElementById('btn-undo').addEventListener('click', handleUndo);
+        document.getElementById('btn-redo').addEventListener('click', handleRedo);
+
+        document.getElementById('nav-brand').addEventListener('click', () => {
+            if (STATE.accessToken) switchView('playlists');
+            else switchView('intro');
+        });
+
+        const modalEdit = document.getElementById('modal-edit-playlist');
+        let editingPlaylistId = null;
+
+        function openEditPlaylistModal(id) {
+            editingPlaylistId = id;
+            let pl = STATE.playlists.find(p => p.id === id);
+            document.getElementById('input-edit-name').value = pl.name;
+            modalEdit.classList.remove('hidden');
+        }
+
+        document.getElementById('btn-close-edit').addEventListener('click', () => {
+            modalEdit.classList.add('hidden');
+        });
+
+        document.getElementById('btn-save-edit').addEventListener('click', async () => {
+            let newName = document.getElementById('input-edit-name').value.trim();
+            if (!newName) return;
+
+            toggleLoader(true, 'Updating Profile Container');
+            try {
+                let res = await apiFetch(`/playlists/${editingPlaylistId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: newName })
+                });
+
+                if (res.ok) {
+                    let pl = STATE.playlists.find(p => p.id === editingPlaylistId);
+                    if (pl) pl.name = newName;
+                    
+                    if (STATE.selectedPlaylist && STATE.selectedPlaylist.id === editingPlaylistId) {
+                        STATE.selectedPlaylist.name = newName;
+                        syncDetailsHeader();
+                    }
+                    
+                    renderPlaylistsGrid();
+                    modalEdit.classList.add('hidden');
+                    showToast('Playlist name synchronized successfully.');
+                }
+            } catch (err) {
+                showToast('Failed synchronizing structural attributes.');
+            } finally {
+                toggleLoader(false);
+            }
+        });
+
+        document.getElementById('btn-edit-playlist').addEventListener('click', () => {
+            if (STATE.selectedPlaylist) openEditPlaylistModal(STATE.selectedPlaylist.id);
+        });
+
+        const modalRemoved = document.getElementById('modal-removed');
+        document.getElementById('btn-open-removed').addEventListener('click', () => {
+            renderRemovedTracks();
+            modalRemoved.classList.remove('hidden');
+        });
+
+        document.getElementById('btn-close-removed').addEventListener('click', () => {
+            modalRemoved.classList.add('hidden');
+        });
+
+        function renderRemovedTracks() {
+            const list = document.getElementById('removed-list');
+            list.innerHTML = '';
+
+            if (STATE.removedTracks.length === 0) {
+                list.innerHTML = '<p class="text-neutral-500 text-sm text-center py-6">Buffer clean. No entries items mapped.</p>';
+                return;
+            }
+
+            STATE.removedTracks.forEach((t, idx) => {
+                const item = document.createElement('div');
+                item.className = 'py-3 flex items-center justify-between text-sm';
+                item.innerHTML = `
+                    <div class="flex flex-col min-w-0 pr-4">
+                        <span class="text-white font-semibold truncate">${t.name}</span>
+                        <span class="text-neutral-400 text-xs truncate mt-0.5">${t.artists.map(a => a.name).join(', ')}</span>
+                    </div>
+                    <button class="btn-restore-track text-emerald-400 font-bold hover:text-emerald-300 text-xs uppercase tracking-wider shrink-0">Restore</button>
+                `;
+
+                item.querySelector('.btn-restore-track').addEventListener('click', () => {
+                    STATE.removedTracks.splice(idx, 1);
+                    STATE.tracks.push(t);
+                    pushState();
+                    syncDetailsHeader();
+                    renderTracks();
+                    renderRemovedTracks();
+                });
+
+                list.appendChild(item);
+            });
+        }
+
+        document.getElementById('btn-restore-all').addEventListener('click', () => {
+            if (STATE.removedTracks.length === 0) return;
+            STATE.tracks = STATE.tracks.concat(STATE.removedTracks);
+            STATE.removedTracks = [];
+            pushState();
+            syncDetailsHeader();
+            renderTracks();
+            modalRemoved.classList.add('hidden');
+            showToast('All buffered configuration entries restored.');
+        });
+
+        const modalRules = document.getElementById('modal-rules');
+        document.getElementById('btn-open-artists').addEventListener('click', () => {
+            document.getElementById('rule-min-duration').value = STATE.rules.minDuration || '';
+            document.getElementById('rule-max-duration').value = STATE.rules.maxDuration || '';
+            renderArtistsExclusionList();
+            modalRules.classList.remove('hidden');
+        });
+
+        document.getElementById('btn-close-rules').addEventListener('click', () => {
+            modalRules.classList.add('hidden');
+        });
+
+        function renderArtistsExclusionList() {
+            const list = document.getElementById('artists-exclusion-list');
+            list.innerHTML = '';
+
+            Object.keys(STATE.artistExclusions).forEach(id => {
+                const item = STATE.artistExclusions[id];
+                const div = document.createElement('label');
+                div.className = 'flex items-center space-x-3 py-1.5 px-2 hover:bg-neutral-800 rounded cursor-pointer text-sm text-neutral-300 select-none';
+                div.innerHTML = `
+                    <input type="checkbox" ${item.enabled ? 'checked' : ''} data-id="${id}" class="rounded bg-neutral-900 border-neutral-700 text-emerald-500 focus:ring-0 focus:ring-offset-0 w-4 h-4">
+                    <span class="truncate">${item.name}</span>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        document.getElementById('btn-apply-rules').addEventListener('click', () => {
+            let minVal = document.getElementById('rule-min-duration').value;
+            let maxVal = document.getElementById('rule-max-duration').value;
+
+            STATE.rules.minDuration = minVal !== '' ? parseFloat(minVal) : null;
+            STATE.rules.maxDuration = maxVal !== '' ? parseFloat(maxVal) : null;
+
+            document.querySelectorAll('#artists-exclusion-list input[type="checkbox"]').forEach(chk => {
+                let id = chk.getAttribute('data-id');
+                if (id in STATE.artistExclusions) {
+                    STATE.artistExclusions[id].enabled = chk.checked;
+                }
+            });
+
+            pushState();
+            syncDetailsHeader();
+            renderTracks();
+            modalRules.classList.add('hidden');
+            showToast('Rules architecture schema updated.');
+        });
+
+        function clearPillActiveStates() {
+            document.querySelectorAll('.pill-btn').forEach(btn => btn.classList.remove('pill-active'));
+        }
+
+        document.querySelectorAll('.pill-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const sortType = btn.getAttribute('data-sort');
+                executeSortAction(sortType, btn);
+            });
+        });
+
+        function executeSortAction(type, element) {
+            let visible = getFilteredTracks();
+            if (visible.length <= 1) return;
+
+            let fullWorking = [...STATE.tracks];
+
+            let uidsInVisible = new Set(visible.map(v => v.uniqueId));
+            let nonVisibleTracks = fullWorking.filter(x => !uidsInVisible.has(x.uniqueId));
+
+            if (type === 'az' || type === 'za') {
+                document.querySelector('[data-sort="az"]').classList.remove('pill-active');
+                document.querySelector('[data-sort="za"]').classList.remove('pill-active');
+                element.classList.add('pill-active');
+                
+                visible.sort((a, b) => {
+                    return type === 'az' 
+                        ? a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
+                        : b.name.localeCompare(a.name, undefined, { numeric: true, sensitivity: 'base' });
+                });
+            } else if (type === 'artist') {
+                togglePillState(element, 'artist');
+                visible.sort((a, b) => {
+                    let aName = a.artists.length > 0 ? a.artists[0].name : '';
+                    let bName = b.artists.length > 0 ? b.artists[0].name : '';
+                    return aName.localeCompare(bName, undefined, { numeric: true, sensitivity: 'base' });
+                });
+            } else if (type === 'album') {
+                togglePillState(element, 'album');
+                visible.sort((a, b) => {
+                    let albumComp = a.album.localeCompare(b.album, undefined, { numeric: true, sensitivity: 'base' });
+                    if (albumComp !== 0) return albumComp;
+                    return a.albumTrackNumber - b.albumTrackNumber;
+                });
+            } else if (type === 'genre') {
+                togglePillState(element, 'genre');
+                visible.sort((a, b) => {
+                    let gA = getTrackGenreDisplay(a);
+                    let gB = getTrackGenreDisplay(b);
+                    if (gA === '-') return 1;
+                    if (gB === '-') return -1;
+                    return gA.localeCompare(gB, undefined, { sensitivity: 'base' });
+                });
+            } else if (type === 'release-early' || type === 'release-latest') {
+                document.querySelector('[data-sort="release-early"]').classList.remove('pill-active');
+                document.querySelector('[data-sort="release-latest"]').classList.remove('pill-active');
+                element.classList.add('pill-active');
+
+                visible.sort((a, b) => {
+                    let dA = new Date(a.release_date);
+                    let dB = new Date(b.release_date);
+                    return type === 'release-early' ? dA - dB : dB - dA;
+                });
+            } else if (type === 'duration-short' || type === 'duration-long') {
+                document.querySelector('[data-sort="duration-short"]').classList.remove('pill-active');
+                document.querySelector('[data-sort="duration-long"]').classList.remove('pill-active');
+                element.classList.add('pill-active');
+
+                visible.sort((a, b) => {
+                    return type === 'duration-short' ? a.duration_ms - b.duration_ms : b.duration_ms - a.duration_ms;
+                });
+            } else if (type === 'added-early' || type === 'added-latest') {
+                document.querySelector('[data-sort="added-early"]').classList.remove('pill-active');
+                document.querySelector('[data-sort="added-latest"]').classList.remove('pill-active');
+                element.classList.add('pill-active');
+
+                visible.sort((a, b) => {
+                    let dA = new Date(a.added_at);
+                    let dB = new Date(b.added_at);
+                    return type === 'added-early' ? dA - dB : dB - dA;
+                });
+            }
+
+            STATE.tracks = [...visible, ...nonVisibleTracks];
+            pushState();
+            renderTracks();
+        }
+
+        function togglePillState(el, key) {
+            if (el.classList.contains('pill-active')) {
+                el.classList.remove('pill-active');
+            } else {
+                el.classList.add('pill-active');
+            }
+        }
+
+        const modalExplicit = document.getElementById('modal-explicit');
+        const modalExplicitStrip = document.getElementById('modal-explicit-strip');
+
+        document.getElementById('pill-btn-explicit').addEventListener('click', () => {
+            modalExplicit.classList.remove('hidden');
+        });
+
+        document.getElementById('btn-close-explicit').addEventListener('click', () => {
+            modalExplicit.classList.add('hidden');
+        });
+
+        modalExplicit.querySelectorAll('[data-action]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                let action = btn.getAttribute('data-action');
+                modalExplicit.classList.add('hidden');
+                
+                if (action === 'first' || action === 'last') {
+                    positionExplicitTracks(action);
+                } else if (action === 'filter') {
+                    openExplicitStripModal();
+                }
+            });
+        });
+
+        function positionExplicitTracks(direction) {
+            let visible = getFilteredTracks();
+            if (visible.length <= 1) return;
+
+            let fullWorking = [...STATE.tracks];
+            let uidsInVisible = new Set(visible.map(v => v.uniqueId));
+            let nonVisibleTracks = fullWorking.filter(x => !uidsInVisible.has(x.uniqueId));
+
+            let explicit = visible.filter(t => t.explicit);
+            let clean = visible.filter(t => !t.explicit);
+
+            let sortedVisible = direction === 'first' ? [...explicit, ...clean] : [...clean, ...explicit];
+            STATE.tracks = [...sortedVisible, ...nonVisibleTracks];
+            
+            pushState();
+            renderTracks();
+            showToast(`Explicit tracks moved to ${direction}.`);
+        }
+
+        function openExplicitStripModal() {
+            const list = document.getElementById('explicit-strip-list');
+            list.innerHTML = '';
+
+            let visible = getFilteredTracks();
+            let explicitTracks = visible.filter(t => t.explicit);
+
+            if (explicitTracks.length === 0) {
+                showToast('No explicit tracks found in current layout configuration.');
+                return;
+            }
+
+            explicitTracks.forEach(t => {
+                const label = document.createElement('label');
+                label.className = 'flex items-center space-x-3 py-2 px-3 bg-neutral-800 rounded cursor-pointer text-sm text-neutral-200 select-none';
+                label.innerHTML = `
+                    <input type="checkbox" checked data-uid="${t.uniqueId}" class="rounded bg-neutral-900 border-neutral-700 text-red-500 focus:ring-0 w-4 h-4">
+                    <div class="flex-1 min-w-0">
+                        <div class="font-semibold truncate">${t.name}</div>
+                        <div class="text-neutral-400 text-xs truncate">${t.artists.map(a => a.name).join(', ')}</div>
+                    </div>
+                `;
+                list.appendChild(label);
+            });
+
+            modalExplicitStrip.classList.remove('hidden');
+        }
+
+        document.getElementById('btn-close-strip').addEventListener('click', () => {
+            modalExplicitStrip.classList.add('hidden');
+        });
+
+        document.getElementById('btn-confirm-strip').addEventListener('click', () => {
+            let targetUids = new Set();
+            document.querySelectorAll('#explicit-strip-list input[type="checkbox"]:checked').forEach(chk => {
+                targetUids.add(chk.getAttribute('data-uid'));
+            });
+
+            if (targetUids.size === 0) {
+                modalExplicitStrip.classList.add('hidden');
+                return;
+            }
+
+            let fullWorking = [...STATE.tracks];
+            let nextTracks = [];
+
+            fullWorking.forEach(t => {
+                if (targetUids.has(t.uniqueId)) {
+                    STATE.removedTracks.push(t);
+                } else {
+                    nextTracks.push(t);
+                }
+            });
+
+            STATE.tracks = nextTracks;
+            pushState();
+            syncDetailsHeader();
+            renderTracks();
+            modalExplicitStrip.classList.add('hidden');
+            showToast(`Stripped ${targetUids.size} explicit tracks.`);
+        });
+
+        const modalDuplicates = document.getElementById('modal-duplicates');
+        let potentialDuplicatesCollection = [];
+
+        document.getElementById('pill-btn-duplicates').addEventListener('click', () => {
+            analyzeDuplicates();
+        });
+
+        function analyzeDuplicates() {
+            let visible = getFilteredTracks();
+            if (visible.length <= 1) {
+                showToast('Insufficient population to track matching parameters.');
+                return;
+            }
+
+            let seenIds = {};
+            let seenProfiles = {};
+            potentialDuplicatesCollection = [];
+
+            visible.forEach(t => {
+                let isDup = false;
+                let reasons = [];
+
+                if (t.id) {
+                    if (t.id in seenIds) {
+                        isDup = true;
+                        reasons.push('Track ID Match');
+                    } else {
+                        seenIds[t.id] = true;
+                    }
+                }
+
+                let profileKey = `${t.name.toLowerCase().trim()}|${Math.floor(t.duration_ms / 1000)}`;
+                if (profileKey in seenProfiles) {
+                    isDup = true;
+                    reasons.push('Name & Duration Profile Match');
+                } else {
+                    seenProfiles[profileKey] = true;
+                }
+
+                if (isDup) {
+                    potentialDuplicatesCollection.push({
+                        track: t,
+                        reasons: reasons
+                    });
+                }
+            });
+
+            if (potentialDuplicatesCollection.length === 0) {
+                showToast('No matching duplicate profiles identified.');
+                return;
+            }
+
+            renderDuplicatesModalList();
+            modalDuplicates.classList.remove('hidden');
+        }
+
+        function renderDuplicatesModalList() {
+            const list = document.getElementById('duplicates-list');
+            list.innerHTML = '';
+
+            potentialDuplicatesCollection.forEach((item, idx) => {
+                const label = document.createElement('label');
+                label.className = 'flex items-center space-x-3 py-2.5 px-3 bg-neutral-800 rounded cursor-pointer text-sm text-neutral-200 select-none';
+                label.innerHTML = `
+                    <input type="checkbox" checked data-idx="${idx}" class="rounded bg-neutral-900 border-neutral-700 text-red-500 focus:ring-0 w-4 h-4">
+                    <div class="flex-1 min-w-0">
+                        <div class="font-semibold truncate">${item.track.name}</div>
+                        <div class="text-neutral-400 text-xs truncate">${item.track.artists.map(a => a.name).join(', ')} • ${item.track.album}</div>
+                        <div class="text-[10px] text-red-400 font-bold uppercase tracking-wider mt-0.5">${item.reasons.join(' & ')}</div>
+                    </div>
+                `;
+                list.appendChild(label);
+            });
+        }
+
+        document.getElementById('btn-close-duplicates').addEventListener('click', () => {
+            modalDuplicates.classList.add('hidden');
+        });
+
+        document.getElementById('btn-confirm-duplicates').addEventListener('click', () => {
+            let selectedUids = new Set();
+            document.querySelectorAll('#duplicates-list input[type="checkbox"]:checked').forEach(chk => {
+                let idx = parseInt(chk.getAttribute('data-idx'));
+                selectedUids.add(potentialDuplicatesCollection[idx].track.uniqueId);
+            });
+
+            if (selectedUids.size === 0) {
+                modalDuplicates.classList.add('hidden');
+                return;
+            }
+
+            let fullWorking = [...STATE.tracks];
+            let nextTracks = [];
+
+            fullWorking.forEach(t => {
+                if (selectedUids.has(t.uniqueId)) {
+                    STATE.removedTracks.push(t);
+                } else {
+                    nextTracks.push(t);
+                }
+            });
+
+            STATE.tracks = nextTracks;
+            pushState();
+            syncDetailsHeader();
+            renderTracks();
+            modalDuplicates.classList.add('hidden');
+            showToast(`Removed ${selectedUids.size} duplicate nodes from configuration state.`);
+        });
+
+        const modalSave = document.getElementById('modal-save');
+        const modalSelectOther = document.getElementById('modal-select-other');
+        const modalCreateName = document.getElementById('modal-create-name');
+
+        document.getElementById('btn-save-playlist').addEventListener('click', () => {
+            modalSave.classList.remove('hidden');
+        });
+
+        document.getElementById('btn-close-save').addEventListener('click', () => {
+            modalSave.classList.add('hidden');
+        });
+
+        document.getElementById('save-option-overwrite').addEventListener('click', async () => {
+            modalSave.classList.add('hidden');
+            await commitPlaylistUpdate(STATE.selectedPlaylist.id, STATE.selectedPlaylist.name);
+        });
+
+        document.getElementById('save-option-overwrite-other').addEventListener('click', () => {
+            modalSave.classList.add('hidden');
+            renderSelectOtherList();
+            modalSelectOther.classList.remove('hidden');
+        });
+
+        document.getElementById('btn-close-other').addEventListener('click', () => {
+            modalSelectOther.classList.add('hidden');
+        });
+
+        function renderSelectOtherList() {
+            const list = document.getElementById('select-other-list');
+            list.innerHTML = '';
+
+            STATE.playlists.forEach(pl => {
+                if (pl.id === STATE.selectedPlaylist.id) return;
+                
+                const btn = document.createElement('button');
+                btn.className = 'w-full text-left bg-neutral-800 hover:bg-neutral-700 p-2.5 rounded text-sm text-white font-medium truncate block';
+                btn.textContent = pl.name;
+                
+                btn.addEventListener('click', async () => {
+                    modalSelectOther.classList.add('hidden');
+                    await commitPlaylistUpdate(pl.id, pl.name);
+                });
+
+                list.appendChild(btn);
+            });
+
+            if (list.children.length === 0) {
+                list.innerHTML = '<p class="text-neutral-500 text-xs text-center py-4">No alternative valid playlists found.</p>';
+            }
+        }
+
+        document.getElementById('save-option-create').addEventListener('click', () => {
+            modalSave.classList.add('hidden');
+            document.getElementById('input-create-name').value = `${STATE.selectedPlaylist.name} (Organized)`;
+            modalCreateName.classList.remove('hidden');
+        });
+
+        document.getElementById('btn-close-create-name').addEventListener('click', () => {
+            modalCreateName.classList.add('hidden');
+        });
+
+        document.getElementById('btn-confirm-create').addEventListener('click', async () => {
+            let targetName = document.getElementById('input-create-name').value.trim();
+            if (!targetName) return;
+            modalCreateName.classList.add('hidden');
+            await commitPlaylistCreation(targetName);
+        });
+
+        async function commitPlaylistUpdate(targetPlaylistId, targetPlaylistName) {
+            let visible = getFilteredTracks();
+            toggleLoader(true, `Syncing to ${targetPlaylistName}`);
+
+            try {
+                let uris = visible.filter(t => t.id).map(t => `spotify:track:${t.id}`);
+                
+                await apiFetch(`/playlists/${targetPlaylistId}/tracks`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ uris: [] })
+                });
+
+                let chunks = [];
+                for (let i = 0; i < uris.length; i += 100) {
+                    chunks.push(uris.slice(i, i + 100));
+                }
+
+                for (let chunk of chunks) {
+                    await apiFetch(`/playlists/${targetPlaylistId}/tracks`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ uris: chunk })
+                    });
+                }
+
+                showToast(`Successfully updated configuration sequence inside ${targetPlaylistName}.`);
+                await loadPlaylists();
+                if (STATE.selectedPlaylist && STATE.selectedPlaylist.id === targetPlaylistId) {
+                    await loadPlaylistDetails(targetPlaylistId);
+                } else {
+                    switchView('playlists');
+                }
+            } catch (err) {
+                showToast('Failed synchronizing structural updates upstream.');
+            } finally {
+                toggleLoader(false);
+            }
+        }
+
+        async function commitPlaylistCreation(name) {
+            let visible = getFilteredTracks();
+            toggleLoader(true, 'Provisioning Container');
+
+            try {
+                let createRes = await apiFetch(`/users/${STATE.user.id}/playlists`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: name,
+                        description: 'Generated via Playlist Organizer.',
+                        public: false
+                    })
+                });
+
+                let newPlaylist = await createRes.json();
+                let uris = visible.filter(t => t.id).map(t => `spotify:track:${t.id}`);
+
+                let chunks = [];
+                for (let i = 0; i < uris.length; i += 100) {
+                    chunks.push(uris.slice(i, i + 100));
+                }
+
+                for (let chunk of chunks) {
+                    await apiFetch(`/playlists/${newPlaylist.id}/tracks`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ uris: chunk })
+                    });
+                }
+
+                showToast(`Pristine container generated: ${name}`);
+                await loadPlaylists();
+                switchView('playlists');
+            } catch (err) {
+                showToast('Failed executing allocation routine.');
+            } finally {
+                toggleLoader(false);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', initAuth);
+    </script>
 </body>
 </html>
