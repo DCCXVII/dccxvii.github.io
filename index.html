@@ -2,1533 +2,633 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Playlist Organizer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Playlist Manager</title>
 <style>
-:root{
---green:#1DB954;
---green-bright:#1ED760;
---green-press:#169c46;
---black:#000000;
---bg:#121212;
---bg-elevated:#181818;
---bg-card:#1A1A1A;
---bg-highlight:#262626;
---bg-press:#2a2a2a;
---text:#FFFFFF;
---text-sub:#A7A7A7;
---text-faint:#6a6a6a;
---border:rgba(255,255,255,0.08);
---danger:#E91429;
---radius:8px;
-}
-*{box-sizing:border-box;}
-html,body{margin:0;padding:0;}
-body{
-background:var(--bg);
-color:var(--text);
-font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
-min-height:100vh;
--webkit-font-smoothing:antialiased;
-}
-button{
-font-family:inherit;
-cursor:pointer;
-border:none;
-background:none;
-color:inherit;
-}
-button:disabled{cursor:not-allowed;opacity:0.5;}
-input{
-font-family:inherit;
-color:var(--text);
-background:var(--bg-highlight);
-border:1px solid var(--border);
-border-radius:4px;
-padding:8px 10px;
-}
-input:focus,button:focus-visible,select:focus-visible{
-outline:2px solid var(--green-bright);
-outline-offset:1px;
-}
-a{color:var(--green-bright);text-decoration:none;}
-::-webkit-scrollbar{width:10px;height:10px;}
-::-webkit-scrollbar-thumb{background:#3a3a3a;border-radius:6px;}
-::-webkit-scrollbar-track{background:transparent;}
-.view{display:none;min-height:100vh;}
-.view.active{display:block;}
-.hidden{display:none !important;}
-.btn{
-padding:10px 22px;
-border-radius:500px;
-font-weight:700;
-font-size:14px;
-letter-spacing:0.3px;
-transition:transform 0.08s ease, background-color 0.12s ease;
-}
-.btn:active{transform:scale(0.97);}
-.btn-primary{background:var(--green);color:#000;}
-.btn-primary:hover:not(:disabled){background:var(--green-bright);}
-.btn-secondary{background:var(--bg-highlight);color:var(--text);}
-.btn-secondary:hover:not(:disabled){background:var(--bg-press);}
-.btn-outline{background:transparent;color:var(--text);border:1px solid #555;}
-.btn-outline:hover:not(:disabled){border-color:var(--text);}
-.btn-danger{background:var(--danger);color:#fff;}
-.btn-danger:hover:not(:disabled){background:#ff1f3a;}
-.btn-icon{
-width:34px;height:34px;border-radius:50%;
-display:inline-flex;align-items:center;justify-content:center;
-background:var(--bg-highlight);font-size:15px;
-}
-.btn-icon:hover:not(:disabled){background:var(--bg-press);}
-#view-landing{
-display:flex;align-items:center;justify-content:center;
-min-height:100vh;padding:24px;
-background:radial-gradient(circle at 50% 0%, #1a3d28 0%, var(--bg) 55%);
-}
-.landing-box{max-width:480px;text-align:center;}
-.landing-logo{
-width:64px;height:64px;border-radius:50%;
-background:var(--green);
-display:flex;align-items:center;justify-content:center;
-margin:0 auto 28px;
-}
-.landing-logo svg{width:34px;height:34px;}
-.landing-box h1{font-size:30px;line-height:1.25;margin:0 0 14px;font-weight:800;}
-.landing-box p{color:var(--text-sub);font-size:15px;line-height:1.6;margin:0 0 30px;}
-.connect-btn{
-display:inline-flex;align-items:center;gap:10px;
-padding:14px 32px;font-size:15px;
-}
-.connect-btn svg{width:20px;height:20px;}
-.landing-foot{margin-top:26px;font-size:12px;color:var(--text-faint);}
-#view-loading{
-display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:18px;
-}
-.spinner{
-width:34px;height:34px;border-radius:50%;
-border:3px solid var(--bg-highlight);
-border-top-color:var(--green);
-animation:spin 0.8s linear infinite;
-}
-@keyframes spin{to{transform:rotate(360deg);}}
-.loading-text{color:var(--text-sub);font-size:14px;}
-.topbar{
-position:sticky;top:0;z-index:20;
-display:flex;align-items:center;justify-content:space-between;
-padding:14px 26px;
-background:rgba(18,18,18,0.92);
-backdrop-filter:blur(6px);
-border-bottom:1px solid var(--border);
-}
-.topbar-left{display:flex;align-items:center;gap:14px;}
-.topbar-title{font-weight:800;font-size:17px;}
-.topbar-right{display:flex;align-items:center;gap:12px;}
-.user-chip{display:flex;align-items:center;gap:8px;color:var(--text-sub);font-size:13px;}
-.user-avatar{width:28px;height:28px;border-radius:50%;background:var(--bg-highlight);object-fit:cover;}
-#playlists-grid-wrap{padding:30px 26px 100px;max-width:1200px;margin:0 auto;}
-.section-heading{font-size:22px;font-weight:800;margin:0 0 18px;}
-.playlists-grid{
-display:grid;
-grid-template-columns:repeat(auto-fill, minmax(180px,1fr));
-gap:18px;
-}
-.playlist-card{
-position:relative;
-background:var(--bg-card);
-border-radius:var(--radius);
-padding:14px;
-transition:background-color 0.15s ease;
-cursor:pointer;
-}
-.playlist-card:hover{background:var(--bg-highlight);}
-.playlist-card .cover-wrap{position:relative;margin-bottom:12px;}
-.playlist-cover{
-width:100%;aspect-ratio:1/1;border-radius:5px;object-fit:cover;
-background:var(--bg-highlight);display:block;
-}
-.cover-fallback{
-width:100%;aspect-ratio:1/1;border-radius:5px;
-background:linear-gradient(135deg,#2a2a2a,#1a1a1a);
-display:flex;align-items:center;justify-content:center;
-}
-.cover-fallback svg{width:40%;height:40%;opacity:0.35;}
-.edit-pencil{
-position:absolute;top:8px;right:8px;
-width:30px;height:30px;border-radius:50%;
-background:rgba(0,0,0,0.65);
-display:flex;align-items:center;justify-content:center;
-font-size:13px;opacity:0;transition:opacity 0.12s ease;
-}
-.playlist-card:hover .edit-pencil,.playlist-card:focus-within .edit-pencil{opacity:1;}
-.playlist-name{font-weight:700;font-size:14.5px;margin:0 0 4px;
-overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.playlist-meta{font-size:12.5px;color:var(--text-sub);
-overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.empty-state{padding:60px 20px;text-align:center;color:var(--text-sub);}
-#view-editor{padding-bottom:120px;}
-.editor-header{
-display:flex;align-items:flex-end;gap:22px;
-padding:34px 26px 26px;
-background:linear-gradient(180deg, #2a2a2a 0%, var(--bg) 100%);
-}
-.back-row{padding:14px 26px 0;}
-.editor-cover{
-width:172px;height:172px;border-radius:6px;object-fit:cover;
-box-shadow:0 12px 30px rgba(0,0,0,0.5);background:var(--bg-highlight);flex-shrink:0;
-}
-.editor-cover-fallback{
-width:172px;height:172px;border-radius:6px;flex-shrink:0;
-background:linear-gradient(135deg,#333,#1a1a1a);
-display:flex;align-items:center;justify-content:center;
-box-shadow:0 12px 30px rgba(0,0,0,0.5);
-}
-.editor-cover-fallback svg{width:36%;height:36%;opacity:0.4;}
-.editor-meta-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-sub);}
-.editor-title{font-size:42px;font-weight:900;margin:6px 0 10px;line-height:1.1;
-word-break:break-word;}
-.editor-sub{font-size:13.5px;color:var(--text-sub);display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
-.skip-banner{
-margin:0 26px 0;background:var(--bg-highlight);border-radius:6px;
-padding:12px 16px;font-size:13px;color:var(--text-sub);
-}
-.editor-toolbar{
-position:sticky;top:0;z-index:15;
-display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;
-padding:16px 26px;background:rgba(18,18,18,0.97);backdrop-filter:blur(6px);
-border-bottom:1px solid var(--border);
-}
-.toolbar-group{display:flex;align-items:center;gap:8px;}
-.toolbar-pill-btn{
-display:inline-flex;align-items:center;gap:6px;
-padding:8px 16px;border-radius:500px;background:var(--bg-highlight);
-font-size:13.5px;font-weight:600;
-}
-.toolbar-pill-btn:hover:not(:disabled){background:var(--bg-press);}
-.toolbar-count-badge{
-background:var(--green);color:#000;border-radius:500px;
-font-size:11px;font-weight:800;padding:1px 7px;margin-left:2px;
-}
-#track-list-wrap{padding:8px 26px 0;max-width:1100px;margin:0 auto;}
-.track-list-head{
-display:grid;
-grid-template-columns:34px 56px 56px 1fr 200px 70px 40px;
-gap:14px;align-items:center;
-padding:8px 14px;color:var(--text-sub);font-size:12px;
-text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);
-}
-ul#track-list{list-style:none;margin:0;padding:8px 0 40px;}
-.track-row{
-display:grid;
-grid-template-columns:34px 56px 56px 1fr 200px 70px 40px;
-gap:14px;align-items:center;
-padding:8px 14px;border-radius:6px;
-}
-.track-row:hover{background:var(--bg-highlight);}
-.track-row.dragging{opacity:0.35;background:var(--bg-press);}
-.handle{
-cursor:grab;color:var(--text-faint);font-size:18px;text-align:center;
-touch-action:none;user-select:none;
-}
-.handle:active{cursor:grabbing;}
-.pos-input{
-width:50px;padding:6px 4px;text-align:center;background:var(--bg-highlight);
-border:1px solid transparent;font-size:13px;
-}
-.pos-input:hover{border-color:#555;}
-.track-thumb{width:42px;height:42px;border-radius:3px;object-fit:cover;background:var(--bg-highlight);}
-.track-info{min-width:0;}
-.track-name{font-size:14.5px;font-weight:500;
-overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.track-artist{font-size:12.5px;color:var(--text-sub);
-overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.track-album{font-size:13px;color:var(--text-sub);
-overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.track-duration{font-size:13px;color:var(--text-sub);text-align:right;}
-.remove-btn{
-width:28px;height:28px;border-radius:50%;color:var(--text-sub);font-size:13px;
-display:flex;align-items:center;justify-content:center;
-}
-.remove-btn:hover{background:var(--bg-press);color:var(--text);}
-.sort-bar-wrap{
-position:fixed;bottom:0;left:0;right:0;z-index:30;
-background:rgba(18,18,18,0.97);backdrop-filter:blur(8px);
-border-top:1px solid var(--border);
-padding:10px 16px;
-overflow-x:auto;
-white-space:nowrap;
-}
-.sort-bar-wrap::-webkit-scrollbar{display:none;}
-.sort-pills{display:inline-flex;gap:8px;}
-.sort-pill{
-display:inline-flex;align-items:center;
-padding:9px 16px;border-radius:500px;background:var(--bg-highlight);
-font-size:13px;font-weight:600;white-space:nowrap;color:var(--text-sub);
-border:1px solid transparent;
-}
-.sort-pill:hover{color:var(--text);}
-.sort-pill.active{background:var(--green);color:#000;}
-.modal-overlay{
-position:fixed;inset:0;background:rgba(0,0,0,0.72);
-display:flex;align-items:center;justify-content:center;z-index:100;padding:18px;
-}
-.modal-overlay.hidden{display:none;}
-.modal-box{
-background:var(--bg-elevated);border-radius:10px;
-width:100%;max-width:460px;max-height:86vh;overflow-y:auto;
-padding:26px;
-}
-.modal-box.wide{max-width:600px;}
-.modal-title{font-size:19px;font-weight:800;margin:0 0 18px;}
-.modal-field{margin-bottom:16px;}
-.modal-field label{display:block;font-size:12.5px;color:var(--text-sub);margin-bottom:6px;font-weight:600;}
-.modal-field input[type=text],.modal-field input[type=number],.modal-field select{
-width:100%;padding:11px 12px;font-size:14px;
-}
-.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;}
-.modal-close-x{
-position:absolute;top:18px;right:18px;width:30px;height:30px;border-radius:50%;
-background:var(--bg-highlight);display:flex;align-items:center;justify-content:center;
-}
-.modal-close-x:hover{background:var(--bg-press);}
-.cover-edit-preview{
-width:96px;height:96px;border-radius:6px;object-fit:cover;background:var(--bg-highlight);
-margin-bottom:10px;display:block;
-}
-.tabs-row{display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--border);}
-.tab-btn{
-padding:10px 4px;font-size:13.5px;font-weight:700;color:var(--text-sub);
-border-bottom:2px solid transparent;margin-right:18px;
-}
-.tab-btn.active{color:var(--text);border-bottom-color:var(--green);}
-.tab-panel{display:none;}
-.tab-panel.active{display:block;}
-.rule-row{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
-.rule-row select,.rule-row input{padding:9px 10px;font-size:13.5px;}
-.chips-wrap{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
-.chip{
-display:inline-flex;align-items:center;gap:8px;
-background:var(--bg-highlight);border-radius:500px;padding:7px 8px 7px 14px;font-size:13px;
-}
-.chip button{
-width:20px;height:20px;border-radius:50%;background:var(--bg-press);
-display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text-sub);
-}
-.chip button:hover{color:var(--text);}
-.empty-mini{color:var(--text-faint);font-size:13px;padding:6px 0;}
-.removed-list{list-style:none;margin:0;padding:0;max-height:50vh;overflow-y:auto;}
-.removed-row{
-display:flex;align-items:center;justify-content:space-between;gap:10px;
-padding:10px 4px;border-bottom:1px solid var(--border);
-}
-.removed-info{min-width:0;}
-.removed-name{font-size:14px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.removed-sub{font-size:12px;color:var(--text-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.removed-reason{font-size:11px;color:var(--green-bright);margin-top:2px;}
-.save-options{display:flex;flex-direction:column;gap:10px;margin-bottom:6px;}
-.save-option{
-display:flex;align-items:flex-start;gap:10px;padding:12px;border-radius:6px;
-background:var(--bg-highlight);cursor:pointer;border:1px solid transparent;
-}
-.save-option.selected{border-color:var(--green);}
-.save-option input{margin-top:3px;}
-.save-option-text strong{display:block;font-size:14px;margin-bottom:2px;}
-.save-option-text span{font-size:12.5px;color:var(--text-sub);}
-.save-suboption{margin:10px 0 0 30px;}
-.toast-container{
-position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:200;
-display:flex;flex-direction:column;gap:8px;align-items:center;
-}
-.toast{
-background:var(--bg-elevated);border:1px solid var(--border);
-padding:12px 20px;border-radius:8px;font-size:13.5px;
-box-shadow:0 8px 20px rgba(0,0,0,0.4);
-}
-.toast.error{border-color:var(--danger);}
-.toast.success{border-color:var(--green);}
-.progress-text{font-size:13px;color:var(--text-sub);margin-top:12px;}
-@media (max-width:680px){
-.editor-header{flex-direction:column;align-items:flex-start;padding:22px 18px;}
-.editor-cover,.editor-cover-fallback{width:120px;height:120px;}
-.editor-title{font-size:28px;}
-.track-list-head{grid-template-columns:30px 46px 1fr 60px 38px;}
-.track-list-head .col-album,.track-list-head .col-pos{display:none;}
-.track-row{grid-template-columns:30px 46px 1fr 60px 38px;}
-.track-row .track-album,.track-row .pos-input{display:none;}
-#track-list-wrap,.editor-toolbar,#playlists-grid-wrap{padding-left:14px;padding-right:14px;}
-}
-body.dragging-active{user-select:none;}
-.visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);}
+    :root {
+        --spotify-green: #1DB954;
+        --spotify-black: #191414;
+        --spotify-dark-gray: #121212;
+        --spotify-light-gray: #282828;
+        --spotify-text: #FFFFFF;
+        --spotify-subtext: #B3B3B3;
+    }
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    body {
+        background-color: var(--spotify-dark-gray);
+        color: var(--spotify-text);
+        overflow-x: hidden;
+    }
+    button {
+        cursor: pointer;
+        border: none;
+        outline: none;
+        font-weight: bold;
+    }
+    .btn-primary {
+        background-color: var(--spotify-green);
+        color: var(--spotify-text);
+        padding: 14px 32px;
+        border-radius: 500px;
+        font-size: 16px;
+        transition: transform 0.1s ease;
+    }
+    .btn-primary:hover {
+        transform: scale(1.04);
+    }
+    .btn-secondary {
+        background-color: transparent;
+        color: var(--spotify-text);
+        border: 1px solid var(--spotify-subtext);
+        padding: 8px 16px;
+        border-radius: 500px;
+        font-size: 12px;
+    }
+    .btn-secondary:hover {
+        border-color: var(--spotify-text);
+    }
+    #login-view {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        text-align: center;
+        padding: 20px;
+    }
+    #login-view h1 {
+        font-size: 3rem;
+        margin-bottom: 20px;
+    }
+    #login-view p {
+        color: var(--spotify-subtext);
+        margin-bottom: 40px;
+        max-width: 600px;
+        line-height: 1.5;
+    }
+    #app-view {
+        display: none;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+    .main-container {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+    }
+    .sidebar {
+        width: 250px;
+        background-color: #000000;
+        padding: 24px 12px;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+    }
+    .playlist-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        color: var(--spotify-subtext);
+    }
+    .playlist-item:hover {
+        background-color: var(--spotify-light-gray);
+        color: var(--spotify-text);
+    }
+    .playlist-item span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .edit-icon {
+        font-size: 12px;
+        opacity: 0.5;
+    }
+    .playlist-item:hover .edit-icon {
+        opacity: 1;
+    }
+    .content-area {
+        flex: 1;
+        background: linear-gradient(180deg, var(--spotify-light-gray) 0%, var(--spotify-dark-gray) 100%);
+        padding: 24px;
+        overflow-y: auto;
+        position: relative;
+    }
+    .playlist-header {
+        display: flex;
+        align-items: flex-end;
+        margin-bottom: 24px;
+    }
+    .playlist-cover {
+        width: 150px;
+        height: 150px;
+        background-color: var(--spotify-light-gray);
+        box-shadow: 0 4px 60px rgba(0,0,0,0.5);
+        margin-right: 24px;
+    }
+    .playlist-info h2 {
+        font-size: 4rem;
+        margin: 8px 0;
+        line-height: 1;
+    }
+    .track-list-header {
+        display: grid;
+        grid-template-columns: 50px 3fr 2fr 1fr 50px;
+        padding: 10px 16px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        color: var(--spotify-subtext);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 12px;
+    }
+    .track-item {
+        display: grid;
+        grid-template-columns: 50px 3fr 2fr 1fr 50px;
+        padding: 10px 16px;
+        border-radius: 4px;
+        align-items: center;
+        cursor: grab;
+    }
+    .track-item:hover {
+        background-color: rgba(255,255,255,0.1);
+    }
+    .track-item:active {
+        cursor: grabbing;
+    }
+    .track-index input {
+        background: transparent;
+        border: none;
+        color: var(--spotify-text);
+        width: 30px;
+        font-size: 14px;
+    }
+    .track-details {
+        display: flex;
+        flex-direction: column;
+    }
+    .track-name {
+        font-size: 16px;
+        color: var(--spotify-text);
+        margin-bottom: 4px;
+    }
+    .track-artist {
+        font-size: 14px;
+        color: var(--spotify-subtext);
+    }
+    .track-album, .track-duration {
+        font-size: 14px;
+        color: var(--spotify-subtext);
+    }
+    .track-actions {
+        display: flex;
+        gap: 10px;
+        opacity: 0;
+    }
+    .track-item:hover .track-actions {
+        opacity: 1;
+    }
+    .pill-menu {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: var(--spotify-light-gray);
+        padding: 12px 24px;
+        border-radius: 500px;
+        display: flex;
+        gap: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        z-index: 1000;
+        overflow-x: auto;
+        max-width: 90vw;
+    }
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.8);
+        z-index: 2000;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-content {
+        background-color: var(--spotify-light-gray);
+        padding: 32px;
+        border-radius: 8px;
+        width: 500px;
+        max-width: 90vw;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    .modal-header {
+        font-size: 24px;
+        margin-bottom: 24px;
+    }
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 16px;
+        margin-top: 24px;
+    }
 </style>
 </head>
 <body>
 
-<div id="view-landing" class="view active">
-<div class="landing-box">
-<div class="landing-logo">
-<svg viewBox="0 0 24 24" fill="#000"><path d="M12 0a12 12 0 1 0 0 24 12 12 0 0 0 0-24Zm5.5 17.3c-.2.4-.7.5-1 .3-2.9-1.8-6.6-2.2-10.9-1.2-.4.1-.8-.2-.9-.6-.1-.4.2-.8.6-.9 4.7-1.1 8.8-.6 12 1.4.4.2.5.7.2 1Zm1.5-3.3c-.3.4-.8.6-1.2.3-3.3-2-8.3-2.6-12.2-1.4-.5.1-1-.1-1.1-.6-.1-.5.1-1 .6-1.1 4.4-1.3 10-1 13.7 1.2.4.3.6.9.2 1.6Zm.1-3.4C15 8.4 8.9 8.2 5.4 9.3c-.6.2-1.2-.2-1.3-.7-.2-.6.2-1.2.7-1.3 4-1.2 10.8-1 14.9 1.4.5.3.7 1 .4 1.5-.3.5-1 .7-1.5.4Z"/></svg>
-</div>
-<h1>Reorganize your Spotify playlists, your way</h1>
-<p>Connect your Spotify account, pick any playlist, reorder and filter tracks exactly how you want, then save it back as a new playlist or overwrite an existing one.</p>
-<button class="btn btn-primary connect-btn" id="btn-connect">
-<svg viewBox="0 0 24 24" fill="#000"><path d="M12 0a12 12 0 1 0 0 24 12 12 0 0 0 0-24Zm5.5 17.3c-.2.4-.7.5-1 .3-2.9-1.8-6.6-2.2-10.9-1.2-.4.1-.8-.2-.9-.6-.1-.4.2-.8.6-.9 4.7-1.1 8.8-.6 12 1.4.4.2.5.7.2 1Zm1.5-3.3c-.3.4-.8.6-1.2.3-3.3-2-8.3-2.6-12.2-1.4-.5.1-1-.1-1.1-.6-.1-.5.1-1 .6-1.1 4.4-1.3 10-1 13.7 1.2.4.3.6.9.2 1.6Zm.1-3.4C15 8.4 8.9 8.2 5.4 9.3c-.6.2-1.2-.2-1.3-.7-.2-.6.2-1.2.7-1.3 4-1.2 10.8-1 14.9 1.4.5.3.7 1 .4 1.5-.3.5-1 .7-1.5.4Z"/></svg>
-Connect with Spotify
-</button>
-<div class="landing-foot">You will be redirected to Spotify to approve access, then brought right back here.</div>
-</div>
+<div id="login-view">
+    <h1>Playlist Manager</h1>
+    <p>Connect your Spotify account to seamlessly select, organize, sort, and refine your playlists. Reorder tracks, apply complex filters, remove duplicates, and overwrite or create new playlists instantly.</p>
+    <button class="btn-primary" id="login-btn">Connect Spotify</button>
 </div>
 
-<div id="view-loading" class="view">
-<div class="spinner"></div>
-<div class="loading-text" id="loading-text">Connecting to Spotify...</div>
+<div id="app-view">
+    <div class="main-container">
+        <div class="sidebar" id="sidebar-playlists">
+            <h3 style="color:var(--spotify-subtext); font-size:12px; letter-spacing:1px; margin-bottom:16px;">YOUR PLAYLISTS</h3>
+        </div>
+        <div class="content-area">
+            <div id="playlist-view" style="display:none;">
+                <div class="playlist-header">
+                    <img id="active-playlist-img" class="playlist-cover" src="" alt="">
+                    <div class="playlist-info">
+                        <p style="font-size:12px; font-weight:bold;">PLAYLIST</p>
+                        <h2 id="active-playlist-name">Select a Playlist</h2>
+                        <p id="active-playlist-meta" style="color:var(--spotify-subtext); font-size:14px;"></p>
+                    </div>
+                </div>
+                <div class="track-list-container">
+                    <div class="track-list-header">
+                        <div>#</div>
+                        <div>Title</div>
+                        <div>Album</div>
+                        <div>Duration</div>
+                        <div></div>
+                    </div>
+                    <div id="track-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="pill-menu" id="bottom-pill" style="display:none;">
+        <button class="btn-secondary" id="sort-az">A - Z</button>
+        <button class="btn-secondary" id="sort-za">Z - A</button>
+        <button class="btn-secondary" id="sort-artist">Artist</button>
+        <button class="btn-secondary" id="sort-duration-short">Shortest</button>
+        <button class="btn-secondary" id="sort-duration-long">Longest</button>
+        <button class="btn-secondary" id="filter-explicit">Explicit First</button>
+        <button class="btn-secondary" id="btn-duplicates">Remove Duplicates</button>
+        <button class="btn-secondary" id="btn-removed">Trash Bin</button>
+        <button class="btn-secondary" id="btn-undo">Undo</button>
+        <button class="btn-primary" id="btn-save" style="padding: 8px 16px; font-size:12px;">Save Playlist</button>
+    </div>
 </div>
 
-<div id="view-playlists" class="view">
-<div class="topbar">
-<div class="topbar-left"><span class="topbar-title">Your Playlists</span></div>
-<div class="topbar-right">
-<div class="user-chip">
-<img class="user-avatar" id="user-avatar" alt="">
-<span id="user-name"></span>
-</div>
-<button class="btn btn-outline" id="btn-logout" style="padding:8px 16px;font-size:13px;">Log out</button>
-</div>
-</div>
-<div id="playlists-grid-wrap">
-<div id="playlists-grid" class="playlists-grid"></div>
-</div>
+<div id="removed-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">Removed Tracks</div>
+        <div id="removed-list"></div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="document.getElementById('removed-modal').style.display='none'">Close</button>
+        </div>
+    </div>
 </div>
 
-<div id="view-editor" class="view">
-<div class="back-row">
-<button class="btn-icon" id="btn-back" aria-label="Back to playlists" title="Back to playlists">&#8592;</button>
+<div id="save-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">Save Organized Playlist</div>
+        <div style="display:flex; flex-direction:column; gap:16px;">
+            <button class="btn-primary" id="save-overwrite">Overwrite Current Playlist</button>
+            <hr style="border:0; border-top:1px solid var(--spotify-subtext);">
+            <input type="text" id="new-playlist-name" placeholder="New Playlist Name" style="padding:12px; background:var(--spotify-dark-gray); border:1px solid var(--spotify-subtext); color:white; border-radius:4px;">
+            <button class="btn-primary" id="save-new">Create New Playlist</button>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="document.getElementById('save-modal').style.display='none'">Cancel</button>
+        </div>
+    </div>
 </div>
-<div class="editor-header">
-<img class="editor-cover hidden" id="editor-cover-img" alt="">
-<div class="editor-cover-fallback" id="editor-cover-fallback">
-<svg viewBox="0 0 24 24" fill="#666"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-</div>
-<div>
-<div class="editor-meta-label">Playlist</div>
-<h1 class="editor-title" id="editor-title">Loading...</h1>
-<div class="editor-sub" id="editor-sub"></div>
-</div>
-</div>
-<div class="skip-banner hidden" id="skip-banner"></div>
-<div class="editor-toolbar">
-<div class="toolbar-group">
-<button class="btn-icon" id="btn-undo" title="Undo" disabled>&#8634;</button>
-<button class="btn-icon" id="btn-redo" title="Redo" disabled>&#8635;</button>
-</div>
-<div class="toolbar-group">
-<button class="toolbar-pill-btn" id="btn-open-filters">Filters<span class="toolbar-count-badge hidden" id="rules-badge">0</span></button>
-<button class="toolbar-pill-btn" id="btn-open-removed">Removed<span class="toolbar-count-badge hidden" id="removed-badge">0</span></button>
-<button class="btn btn-primary" id="btn-open-save" style="padding:9px 22px;font-size:13.5px;">Save Playlist</button>
-</div>
-</div>
-<div id="track-list-wrap">
-<div class="track-list-head">
-<span></span>
-<span class="col-pos">#</span>
-<span></span>
-<span>Title</span>
-<span class="col-album">Album</span>
-<span style="text-align:right;">Time</span>
-<span></span>
-</div>
-<ul id="track-list"></ul>
-</div>
-</div>
-
-<div class="sort-bar-wrap hidden" id="sort-bar">
-<div class="sort-pills" id="sort-pills">
-<button class="sort-pill" data-sort="title_asc">Title A-Z</button>
-<button class="sort-pill" data-sort="title_desc">Title Z-A</button>
-<button class="sort-pill" data-sort="artist_asc">Artist A-Z</button>
-<button class="sort-pill" data-sort="artist_desc">Artist Z-A</button>
-<button class="sort-pill" data-sort="oldest">Oldest First</button>
-<button class="sort-pill" data-sort="newest">Newest First</button>
-<button class="sort-pill" data-sort="shortest">Shortest First</button>
-<button class="sort-pill" data-sort="longest">Longest First</button>
-<button class="sort-pill" data-sort="album_order">Album Order</button>
-</div>
-</div>
-
-<div class="modal-overlay hidden" id="modal-edit-playlist">
-<div class="modal-box" style="position:relative;">
-<button class="modal-close-x" data-close="modal-edit-playlist">&#10005;</button>
-<h2 class="modal-title">Edit Playlist</h2>
-<div class="modal-field">
-<label>Cover Image</label>
-<img class="cover-edit-preview" id="edit-cover-preview" alt="">
-<input type="file" id="edit-cover-file" accept="image/*">
-</div>
-<div class="modal-field">
-<label>Name</label>
-<input type="text" id="edit-name-input" maxlength="100">
-</div>
-<div class="modal-actions">
-<button class="btn btn-secondary" data-close="modal-edit-playlist">Cancel</button>
-<button class="btn btn-primary" id="btn-save-edit-playlist">Save</button>
-</div>
-</div>
-</div>
-
-<div class="modal-overlay hidden" id="modal-filters">
-<div class="modal-box wide" style="position:relative;">
-<button class="modal-close-x" data-close="modal-filters">&#10005;</button>
-<h2 class="modal-title">Filters &amp; Exclusions</h2>
-<div class="tabs-row">
-<button class="tab-btn active" data-tab="tab-artists">Artists</button>
-<button class="tab-btn" data-tab="tab-duration">Duration</button>
-<button class="tab-btn" data-tab="tab-year">Release Year</button>
-</div>
-<div class="tab-panel active" id="tab-artists">
-<div class="rule-row">
-<select id="artist-select"></select>
-<button class="btn btn-secondary" id="btn-add-artist-rule" style="padding:9px 16px;font-size:13px;">Exclude</button>
-</div>
-<div class="chips-wrap" id="artist-chips"></div>
-</div>
-<div class="tab-panel" id="tab-duration">
-<div class="rule-row">
-<select id="duration-op">
-<option value="shorter">Shorter than</option>
-<option value="longer">Longer than</option>
-</select>
-<input type="number" id="duration-minutes" min="0" placeholder="min" style="width:60px;">
-<span style="color:var(--text-sub);">:</span>
-<input type="number" id="duration-seconds" min="0" max="59" placeholder="sec" style="width:60px;">
-<button class="btn btn-secondary" id="btn-add-duration-rule" style="padding:9px 16px;font-size:13px;">Add Rule</button>
-</div>
-<div class="chips-wrap" id="duration-chips"></div>
-</div>
-<div class="tab-panel" id="tab-year">
-<div class="rule-row">
-<select id="year-op">
-<option value="before">Released before</option>
-<option value="after">Released after</option>
-</select>
-<input type="number" id="year-value" placeholder="year" style="width:90px;">
-<button class="btn btn-secondary" id="btn-add-year-rule" style="padding:9px 16px;font-size:13px;">Add Rule</button>
-</div>
-<div class="chips-wrap" id="year-chips"></div>
-</div>
-<div class="modal-actions">
-<button class="btn btn-outline" id="btn-restore-all-rules">Restore All Excluded</button>
-<button class="btn btn-secondary" data-close="modal-filters">Done</button>
-</div>
-</div>
-</div>
-
-<div class="modal-overlay hidden" id="modal-removed">
-<div class="modal-box wide" style="position:relative;">
-<button class="modal-close-x" data-close="modal-removed">&#10005;</button>
-<h2 class="modal-title">Removed &amp; Excluded Tracks</h2>
-<ul class="removed-list" id="removed-list"></ul>
-<div class="modal-actions">
-<button class="btn btn-outline" id="btn-restore-all-pool">Restore All</button>
-<button class="btn btn-secondary" data-close="modal-removed">Close</button>
-</div>
-</div>
-</div>
-
-<div class="modal-overlay hidden" id="modal-save">
-<div class="modal-box" style="position:relative;">
-<button class="modal-close-x" data-close="modal-save">&#10005;</button>
-<h2 class="modal-title">Save Playlist</h2>
-<div class="save-options">
-<label class="save-option selected" data-option="current">
-<input type="radio" name="save-target" value="current" checked>
-<div class="save-option-text"><strong>Overwrite this playlist</strong><span>Replaces the tracks in the playlist you are editing.</span></div>
-</label>
-<label class="save-option" data-option="other">
-<input type="radio" name="save-target" value="other">
-<div class="save-option-text"><strong>Overwrite another playlist</strong><span>Choose one of your other playlists to replace.</span></div>
-</label>
-<label class="save-option" data-option="new">
-<input type="radio" name="save-target" value="new">
-<div class="save-option-text"><strong>Create a new playlist</strong><span>Keeps the original untouched and makes a new one.</span></div>
-</label>
-</div>
-<div class="save-suboption hidden" id="save-other-wrap">
-<select id="save-other-select" style="width:100%;padding:10px;"></select>
-</div>
-<div class="save-suboption hidden" id="save-new-wrap">
-<input type="text" id="save-new-name" placeholder="New playlist name" maxlength="100" style="width:100%;">
-</div>
-<div class="progress-text hidden" id="save-progress"></div>
-<div class="modal-actions">
-<button class="btn btn-secondary" data-close="modal-save">Cancel</button>
-<button class="btn btn-primary" id="btn-confirm-save">Save</button>
-</div>
-</div>
-</div>
-
-<div class="toast-container" id="toast-container"></div>
 
 <script>
-var CLIENT_ID="fcc60831d3974fec8770b2f9af452de8";
-var SCOPES="playlist-read-private playlist-read-collaborative playlist-modify-public playlist-modify-private ugc-image-upload user-read-private user-read-email";
-var REDIRECT_URI=window.location.origin+window.location.pathname;
+    const CLIENT_ID = 'fcc60831d3974fec8770b2f9af452de8';
+    const REDIRECT_URI = 'https://dccxvii.github.io';
+    const SCOPES = ['playlist-read-private', 'playlist-modify-public', 'playlist-modify-private'].join(' ');
 
-function getEl(id){return document.getElementById(id);}
-function showView(id){
-var views=document.querySelectorAll(".view");
-for(var i=0;i<views.length;i++){views[i].classList.remove("active");}
-getEl(id).classList.add("active");
-var sortBar=getEl("sort-bar");
-if(id==="view-editor"){sortBar.classList.remove("hidden");}else{sortBar.classList.add("hidden");}
-}
-function escapeHtml(str){
-if(str===null||str===undefined)return"";
-return String(str).replace(/[&<>"']/g,function(c){
-return({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c];
-});
-}
-function toast(msg,isError){
-var c=getEl("toast-container");
-var t=document.createElement("div");
-t.className="toast "+(isError?"error":"success");
-t.textContent=msg;
-c.appendChild(t);
-setTimeout(function(){t.style.opacity="0";t.style.transition="opacity 0.3s";},2600);
-setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t);},3000);
-}
-function formatDuration(ms){
-if(!ms||ms<0)ms=0;
-var totalSec=Math.round(ms/1000);
-var m=Math.floor(totalSec/60);
-var s=totalSec%60;
-return m+":"+(s<10?"0"+s:s);
-}
-function formatDurationLong(ms){
-var totalMin=Math.round(ms/60000);
-var h=Math.floor(totalMin/60);
-var m=totalMin%60;
-if(h>0)return h+" hr "+m+" min";
-return m+" min";
-}
-function chunkArray(arr,size){
-var out=[];
-for(var i=0;i<arr.length;i+=size){out.push(arr.slice(i,i+size));}
-return out;
-}
-function generateRandomString(length){
-var chars="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-var result="";
-var values=new Uint8Array(length);
-window.crypto.getRandomValues(values);
-for(var i=0;i<length;i++){result+=chars[values[i]%chars.length];}
-return result;
-}
-function base64UrlEncode(buffer){
-var bytes=new Uint8Array(buffer);
-var str="";
-for(var i=0;i<bytes.length;i++){str+=String.fromCharCode(bytes[i]);}
-return btoa(str).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
-}
-async function generateCodeChallenge(verifier){
-var data=new TextEncoder().encode(verifier);
-var digest=await window.crypto.subtle.digest("SHA-256",data);
-return base64UrlEncode(digest);
-}
+    let accessToken = '';
+    let userId = '';
+    let playlists = [];
+    let currentPlaylistId = null;
+    let tracks = [];
+    let removedTracks = [];
+    let stateHistory = [];
+    let draggedItemIndex = null;
 
-var state={
-accessToken:null,
-refreshToken:null,
-tokenExpiresAt:0,
-user:null,
-playlists:[],
-currentPlaylistId:null,
-currentPlaylistMeta:null,
-trackByUid:new Map(),
-masterList:[],
-pool:[],
-rules:[],
-undoStack:[],
-redoStack:[],
-ruleSeq:1,
-uidSeq:1,
-activeSortPill:null,
-skippedCount:0,
-filtersActiveTab:"tab-artists"
-};
+    function getHashParams() {
+        const hashParams = {};
+        let e, r = /([^&;=]+)=?([^&;]*)/g,
+            q = window.location.hash.substring(1);
+        while (e = r.exec(q)) {
+            hashParams[e[1]] = decodeURIComponent(e[2]);
+        }
+        return hashParams;
+    }
 
-function loadTokensFromStorage(){
-state.accessToken=localStorage.getItem("po_access_token");
-state.refreshToken=localStorage.getItem("po_refresh_token");
-state.tokenExpiresAt=parseInt(localStorage.getItem("po_token_expires_at")||"0",10);
-}
-function storeTokens(data){
-state.accessToken=data.access_token;
-if(data.refresh_token){state.refreshToken=data.refresh_token;}
-state.tokenExpiresAt=Date.now()+(data.expires_in*1000)-60000;
-localStorage.setItem("po_access_token",state.accessToken);
-if(state.refreshToken){localStorage.setItem("po_refresh_token",state.refreshToken);}
-localStorage.setItem("po_token_expires_at",String(state.tokenExpiresAt));
-}
-function clearTokens(){
-state.accessToken=null;state.refreshToken=null;state.tokenExpiresAt=0;
-localStorage.removeItem("po_access_token");
-localStorage.removeItem("po_refresh_token");
-localStorage.removeItem("po_token_expires_at");
-}
-async function startAuth(){
-var verifier=generateRandomString(64);
-var challenge=await generateCodeChallenge(verifier);
-var authState=generateRandomString(16);
-localStorage.setItem("po_pkce_verifier",verifier);
-localStorage.setItem("po_auth_state",authState);
-var params=new URLSearchParams({
-response_type:"code",
-client_id:CLIENT_ID,
-scope:SCOPES,
-redirect_uri:REDIRECT_URI,
-code_challenge_method:"S256",
-code_challenge:challenge,
-state:authState
-});
-window.location.href="https://accounts.spotify.com/authorize?"+params.toString();
-}
-async function exchangeCodeForToken(code){
-var verifier=localStorage.getItem("po_pkce_verifier");
-var body=new URLSearchParams({
-grant_type:"authorization_code",
-code:code,
-redirect_uri:REDIRECT_URI,
-client_id:CLIENT_ID,
-code_verifier:verifier
-});
-var res=await fetch("https://accounts.spotify.com/api/token",{
-method:"POST",
-headers:{"Content-Type":"application/x-www-form-urlencoded"},
-body:body
-});
-if(!res.ok){throw new Error("token_exchange_failed");}
-var data=await res.json();
-storeTokens(data);
-localStorage.removeItem("po_pkce_verifier");
-localStorage.removeItem("po_auth_state");
-}
-async function refreshAccessToken(){
-if(!state.refreshToken){throw new Error("no_refresh_token");}
-var body=new URLSearchParams({
-grant_type:"refresh_token",
-refresh_token:state.refreshToken,
-client_id:CLIENT_ID
-});
-var res=await fetch("https://accounts.spotify.com/api/token",{
-method:"POST",
-headers:{"Content-Type":"application/x-www-form-urlencoded"},
-body:body
-});
-if(!res.ok){throw new Error("refresh_failed");}
-var data=await res.json();
-storeTokens(data);
-}
-async function ensureValidToken(){
-if(!state.accessToken){throw new Error("not_authed");}
-if(Date.now()>state.tokenExpiresAt){await refreshAccessToken();}
-}
-async function apiFetch(url,options){
-options=options||{};
-await ensureValidToken();
-options.headers=options.headers||{};
-options.headers["Authorization"]="Bearer "+state.accessToken;
-var res=await fetch(url,options);
-if(res.status===401){
-await refreshAccessToken();
-options.headers["Authorization"]="Bearer "+state.accessToken;
-res=await fetch(url,options);
-}
-if(res.status===429){
-var retryAfter=parseInt(res.headers.get("Retry-After")||"2",10);
-await new Promise(function(r){setTimeout(r,(retryAfter+1)*1000);});
-res=await fetch(url,options);
-}
-return res;
-}
-async function apiFetchJson(url,options){
-var res=await apiFetch(url,options);
-if(!res.ok){
-var text="";
-try{text=await res.text();}catch(e){}
-throw new Error("API error "+res.status+" "+text);
-}
-if(res.status===204){return null;}
-return res.json();
-}
-async function getAllPaginated(url){
-var items=[];
-var next=url;
-while(next){
-var data=await apiFetchJson(next,{method:"GET"});
-if(data.items){items=items.concat(data.items);}
-next=data.next||null;
-}
-return items;
-}
+    function login() {
+        const url = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(SCOPES)}&response_type=token&show_dialog=true`;
+        window.location = url;
+    }
 
-async function initAfterAuth(){
-showView("view-loading");
-getEl("loading-text").textContent="Loading your profile...";
-try{
-state.user=await apiFetchJson("https://api.spotify.com/v1/me",{method:"GET"});
-getEl("user-name").textContent=state.user.display_name||state.user.id;
-var avatarUrl=(state.user.images&&state.user.images.length)?state.user.images[0].url:"";
-getEl("user-avatar").src=avatarUrl;
-getEl("user-avatar").style.display=avatarUrl?"block":"none";
-await loadPlaylists();
-showView("view-playlists");
-}catch(e){
-toast("Could not load your Spotify account. Please reconnect.",true);
-clearTokens();
-showView("view-landing");
-}
-}
-async function loadPlaylists(){
-getEl("loading-text").textContent="Loading your playlists...";
-var items=await getAllPaginated("https://api.spotify.com/v1/me/playlists?limit=50");
-state.playlists=items.filter(function(p){return p&&p.id;});
-renderPlaylists();
-}
-function renderPlaylists(){
-var grid=getEl("playlists-grid");
-if(!state.playlists.length){
-grid.innerHTML='<div class="empty-state">No playlists found on this Spotify account yet.</div>';
-return;
-}
-var html="";
-for(var i=0;i<state.playlists.length;i++){
-var p=state.playlists[i];
-var img=(p.images&&p.images.length)?p.images[0].url:"";
-var coverHtml=img?'<img class="playlist-cover" src="'+escapeHtml(img)+'" alt="">':
-'<div class="cover-fallback"><svg viewBox="0 0 24 24" fill="#666"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>';
-html+='<div class="playlist-card" data-id="'+escapeHtml(p.id)+'" tabindex="0">'+
-'<div class="cover-wrap">'+coverHtml+
-'<button class="edit-pencil" data-id="'+escapeHtml(p.id)+'" title="Edit name or cover" aria-label="Edit playlist">&#9998;</button>'+
-'</div>'+
-'<div class="playlist-name">'+escapeHtml(p.name)+'</div>'+
-'<div class="playlist-meta">'+(p.tracks?p.tracks.total:0)+' tracks</div>'+
-'</div>';
-}
-grid.innerHTML=html;
-}
-getEl("playlists-grid").addEventListener("click",function(e){
-var pencil=e.target.closest(".edit-pencil");
-if(pencil){
-e.stopPropagation();
-openEditPlaylistModal(pencil.dataset.id);
-return;
-}
-var card=e.target.closest(".playlist-card");
-if(card){openEditor(card.dataset.id);}
-});
-getEl("playlists-grid").addEventListener("keydown",function(e){
-if(e.key==="Enter"){
-var card=e.target.closest(".playlist-card");
-if(card){openEditor(card.dataset.id);}
-}
-});
+    function initApp() {
+        const params = getHashParams();
+        accessToken = params.access_token;
+        if (accessToken) {
+            document.getElementById('login-view').style.display = 'none';
+            document.getElementById('app-view').style.display = 'flex';
+            fetchUser();
+        }
+    }
 
-var editingPlaylistId=null;
-function openEditPlaylistModal(id){
-var p=state.playlists.find(function(x){return x.id===id;});
-if(!p)return;
-editingPlaylistId=id;
-getEl("edit-name-input").value=p.name;
-var img=(p.images&&p.images.length)?p.images[0].url:"";
-getEl("edit-cover-preview").src=img;
-getEl("edit-cover-preview").style.visibility=img?"visible":"hidden";
-getEl("edit-cover-file").value="";
-openModal("modal-edit-playlist");
-}
-getEl("edit-cover-file").addEventListener("change",function(e){
-var file=e.target.files[0];
-if(!file)return;
-var reader=new FileReader();
-reader.onload=function(ev){
-getEl("edit-cover-preview").src=ev.target.result;
-getEl("edit-cover-preview").style.visibility="visible";
-};
-reader.readAsDataURL(file);
-});
-function resizeImageToJpegBase64(file,maxSize){
-return new Promise(function(resolve,reject){
-var img=new Image();
-var reader=new FileReader();
-reader.onload=function(ev){img.src=ev.target.result;};
-reader.onerror=reject;
-img.onload=function(){
-var canvas=document.createElement("canvas");
-var w=img.width,h=img.height;
-var scale=Math.min(1,maxSize/Math.max(w,h));
-canvas.width=Math.round(w*scale);
-canvas.height=Math.round(h*scale);
-var ctx=canvas.getContext("2d");
-ctx.drawImage(img,0,0,canvas.width,canvas.height);
-var quality=0.85;
-function attempt(){
-var dataUrl=canvas.toDataURL("image/jpeg",quality);
-var base64=dataUrl.split(",")[1];
-var sizeBytes=Math.ceil(base64.length*0.75);
-if(sizeBytes>250000&&quality>0.3){
-quality-=0.1;
-attempt();
-}else{
-resolve(base64);
-}
-}
-attempt();
-};
-img.onerror=reject;
-reader.readAsDataURL(file);
-});
-}
-getEl("btn-save-edit-playlist").addEventListener("click",async function(){
-var id=editingPlaylistId;
-if(!id)return;
-var newName=getEl("edit-name-input").value.trim();
-var file=getEl("edit-cover-file").files[0];
-var btn=getEl("btn-save-edit-playlist");
-btn.disabled=true;
-try{
-var p=state.playlists.find(function(x){return x.id===id;});
-if(newName&&p&&newName!==p.name){
-await apiFetchJson("https://api.spotify.com/v1/playlists/"+id,{
-method:"PUT",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({name:newName})
-});
-p.name=newName;
-}
-if(file){
-var base64=await resizeImageToJpegBase64(file,300);
-await apiFetch("https://api.spotify.com/v1/playlists/"+id+"/images",{
-method:"PUT",
-headers:{"Content-Type":"image/jpeg"},
-body:base64
-});
-if(p){p.images=[{url:getEl("edit-cover-preview").src}];}
-}
-renderPlaylists();
-closeModal("modal-edit-playlist");
-toast("Playlist updated");
-}catch(e){
-toast("Could not update playlist. Try again.",true);
-}
-btn.disabled=false;
-});
+    async function apiCall(endpoint, method = 'GET', body = null) {
+        const options = {
+            method,
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+            }
+        };
+        if (body) options.body = JSON.stringify(body);
+        const res = await fetch(`https://api.spotify.com/v1${endpoint}`, options);
+        if(method !== 'DELETE' && res.status !== 204 && res.status !== 201 && res.status !== 200) {
+            return null;
+        }
+        if(res.status === 204) return true;
+        return res.json();
+    }
 
-getEl("btn-connect").addEventListener("click",startAuth);
-getEl("btn-logout").addEventListener("click",function(){
-clearTokens();
-showView("view-landing");
-});
-getEl("btn-back").addEventListener("click",function(){
-showView("view-playlists");
-});
+    async function fetchUser() {
+        const user = await apiCall('/me');
+        if (user) {
+            userId = user.id;
+            fetchPlaylists();
+        }
+    }
 
-function trackTitle(t){return(t.name||"").trim();}
-function trackArtist(t){return(t.artists&&t.artists[0]&&t.artists[0].name)||"";}
-function trackArtistNames(t){return(t.artists||[]).map(function(a){return a.name;}).join(", ");}
-function albumReleaseDate(t){
-var d=t.album&&t.album.release_date;
-if(!d)return 0;
-if(/^\d{4}$/.test(d)){d=d+"-01-01";}
-else if(/^\d{4}-\d{2}$/.test(d)){d=d+"-01";}
-var time=new Date(d).getTime();
-return isNaN(time)?0:time;
-}
-function albumReleaseYear(t){
-var d=t.album&&t.album.release_date;
-if(!d)return 0;
-var y=parseInt(d.substring(0,4),10);
-return isNaN(y)?0:y;
-}
-function leadIsDigit(s){return/^[0-9]/.test(s);}
-function baseCompare(a,b){
-var ad=leadIsDigit(a),bd=leadIsDigit(b);
-if(ad&&!bd)return -1;
-if(!ad&&bd)return 1;
-return a.localeCompare(b,undefined,{sensitivity:"base",numeric:true});
-}
-var sortDefs={
-title_asc:function(a,b){return baseCompare(trackTitle(a),trackTitle(b));},
-title_desc:function(a,b){return -baseCompare(trackTitle(a),trackTitle(b));},
-artist_asc:function(a,b){return baseCompare(trackArtist(a),trackArtist(b));},
-artist_desc:function(a,b){return -baseCompare(trackArtist(a),trackArtist(b));},
-oldest:function(a,b){return albumReleaseDate(a)-albumReleaseDate(b);},
-newest:function(a,b){return albumReleaseDate(b)-albumReleaseDate(a);},
-shortest:function(a,b){return a.duration_ms-b.duration_ms;},
-longest:function(a,b){return b.duration_ms-a.duration_ms;},
-album_order:function(a,b){
-var ra=albumReleaseDate(a),rb=albumReleaseDate(b);
-if(ra!==rb)return ra-rb;
-var an=(a.album&&a.album.name)||"",bn=(b.album&&b.album.name)||"";
-if(an!==bn)return an.localeCompare(bn);
-var da=a.disc_number||1,db=b.disc_number||1;
-if(da!==db)return da-db;
-return(a.track_number||0)-(b.track_number||0);
-}
-};
+    async function fetchPlaylists() {
+        const data = await apiCall('/me/playlists?limit=50');
+        if (data) {
+            playlists = data.items;
+            renderPlaylists();
+        }
+    }
 
-async function openEditor(playlistId){
-state.currentPlaylistId=playlistId;
-showView("view-loading");
-getEl("loading-text").textContent="Loading playlist...";
-try{
-var meta=await apiFetchJson("https://api.spotify.com/v1/playlists/"+playlistId+"?fields=id,name,images,owner(display_name),description",{method:"GET"});
-state.currentPlaylistMeta=meta;
-var items=await getAllPaginated("https://api.spotify.com/v1/playlists/"+playlistId+"/tracks?limit=100");
-state.trackByUid=new Map();
-state.masterList=[];
-state.pool=[];
-state.rules=[];
-state.undoStack=[];
-state.redoStack=[];
-state.activeSortPill=null;
-state.ruleSeq=1;
-state.uidSeq=1;
-var skipped=0;
-for(var i=0;i<items.length;i++){
-var it=items[i];
-var tr=it.track;
-if(!tr||tr.is_local||tr.type!=="track"){skipped++;continue;}
-var uid="t"+(state.uidSeq++);
-var trackObj={
-uid:uid,
-id:tr.id,
-uri:tr.uri,
-name:tr.name,
-artists:tr.artists||[],
-album:tr.album||{},
-duration_ms:tr.duration_ms||0,
-disc_number:tr.disc_number||1,
-track_number:tr.track_number||0,
-origIndex:state.masterList.length
-};
-state.trackByUid.set(uid,trackObj);
-state.masterList.push(trackObj);
-}
-state.skippedCount=skipped;
-renderEditorHeader();
-renderSkipBanner();
-render();
-showView("view-editor");
-getEl("track-list-wrap").scrollIntoView({block:"start"});
-window.scrollTo(0,0);
-}catch(e){
-toast("Could not load this playlist.",true);
-showView("view-playlists");
-}
-}
-function renderEditorHeader(){
-var meta=state.currentPlaylistMeta;
-getEl("editor-title").textContent=meta.name;
-var img=(meta.images&&meta.images.length)?meta.images[0].url:"";
-if(img){
-getEl("editor-cover-img").src=img;
-getEl("editor-cover-img").classList.remove("hidden");
-getEl("editor-cover-fallback").classList.add("hidden");
-}else{
-getEl("editor-cover-img").classList.add("hidden");
-getEl("editor-cover-fallback").classList.remove("hidden");
-}
-}
-function renderSkipBanner(){
-var el=getEl("skip-banner");
-if(state.skippedCount>0){
-el.textContent="This tool skipped "+state.skippedCount+" item(s) that were local files or podcast episodes, since those cannot be reordered the same way as regular tracks.";
-el.classList.remove("hidden");
-}else{
-el.classList.add("hidden");
-}
-}
-function render(){
-renderTrackList();
-renderToolbarCounts();
-renderSortPillsUI();
-updateUndoRedoButtons();
-if(!getEl("modal-filters").classList.contains("hidden")){renderFiltersModal();}
-if(!getEl("modal-removed").classList.contains("hidden")){renderRemovedModal();}
-}
-function renderToolbarCounts(){
-var totalMs=0;
-for(var i=0;i<state.masterList.length;i++){totalMs+=state.masterList[i].duration_ms;}
-getEl("editor-sub").textContent=state.currentPlaylistMeta.owner.display_name+" \u2022 "+state.masterList.length+" songs \u2022 "+formatDurationLong(totalMs);
-var rulesBadge=getEl("rules-badge");
-if(state.rules.length>0){rulesBadge.textContent=state.rules.length;rulesBadge.classList.remove("hidden");}
-else{rulesBadge.classList.add("hidden");}
-var removedBadge=getEl("removed-badge");
-if(state.pool.length>0){removedBadge.textContent=state.pool.length;removedBadge.classList.remove("hidden");}
-else{removedBadge.classList.add("hidden");}
-}
-function renderTrackList(){
-var ul=getEl("track-list");
-if(!state.masterList.length){
-ul.innerHTML='<div class="empty-state">No tracks left in this playlist. Restore some from the Removed list, or save to clear it.</div>';
-return;
-}
-var html="";
-for(var i=0;i<state.masterList.length;i++){
-var t=state.masterList[i];
-var thumb=(t.album&&t.album.images&&t.album.images.length)?t.album.images[t.album.images.length-1].url:"";
-html+='<li class="track-row" data-uid="'+t.uid+'">'+
-'<span class="handle" data-uid="'+t.uid+'" title="Drag to reorder">&#10303;</span>'+
-'<input class="pos-input" type="number" min="1" max="'+state.masterList.length+'" value="'+(i+1)+'" data-uid="'+t.uid+'" aria-label="Track position">'+
-'<img class="track-thumb" src="'+escapeHtml(thumb)+'" alt="">'+
-'<div class="track-info"><div class="track-name">'+escapeHtml(trackTitle(t))+'</div><div class="track-artist">'+escapeHtml(trackArtistNames(t))+'</div></div>'+
-'<div class="track-album">'+escapeHtml((t.album&&t.album.name)||"")+'</div>'+
-'<div class="track-duration">'+formatDuration(t.duration_ms)+'</div>'+
-'<button class="remove-btn" data-uid="'+t.uid+'" title="Remove track" aria-label="Remove track">&#10005;</button>'+
-'</li>';
-}
-ul.innerHTML=html;
-}
-function snapshot(){
-return{
-master:state.masterList.map(function(t){return t.uid;}),
-pool:state.pool.map(function(p){return{uid:p.track.uid,originalIndex:p.originalIndex,ruleId:p.ruleId,ruleLabel:p.ruleLabel};}),
-rules:JSON.parse(JSON.stringify(state.rules))
-};
-}
-function restoreSnapshot(s){
-state.masterList=s.master.map(function(uid){return state.trackByUid.get(uid);});
-state.pool=s.pool.map(function(p){return{track:state.trackByUid.get(p.uid),originalIndex:p.originalIndex,ruleId:p.ruleId,ruleLabel:p.ruleLabel};});
-state.rules=JSON.parse(JSON.stringify(s.rules));
-state.activeSortPill=null;
-}
-function pushHistory(){
-state.undoStack.push(snapshot());
-if(state.undoStack.length>60){state.undoStack.shift();}
-state.redoStack=[];
-}
-function undo(){
-if(!state.undoStack.length)return;
-state.redoStack.push(snapshot());
-var s=state.undoStack.pop();
-restoreSnapshot(s);
-render();
-}
-function redo(){
-if(!state.redoStack.length)return;
-state.undoStack.push(snapshot());
-var s=state.redoStack.pop();
-restoreSnapshot(s);
-render();
-}
-function updateUndoRedoButtons(){
-getEl("btn-undo").disabled=state.undoStack.length===0;
-getEl("btn-redo").disabled=state.redoStack.length===0;
-}
-getEl("btn-undo").addEventListener("click",undo);
-getEl("btn-redo").addEventListener("click",redo);
+    function renderPlaylists() {
+        const sidebar = document.getElementById('sidebar-playlists');
+        sidebar.innerHTML = '<h3 style="color:var(--spotify-subtext); font-size:12px; letter-spacing:1px; margin-bottom:16px;">YOUR PLAYLISTS</h3>';
+        playlists.forEach(pl => {
+            if(!pl) return;
+            const el = document.createElement('div');
+            el.className = 'playlist-item';
+            el.innerHTML = `<span>${pl.name}</span> <span class="edit-icon">✏️</span>`;
+            el.onclick = () => loadPlaylist(pl.id, pl.name, pl.images, pl.owner.display_name, pl.tracks.total);
+            sidebar.appendChild(el);
+        });
+    }
 
-function moveToPool(track,ruleId,ruleLabel){
-var idx=state.masterList.findIndex(function(t){return t.uid===track.uid;});
-if(idx===-1)return;
-state.masterList.splice(idx,1);
-state.pool.push({track:track,originalIndex:track.origIndex,ruleId:ruleId,ruleLabel:ruleLabel});
-}
-function restoreFromPool(uid){
-var idx=state.pool.findIndex(function(p){return p.track.uid===uid;});
-if(idx===-1)return;
-var entry=state.pool[idx];
-state.pool.splice(idx,1);
-var insertAt=Math.min(entry.originalIndex,state.masterList.length);
-state.masterList.splice(insertAt,0,entry.track);
-}
-function deleteTrack(uid){
-var t=state.masterList.find(function(x){return x.uid===uid;});
-if(!t)return;
-pushHistory();
-moveToPool(t,"manual","Removed manually");
-render();
-}
-function restoreOne(uid){
-pushHistory();
-restoreFromPool(uid);
-render();
-}
-function restoreAllPool(){
-if(!state.pool.length)return;
-pushHistory();
-var uids=state.pool.map(function(p){return p.track.uid;});
-for(var i=0;i<uids.length;i++){restoreFromPool(uids[i]);}
-state.rules=[];
-render();
-}
-function removeRule(ruleId){
-pushHistory();
-state.rules=state.rules.filter(function(r){return r.id!==ruleId;});
-var uids=state.pool.filter(function(p){return p.ruleId===ruleId;}).map(function(p){return p.track.uid;});
-for(var i=0;i<uids.length;i++){restoreFromPool(uids[i]);}
-render();
-}
-function addArtistRule(artistName){
-if(!artistName)return;
-pushHistory();
-var id="r"+(state.ruleSeq++);
-var label="Artist: "+artistName;
-state.rules.push({id:id,type:"artist",label:label,artistName:artistName});
-var matches=state.masterList.filter(function(t){return trackArtistNames(t).indexOf(artistName)!==-1;});
-for(var i=0;i<matches.length;i++){moveToPool(matches[i],id,label);}
-render();
-}
-function addDurationRule(op,ms){
-if(!ms||ms<=0)return;
-pushHistory();
-var id="r"+(state.ruleSeq++);
-var label=(op==="shorter"?"Shorter than ":"Longer than ")+formatDuration(ms);
-state.rules.push({id:id,type:"duration",label:label,op:op,ms:ms});
-var matches=state.masterList.filter(function(t){return op==="shorter"?t.duration_ms<ms:t.duration_ms>ms;});
-for(var i=0;i<matches.length;i++){moveToPool(matches[i],id,label);}
-render();
-}
-function addYearRule(op,year){
-if(!year)return;
-pushHistory();
-var id="r"+(state.ruleSeq++);
-var label=(op==="before"?"Released before ":"Released after ")+year;
-state.rules.push({id:id,type:"year",label:label,op:op,year:year});
-var matches=state.masterList.filter(function(t){var y=albumReleaseYear(t);return op==="before"?y<year:y>year;});
-for(var i=0;i<matches.length;i++){moveToPool(matches[i],id,label);}
-render();
-}
-function setTrackPosition(uid,newPos){
-var idx=state.masterList.findIndex(function(t){return t.uid===uid;});
-if(idx===-1)return;
-var target=parseInt(newPos,10);
-if(isNaN(target)){render();return;}
-target=Math.max(1,Math.min(state.masterList.length,target))-1;
-if(target===idx){render();return;}
-pushHistory();
-var item=state.masterList.splice(idx,1)[0];
-state.masterList.splice(target,0,item);
-state.activeSortPill=null;
-render();
-}
-function moveTrackRelativeTo(dragUid,targetUid,after){
-var dIdx=state.masterList.findIndex(function(t){return t.uid===dragUid;});
-if(dIdx===-1)return;
-var item=state.masterList.splice(dIdx,1)[0];
-var tIdx=state.masterList.findIndex(function(t){return t.uid===targetUid;});
-if(tIdx===-1){state.masterList.splice(dIdx,0,item);return;}
-var insertAt=after?tIdx+1:tIdx;
-state.masterList.splice(insertAt,0,item);
-}
-function applySort(key){
-if(!sortDefs[key])return;
-pushHistory();
-state.masterList.sort(sortDefs[key]);
-state.activeSortPill=key;
-render();
-}
-function renderSortPillsUI(){
-var pills=document.querySelectorAll(".sort-pill");
-for(var i=0;i<pills.length;i++){
-if(pills[i].dataset.sort===state.activeSortPill){pills[i].classList.add("active");}
-else{pills[i].classList.remove("active");}
-}
-}
-getEl("sort-pills").addEventListener("click",function(e){
-var pill=e.target.closest(".sort-pill");
-if(!pill)return;
-var key=pill.dataset.sort;
-if(state.activeSortPill===key){
-state.activeSortPill=null;
-renderSortPillsUI();
-return;
-}
-applySort(key);
-});
+    async function loadPlaylist(id, name, images, owner, total) {
+        currentPlaylistId = id;
+        document.getElementById('playlist-view').style.display = 'block';
+        document.getElementById('bottom-pill').style.display = 'flex';
+        document.getElementById('active-playlist-name').innerText = name;
+        document.getElementById('active-playlist-img').src = images.length > 0 ? images[0].url : '';
+        document.getElementById('active-playlist-meta').innerText = `${owner} • ${total} songs`;
+        
+        const data = await apiCall(`/playlists/${id}/tracks?limit=100`);
+        if (data) {
+            tracks = data.items.map((item, index) => ({
+                id: item.track.id,
+                uri: item.track.uri,
+                name: item.track.name,
+                artist: item.track.artists[0].name,
+                album: item.track.album.name,
+                duration_ms: item.track.duration_ms,
+                explicit: item.track.explicit,
+                originalIndex: index
+            }));
+            removedTracks = [];
+            saveState();
+            renderTracks();
+        }
+    }
 
-var trackListEl=getEl("track-list");
-trackListEl.addEventListener("change",function(e){
-if(e.target.classList.contains("pos-input")){
-setTrackPosition(e.target.dataset.uid,e.target.value);
-}
-});
-trackListEl.addEventListener("click",function(e){
-var btn=e.target.closest(".remove-btn");
-if(btn){deleteTrack(btn.dataset.uid);}
-});
-trackListEl.addEventListener("pointerdown",function(e){
-var handle=e.target.closest(".handle");
-if(handle){startDrag(handle.dataset.uid,e);}
-});
-function startDrag(uid,startEvent){
-startEvent.preventDefault();
-pushHistory();
-var lastKey=null;
-document.body.classList.add("dragging-active");
-markDraggingRow(uid);
-function onMove(ev){
-var y=ev.clientY;
-var rows=trackListEl.querySelectorAll(".track-row");
-for(var i=0;i<rows.length;i++){
-var row=rows[i];
-if(row.dataset.uid===uid)continue;
-var rect=row.getBoundingClientRect();
-if(y>=rect.top&&y<=rect.bottom){
-var after=y>rect.top+rect.height/2;
-var key=row.dataset.uid+"_"+after;
-if(key!==lastKey){
-lastKey=key;
-moveTrackRelativeTo(uid,row.dataset.uid,after);
-renderTrackList();
-markDraggingRow(uid);
-}
-break;
-}
-}
-}
-function onUp(){
-document.removeEventListener("pointermove",onMove);
-document.removeEventListener("pointerup",onUp);
-document.body.classList.remove("dragging-active");
-state.activeSortPill=null;
-render();
-}
-document.addEventListener("pointermove",onMove);
-document.addEventListener("pointerup",onUp);
-}
-function markDraggingRow(uid){
-var row=trackListEl.querySelector('[data-uid="'+uid+'"]');
-if(row)row.classList.add("dragging");
-}
+    function formatTime(ms) {
+        const minutes = Math.floor(ms / 60000);
+        const seconds = ((ms % 60000) / 1000).toFixed(0);
+        return minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
+    }
 
-function openModal(id){getEl(id).classList.remove("hidden");}
-function closeModal(id){getEl(id).classList.add("hidden");}
-document.addEventListener("click",function(e){
-var closeBtn=e.target.closest("[data-close]");
-if(closeBtn){closeModal(closeBtn.dataset.close);}
-if(e.target.classList.contains("modal-overlay")){e.target.classList.add("hidden");}
-});
+    function renderTracks() {
+        const container = document.getElementById('track-list');
+        container.innerHTML = '';
+        tracks.forEach((t, i) => {
+            const row = document.createElement('div');
+            row.className = 'track-item';
+            row.draggable = true;
+            row.dataset.index = i;
+            
+            row.addEventListener('dragstart', handleDragStart);
+            row.addEventListener('dragover', handleDragOver);
+            row.addEventListener('drop', handleDrop);
+            
+            row.innerHTML = `
+                <div class="track-index">
+                    <input type="number" value="${i + 1}" min="1" max="${tracks.length}" onchange="changeTrackIndex(${i}, this.value)">
+                </div>
+                <div class="track-details">
+                    <span class="track-name">${t.name}</span>
+                    <span class="track-artist">${t.explicit ? 'E ' : ''}${t.artist}</span>
+                </div>
+                <div class="track-album">${t.album}</div>
+                <div class="track-duration">${formatTime(t.duration_ms)}</div>
+                <div class="track-actions">
+                    <button class="btn-secondary" style="padding:4px 8px;" onclick="removeTrack(${i})">X</button>
+                </div>
+            `;
+            container.appendChild(row);
+        });
+    }
 
-getEl("btn-open-filters").addEventListener("click",function(){
-renderFiltersModal();
-openModal("modal-filters");
-});
-function renderFiltersModal(){
-var artistSet={};
-for(var i=0;i<state.masterList.length;i++){
-var names=state.masterList[i].artists||[];
-for(var j=0;j<names.length;j++){artistSet[names[j].name]=true;}
-}
-var artistNames=Object.keys(artistSet).sort(function(a,b){return baseCompare(a,b);});
-var sel=getEl("artist-select");
-if(artistNames.length){
-sel.innerHTML=artistNames.map(function(n){return'<option value="'+escapeHtml(n)+'">'+escapeHtml(n)+'</option>';}).join("");
-}else{
-sel.innerHTML='<option value="">No artists available</option>';
-}
-var artistRules=state.rules.filter(function(r){return r.type==="artist";});
-getEl("artist-chips").innerHTML=artistRules.length?artistRules.map(function(r){
-return'<span class="chip">'+escapeHtml(r.label)+'<button data-rule="'+r.id+'">&#10005;</button></span>';
-}).join(""):'<div class="empty-mini">No artists excluded yet.</div>';
-var durationRules=state.rules.filter(function(r){return r.type==="duration";});
-getEl("duration-chips").innerHTML=durationRules.length?durationRules.map(function(r){
-return'<span class="chip">'+escapeHtml(r.label)+'<button data-rule="'+r.id+'">&#10005;</button></span>';
-}).join(""):'<div class="empty-mini">No duration rules yet.</div>';
-var yearRules=state.rules.filter(function(r){return r.type==="year";});
-getEl("year-chips").innerHTML=yearRules.length?yearRules.map(function(r){
-return'<span class="chip">'+escapeHtml(r.label)+'<button data-rule="'+r.id+'">&#10005;</button></span>';
-}).join(""):'<div class="empty-mini">No release year rules yet.</div>';
-}
-getEl("modal-filters").addEventListener("click",function(e){
-var ruleBtn=e.target.closest("button[data-rule]");
-if(ruleBtn){removeRule(ruleBtn.dataset.rule);}
-});
-getEl("btn-add-artist-rule").addEventListener("click",function(){
-var v=getEl("artist-select").value;
-addArtistRule(v);
-});
-getEl("btn-add-duration-rule").addEventListener("click",function(){
-var op=getEl("duration-op").value;
-var mins=parseInt(getEl("duration-minutes").value||"0",10);
-var secs=parseInt(getEl("duration-seconds").value||"0",10);
-var ms=(mins*60+secs)*1000;
-addDurationRule(op,ms);
-getEl("duration-minutes").value="";
-getEl("duration-seconds").value="";
-});
-getEl("btn-add-year-rule").addEventListener("click",function(){
-var op=getEl("year-op").value;
-var year=parseInt(getEl("year-value").value,10);
-if(!isNaN(year)){addYearRule(op,year);}
-getEl("year-value").value="";
-});
-getEl("btn-restore-all-rules").addEventListener("click",function(){
-restoreAllPool();
-});
-document.querySelectorAll(".tab-btn").forEach(function(btn){
-btn.addEventListener("click",function(){
-document.querySelectorAll(".tab-btn").forEach(function(b){b.classList.remove("active");});
-document.querySelectorAll(".tab-panel").forEach(function(p){p.classList.remove("active");});
-btn.classList.add("active");
-getEl(btn.dataset.tab).classList.add("active");
-});
-});
+    function handleDragStart(e) {
+        draggedItemIndex = parseInt(e.currentTarget.dataset.index);
+    }
 
-getEl("btn-open-removed").addEventListener("click",function(){
-renderRemovedModal();
-openModal("modal-removed");
-});
-function renderRemovedModal(){
-var list=getEl("removed-list");
-if(!state.pool.length){
-list.innerHTML='<div class="empty-state">Nothing removed or excluded right now.</div>';
-return;
-}
-var html="";
-for(var i=0;i<state.pool.length;i++){
-var p=state.pool[i];
-var t=p.track;
-html+='<li class="removed-row"><div class="removed-info">'+
-'<div class="removed-name">'+escapeHtml(trackTitle(t))+'</div>'+
-'<div class="removed-sub">'+escapeHtml(trackArtistNames(t))+'</div>'+
-'<div class="removed-reason">'+escapeHtml(p.ruleLabel)+'</div>'+
-'</div><button class="btn btn-secondary" style="padding:7px 14px;font-size:12.5px;" data-restore="'+t.uid+'">Restore</button></li>';
-}
-list.innerHTML=html;
-}
-getEl("removed-list").addEventListener("click",function(e){
-var btn=e.target.closest("button[data-restore]");
-if(btn){restoreOne(btn.dataset.restore);}
-});
-getEl("btn-restore-all-pool").addEventListener("click",function(){
-restoreAllPool();
-});
+    function handleDragOver(e) {
+        e.preventDefault();
+    }
 
-getEl("btn-open-save").addEventListener("click",function(){
-var otherSelect=getEl("save-other-select");
-var others=state.playlists.filter(function(p){return p.id!==state.currentPlaylistId;});
-otherSelect.innerHTML=others.length?others.map(function(p){return'<option value="'+escapeHtml(p.id)+'">'+escapeHtml(p.name)+'</option>';}).join(""):'<option value="">No other playlists</option>';
-document.querySelector('input[name="save-target"][value="current"]').checked=true;
-updateSaveOptionUI();
-getEl("save-new-name").value="";
-getEl("save-progress").classList.add("hidden");
-openModal("modal-save");
-});
-function updateSaveOptionUI(){
-var selected=document.querySelector('input[name="save-target"]:checked').value;
-document.querySelectorAll(".save-option").forEach(function(opt){
-opt.classList.toggle("selected",opt.dataset.option===selected);
-});
-getEl("save-other-wrap").classList.toggle("hidden",selected!=="other");
-getEl("save-new-wrap").classList.toggle("hidden",selected!=="new");
-}
-document.querySelectorAll('input[name="save-target"]').forEach(function(radio){
-radio.addEventListener("change",updateSaveOptionUI);
-});
+    function handleDrop(e) {
+        e.preventDefault();
+        const dropIndex = parseInt(e.currentTarget.dataset.index);
+        if (draggedItemIndex !== null && draggedItemIndex !== dropIndex) {
+            saveState();
+            const item = tracks.splice(draggedItemIndex, 1)[0];
+            tracks.splice(dropIndex, 0, item);
+            renderTracks();
+        }
+    }
 
-async function replacePlaylistTracks(playlistId,uris){
-var chunks=chunkArray(uris,100);
-if(chunks.length===0){
-await apiFetchJson("https://api.spotify.com/v1/playlists/"+playlistId+"/tracks",{
-method:"PUT",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({uris:[]})
-});
-return;
-}
-for(var i=0;i<chunks.length;i++){
-getEl("save-progress").textContent="Saving tracks... ("+(i+1)+" of "+chunks.length+")";
-if(i===0){
-await apiFetchJson("https://api.spotify.com/v1/playlists/"+playlistId+"/tracks",{
-method:"PUT",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({uris:chunks[i]})
-});
-}else{
-await apiFetchJson("https://api.spotify.com/v1/playlists/"+playlistId+"/tracks",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({uris:chunks[i]})
-});
-}
-}
-}
-getEl("btn-confirm-save").addEventListener("click",async function(){
-var target=document.querySelector('input[name="save-target"]:checked').value;
-var uris=state.masterList.map(function(t){return t.uri;});
-var btn=getEl("btn-confirm-save");
-var progress=getEl("save-progress");
-progress.classList.remove("hidden");
-progress.textContent="Saving...";
-btn.disabled=true;
-try{
-if(target==="current"){
-await replacePlaylistTracks(state.currentPlaylistId,uris);
-toast("Playlist saved");
-}else if(target==="other"){
-var otherId=getEl("save-other-select").value;
-if(!otherId){toast("Choose a playlist to overwrite.",true);btn.disabled=false;progress.classList.add("hidden");return;}
-await replacePlaylistTracks(otherId,uris);
-toast("Playlist saved");
-}else if(target==="new"){
-var name=getEl("save-new-name").value.trim();
-if(!name){toast("Enter a name for the new playlist.",true);btn.disabled=false;progress.classList.add("hidden");return;}
-var created=await apiFetchJson("https://api.spotify.com/v1/users/"+state.user.id+"/playlists",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({name:name,"public":false})
-});
-await replacePlaylistTracks(created.id,uris);
-toast("New playlist created");
-}
-closeModal("modal-save");
-await loadPlaylists();
-showView("view-playlists");
-}catch(e){
-toast("Something went wrong while saving. Please try again.",true);
-}
-btn.disabled=false;
-progress.classList.add("hidden");
-});
+    function changeTrackIndex(oldIndex, newIndexVal) {
+        let newIndex = parseInt(newIndexVal) - 1;
+        if (newIndex < 0) newIndex = 0;
+        if (newIndex >= tracks.length) newIndex = tracks.length - 1;
+        if (oldIndex !== newIndex) {
+            saveState();
+            const item = tracks.splice(oldIndex, 1)[0];
+            tracks.splice(newIndex, 0, item);
+            renderTracks();
+        }
+    }
 
-async function init(){
-loadTokensFromStorage();
-var params=new URLSearchParams(window.location.search);
-if(params.has("error")){
-window.history.replaceState({},document.title,REDIRECT_URI);
-toast("Spotify connection was cancelled.",true);
-showView("view-landing");
-return;
-}
-if(params.has("code")){
-var code=params.get("code");
-var returnedState=params.get("state");
-var storedState=localStorage.getItem("po_auth_state");
-showView("view-loading");
-getEl("loading-text").textContent="Connecting to Spotify...";
-if(returnedState!==storedState){
-window.history.replaceState({},document.title,REDIRECT_URI);
-toast("Could not verify the login request. Please try again.",true);
-showView("view-landing");
-return;
-}
-try{
-await exchangeCodeForToken(code);
-window.history.replaceState({},document.title,REDIRECT_URI);
-await initAfterAuth();
-}catch(e){
-window.history.replaceState({},document.title,REDIRECT_URI);
-toast("Could not connect to Spotify. Please try again.",true);
-showView("view-landing");
-}
-return;
-}
-if(state.accessToken){
-await initAfterAuth();
-return;
-}
-showView("view-landing");
-}
-init();
+    function removeTrack(index) {
+        saveState();
+        removedTracks.push(tracks.splice(index, 1)[0]);
+        renderTracks();
+    }
+
+    function restoreTrack(index) {
+        saveState();
+        tracks.push(removedTracks.splice(index, 1)[0]);
+        document.getElementById('removed-modal').style.display = 'none';
+        renderTracks();
+    }
+
+    function saveState() {
+        stateHistory.push({
+            tracks: JSON.parse(JSON.stringify(tracks)),
+            removed: JSON.parse(JSON.stringify(removedTracks))
+        });
+    }
+
+    function undo() {
+        if (stateHistory.length > 0) {
+            const state = stateHistory.pop();
+            tracks = state.tracks;
+            removedTracks = state.removed;
+            renderTracks();
+        }
+    }
+
+    function applySort(sortFn) {
+        saveState();
+        tracks.sort(sortFn);
+        renderTracks();
+    }
+
+    document.getElementById('login-btn').addEventListener('click', login);
+    
+    document.getElementById('sort-az').addEventListener('click', () => {
+        applySort((a, b) => a.name.localeCompare(b.name));
+    });
+
+    document.getElementById('sort-za').addEventListener('click', () => {
+        applySort((a, b) => b.name.localeCompare(a.name));
+    });
+
+    document.getElementById('sort-artist').addEventListener('click', () => {
+        applySort((a, b) => a.artist.localeCompare(b.artist));
+    });
+
+    document.getElementById('sort-duration-short').addEventListener('click', () => {
+        applySort((a, b) => a.duration_ms - b.duration_ms);
+    });
+
+    document.getElementById('sort-duration-long').addEventListener('click', () => {
+        applySort((a, b) => b.duration_ms - a.duration_ms);
+    });
+
+    document.getElementById('filter-explicit').addEventListener('click', () => {
+        applySort((a, b) => (a.explicit === b.explicit) ? 0 : a.explicit ? -1 : 1);
+    });
+
+    document.getElementById('btn-duplicates').addEventListener('click', () => {
+        saveState();
+        const seen = new Set();
+        const dupes = [];
+        const unique = [];
+        tracks.forEach(t => {
+            const key = t.id || (t.name + t.artist);
+            if(seen.has(key)) {
+                dupes.push(t);
+            } else {
+                seen.add(key);
+                unique.push(t);
+            }
+        });
+        if(dupes.length > 0) {
+            tracks = unique;
+            removedTracks = removedTracks.concat(dupes);
+            renderTracks();
+            alert(`Removed ${dupes.length} duplicates.`);
+        } else {
+            alert('No duplicates found.');
+        }
+    });
+
+    document.getElementById('btn-removed').addEventListener('click', () => {
+        const container = document.getElementById('removed-list');
+        container.innerHTML = '';
+        removedTracks.forEach((t, i) => {
+            const el = document.createElement('div');
+            el.style.display = 'flex';
+            el.style.justifyContent = 'space-between';
+            el.style.marginBottom = '10px';
+            el.innerHTML = `<span>${t.name} - ${t.artist}</span> <button class="btn-secondary" onclick="restoreTrack(${i})">Restore</button>`;
+            container.appendChild(el);
+        });
+        document.getElementById('removed-modal').style.display = 'flex';
+    });
+
+    document.getElementById('btn-undo').addEventListener('click', undo);
+
+    document.getElementById('btn-save').addEventListener('click', () => {
+        document.getElementById('save-modal').style.display = 'flex';
+    });
+
+    document.getElementById('save-overwrite').addEventListener('click', async () => {
+        if (!currentPlaylistId) return;
+        const uris = tracks.map(t => t.uri);
+        await apiCall(`/playlists/${currentPlaylistId}/tracks`, 'PUT', { uris });
+        document.getElementById('save-modal').style.display = 'none';
+        alert('Playlist Overwritten Successfully!');
+    });
+
+    document.getElementById('save-new').addEventListener('click', async () => {
+        const name = document.getElementById('new-playlist-name').value || 'My Organized Playlist';
+        const newPl = await apiCall(`/users/${userId}/playlists`, 'POST', { name, description: 'Organized by Playlist Manager' });
+        if (newPl) {
+            const uris = tracks.map(t => t.uri);
+            for(let i = 0; i < uris.length; i += 100) {
+                const chunk = uris.slice(i, i + 100);
+                await apiCall(`/playlists/${newPl.id}/tracks`, 'POST', { uris: chunk });
+            }
+            document.getElementById('save-modal').style.display = 'none';
+            alert('New Playlist Created Successfully!');
+            fetchPlaylists();
+        }
+    });
+
+    window.onload = initApp;
 </script>
+
 </body>
 </html>
