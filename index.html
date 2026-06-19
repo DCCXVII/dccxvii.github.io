@@ -1,16 +1,1025 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My First Web Page</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Playlist Organizer</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --black: #000;
+    --white: #fff;
+    --gray-100: #f5f5f5;
+    --gray-200: #e0e0e0;
+    --gray-400: #999;
+    --gray-600: #555;
+    --gray-800: #222;
+    --radius: 4px;
+    --mono: 'Courier New', Courier, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  }
+
+  body {
+    font-family: var(--sans);
+    background: var(--white);
+    color: var(--black);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    border-bottom: 1.5px solid var(--black);
+    padding: 22px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  header h1 {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: var(--mono);
+  }
+
+  #auth-btn {
+    background: var(--black);
+    color: var(--white);
+    border: none;
+    padding: 9px 22px;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    border-radius: var(--radius);
+    font-family: var(--sans);
+    transition: opacity 0.15s;
+  }
+
+  #auth-btn:hover { opacity: 0.75; }
+
+  #user-info {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--gray-600);
+  }
+
+  #user-info img {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1.5px solid var(--black);
+    object-fit: cover;
+  }
+
+  #logout-btn {
+    background: none;
+    border: 1px solid var(--gray-200);
+    color: var(--gray-600);
+    padding: 5px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: var(--radius);
+    font-family: var(--sans);
+    transition: border-color 0.15s;
+  }
+
+  #logout-btn:hover { border-color: var(--black); color: var(--black); }
+
+  main {
+    flex: 1;
+    padding: 40px;
+    max-width: 960px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  #landing {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    text-align: center;
+    gap: 16px;
+  }
+
+  #landing p {
+    font-size: 14px;
+    color: var(--gray-400);
+    max-width: 320px;
+    line-height: 1.6;
+  }
+
+  #playlists-view { display: none; }
+  #playlist-view { display: none; }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gray-400);
+    margin-bottom: 18px;
+    font-family: var(--mono);
+  }
+
+  .playlists-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+  }
+
+  .playlist-card {
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 14px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .playlist-card:hover {
+    border-color: var(--black);
+    background: var(--gray-100);
+  }
+
+  .playlist-card img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 2px;
+    background: var(--gray-200);
+  }
+
+  .playlist-card-name {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .playlist-card-count {
+    font-size: 11px;
+    color: var(--gray-400);
+    font-family: var(--mono);
+  }
+
+  .back-btn {
+    background: none;
+    border: none;
+    font-size: 13px;
+    color: var(--gray-600);
+    cursor: pointer;
+    padding: 0;
+    font-family: var(--sans);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 24px;
+    transition: color 0.15s;
+  }
+
+  .back-btn:hover { color: var(--black); }
+
+  .playlist-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    margin-bottom: 28px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--gray-200);
+  }
+
+  .playlist-header img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 2px;
+    border: 1.5px solid var(--gray-200);
+    flex-shrink: 0;
+    background: var(--gray-200);
+  }
+
+  .playlist-header-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    justify-content: center;
+  }
+
+  .playlist-header-info h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .playlist-header-info span {
+    font-size: 12px;
+    color: var(--gray-400);
+    font-family: var(--mono);
+  }
+
+  .sort-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+    align-items: center;
+  }
+
+  .sort-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gray-400);
+    font-family: var(--mono);
+    margin-right: 4px;
+  }
+
+  .sort-btn {
+    background: none;
+    border: 1px solid var(--gray-200);
+    color: var(--gray-800);
+    padding: 6px 14px;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: var(--radius);
+    font-family: var(--sans);
+    font-weight: 500;
+    transition: border-color 0.15s, background 0.15s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .sort-btn:hover { border-color: var(--black); }
+
+  .sort-btn.active {
+    background: var(--black);
+    color: var(--white);
+    border-color: var(--black);
+  }
+
+  .sort-btn .arrow { font-size: 10px; opacity: 0.7; }
+
+  .save-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding: 14px 16px;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    background: var(--gray-100);
+  }
+
+  .save-bar span {
+    font-size: 13px;
+    color: var(--gray-600);
+    flex: 1;
+  }
+
+  .save-bar-btns {
+    display: flex;
+    gap: 8px;
+  }
+
+  #save-btn {
+    background: var(--black);
+    color: var(--white);
+    border: none;
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: var(--radius);
+    font-family: var(--sans);
+    transition: opacity 0.15s;
+  }
+
+  #save-btn:hover { opacity: 0.75; }
+  #save-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  #discard-btn {
+    background: none;
+    border: 1px solid var(--gray-200);
+    color: var(--gray-600);
+    padding: 8px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: var(--radius);
+    font-family: var(--sans);
+    transition: border-color 0.15s;
+  }
+
+  #discard-btn:hover { border-color: var(--black); color: var(--black); }
+
+  .track-list {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--gray-200);
+  }
+
+  .track-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--gray-100);
+    transition: background 0.1s;
+    user-select: none;
+  }
+
+  .track-row:hover { background: var(--gray-100); }
+  .track-row.dragging { opacity: 0.4; }
+  .track-row.drag-over { border-top: 2px solid var(--black); }
+
+  .drag-handle {
+    cursor: grab;
+    color: var(--gray-400);
+    font-size: 14px;
+    padding: 0 4px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .drag-handle:active { cursor: grabbing; }
+
+  .drag-handle span {
+    display: block;
+    width: 16px;
+    height: 1.5px;
+    background: var(--gray-400);
+    border-radius: 1px;
+  }
+
+  .track-num {
+    font-size: 11px;
+    color: var(--gray-400);
+    font-family: var(--mono);
+    width: 24px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .track-img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 2px;
+    background: var(--gray-200);
+    flex-shrink: 0;
+  }
+
+  .track-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .track-name {
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .track-artist {
+    font-size: 11px;
+    color: var(--gray-600);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .track-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+
+  .track-duration {
+    font-size: 11px;
+    color: var(--gray-400);
+    font-family: var(--mono);
+  }
+
+  .track-popularity {
+    font-size: 10px;
+    color: var(--gray-400);
+    font-family: var(--mono);
+  }
+
+  .loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    color: var(--gray-400);
+    font-size: 13px;
+    letter-spacing: 0.05em;
+  }
+
+  .loading-dots::after {
+    content: '';
+    animation: dots 1.2s steps(3, end) infinite;
+  }
+
+  @keyframes dots {
+    0%   { content: ''; }
+    33%  { content: '.'; }
+    66%  { content: '..'; }
+    100% { content: '...'; }
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--black);
+    color: var(--white);
+    padding: 11px 22px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+    z-index: 999;
+    white-space: nowrap;
+  }
+
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .col-header-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 6px 0 10px;
+    border-bottom: 1.5px solid var(--black);
+    margin-bottom: 0;
+  }
+
+  .col-header {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gray-400);
+    font-family: var(--mono);
+  }
+
+  .col-handle { width: 24px; flex-shrink: 0; }
+  .col-num { width: 24px; flex-shrink: 0; }
+  .col-img { width: 40px; flex-shrink: 0; }
+  .col-info { flex: 1; }
+  .col-meta { width: 60px; text-align: right; }
+
+  .empty-state {
+    padding: 60px 0;
+    text-align: center;
+    color: var(--gray-400);
+    font-size: 13px;
+  }
+
+  #load-more-btn {
+    width: 100%;
+    padding: 12px;
+    background: none;
+    border: 1px solid var(--gray-200);
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: var(--radius);
+    margin-top: 16px;
+    font-family: var(--sans);
+    color: var(--gray-600);
+    transition: border-color 0.15s;
+  }
+
+  #load-more-btn:hover { border-color: var(--black); color: var(--black); }
+  #load-more-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+</style>
 </head>
 <body>
 
-    <h1>Welcome to My Website</h1>
-    <p>This is a basic paragraph of text on your new HTML page.</p>
-    
-    <a href="https://www.w3schools.com" target="_blank">Visit W3Schools for tutorials</a>
+<header>
+  <h1>Playlist Organizer</h1>
+  <button id="auth-btn">Connect Spotify</button>
+  <div id="user-info">
+    <img id="user-avatar" src="" alt="" />
+    <span id="user-name"></span>
+    <button id="logout-btn">Disconnect</button>
+  </div>
+</header>
 
+<main>
+  <div id="landing">
+    <p>Connect your Spotify account to view, sort, and reorganize your playlists.</p>
+  </div>
+
+  <div id="playlists-view">
+    <div class="section-label">Your Playlists</div>
+    <div class="playlists-grid" id="playlists-grid"></div>
+    <button id="load-more-btn" style="display:none">Load more</button>
+  </div>
+
+  <div id="playlist-view">
+    <button class="back-btn" id="back-btn">← All playlists</button>
+    <div class="playlist-header">
+      <img id="pv-img" src="" alt="" />
+      <div class="playlist-header-info">
+        <h2 id="pv-name"></h2>
+        <span id="pv-count"></span>
+      </div>
+    </div>
+
+    <div class="sort-bar">
+      <span class="sort-label">Sort</span>
+      <button class="sort-btn" data-sort="title-asc">Title <span class="arrow">↑</span></button>
+      <button class="sort-btn" data-sort="title-desc">Title <span class="arrow">↓</span></button>
+      <button class="sort-btn" data-sort="artist-asc">Artist <span class="arrow">↑</span></button>
+      <button class="sort-btn" data-sort="artist-desc">Artist <span class="arrow">↓</span></button>
+      <button class="sort-btn" data-sort="release-asc">Release <span class="arrow">↑</span></button>
+      <button class="sort-btn" data-sort="release-desc">Release <span class="arrow">↓</span></button>
+      <button class="sort-btn" data-sort="duration-asc">Duration <span class="arrow">↑</span></button>
+      <button class="sort-btn" data-sort="duration-desc">Duration <span class="arrow">↓</span></button>
+      <button class="sort-btn" data-sort="album">Album</button>
+      <button class="sort-btn" data-sort="popularity-asc">Popularity <span class="arrow">↑</span></button>
+      <button class="sort-btn" data-sort="popularity-desc">Popularity <span class="arrow">↓</span></button>
+    </div>
+
+    <div id="save-bar" class="save-bar" style="display:none">
+      <span>You have unsaved changes.</span>
+      <div class="save-bar-btns">
+        <button id="discard-btn">Discard</button>
+        <button id="save-btn">Save to Spotify</button>
+      </div>
+    </div>
+
+    <div class="col-header-row">
+      <div class="col-header col-handle"></div>
+      <div class="col-header col-num">#</div>
+      <div class="col-header col-img"></div>
+      <div class="col-header col-info">Track</div>
+      <div class="col-header col-meta">Info</div>
+    </div>
+
+    <div class="track-list" id="track-list"></div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CLIENT_ID = 'fcc60831d3974fec8770b2f9af452de8';
+const REDIRECT_URI = 'https://dccxvii.github.io';
+const SCOPES = 'playlist-read-private playlist-read-collaborative playlist-modify-public playlist-modify-private';
+
+let accessToken = null;
+let currentPlaylist = null;
+let tracks = [];
+let originalTracks = [];
+let isDirty = false;
+let activeSortKey = null;
+let playlistsOffset = 0;
+let playlistsTotal = 0;
+let allPlaylists = [];
+let dragSrcIndex = null;
+
+function pkceChallenge() {
+  const arr = new Uint8Array(32);
+  crypto.getRandomValues(arr);
+  const verifier = btoa(String.fromCharCode(...arr)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  return crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)).then(buf => {
+    const challenge = btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+    return { verifier, challenge };
+  });
+}
+
+async function login() {
+  const { verifier, challenge } = await pkceChallenge();
+  sessionStorage.setItem('pkce_verifier', verifier);
+  const params = new URLSearchParams({
+    client_id: CLIENT_ID,
+    response_type: 'code',
+    redirect_uri: REDIRECT_URI,
+    scope: SCOPES,
+    code_challenge_method: 'S256',
+    code_challenge: challenge,
+  });
+  window.location.href = 'https://accounts.spotify.com/authorize?' + params.toString();
+}
+
+async function exchangeCode(code) {
+  const verifier = sessionStorage.getItem('pkce_verifier');
+  const body = new URLSearchParams({
+    client_id: CLIENT_ID,
+    grant_type: 'authorization_code',
+    code,
+    redirect_uri: REDIRECT_URI,
+    code_verifier: verifier,
+  });
+  const res = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body,
+  });
+  const data = await res.json();
+  if (data.access_token) {
+    accessToken = data.access_token;
+    localStorage.setItem('sp_token', data.access_token);
+    localStorage.setItem('sp_refresh', data.refresh_token);
+    localStorage.setItem('sp_expiry', Date.now() + data.expires_in * 1000);
+    sessionStorage.removeItem('pkce_verifier');
+    window.history.replaceState({}, '', '/');
+    await initApp();
+  }
+}
+
+async function refreshToken() {
+  const refresh = localStorage.getItem('sp_refresh');
+  if (!refresh) return false;
+  const body = new URLSearchParams({
+    client_id: CLIENT_ID,
+    grant_type: 'refresh_token',
+    refresh_token: refresh,
+  });
+  const res = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body,
+  });
+  const data = await res.json();
+  if (data.access_token) {
+    accessToken = data.access_token;
+    localStorage.setItem('sp_token', data.access_token);
+    localStorage.setItem('sp_expiry', Date.now() + data.expires_in * 1000);
+    if (data.refresh_token) localStorage.setItem('sp_refresh', data.refresh_token);
+    return true;
+  }
+  return false;
+}
+
+async function api(path, options = {}) {
+  const expiry = parseInt(localStorage.getItem('sp_expiry') || '0');
+  if (Date.now() > expiry - 60000) {
+    const ok = await refreshToken();
+    if (!ok) { logout(); return null; }
+  }
+  const res = await fetch('https://api.spotify.com/v1' + path, {
+    ...options,
+    headers: {
+      Authorization: 'Bearer ' + accessToken,
+      'Content-Type': 'application/json',
+      ...(options.headers || {}),
+    },
+  });
+  if (res.status === 204) return {};
+  if (!res.ok) return null;
+  return res.json();
+}
+
+function logout() {
+  localStorage.removeItem('sp_token');
+  localStorage.removeItem('sp_refresh');
+  localStorage.removeItem('sp_expiry');
+  accessToken = null;
+  showLanding();
+}
+
+function showLanding() {
+  document.getElementById('landing').style.display = 'flex';
+  document.getElementById('playlists-view').style.display = 'none';
+  document.getElementById('playlist-view').style.display = 'none';
+  document.getElementById('auth-btn').style.display = 'inline-block';
+  document.getElementById('user-info').style.display = 'none';
+}
+
+async function initApp() {
+  const user = await api('/me');
+  if (!user) { showLanding(); return; }
+  document.getElementById('auth-btn').style.display = 'none';
+  const info = document.getElementById('user-info');
+  info.style.display = 'flex';
+  if (user.images && user.images.length) {
+    document.getElementById('user-avatar').src = user.images[0].url;
+  }
+  document.getElementById('user-name').textContent = user.display_name || user.id;
+  document.getElementById('landing').style.display = 'none';
+  await loadPlaylists(true);
+}
+
+async function loadPlaylists(reset = false) {
+  if (reset) { playlistsOffset = 0; allPlaylists = []; }
+  const pv = document.getElementById('playlists-view');
+  pv.style.display = 'block';
+  if (reset) {
+    document.getElementById('playlists-grid').innerHTML = '<div class="loading"><span class="loading-dots">Loading</span></div>';
+  }
+  const data = await api('/me/playlists?limit=50&offset=' + playlistsOffset);
+  if (!data) return;
+  playlistsTotal = data.total;
+  allPlaylists = allPlaylists.concat(data.items);
+  playlistsOffset += data.items.length;
+  renderPlaylists();
+}
+
+function renderPlaylists() {
+  const grid = document.getElementById('playlists-grid');
+  grid.innerHTML = '';
+  allPlaylists.forEach(pl => {
+    const img = (pl.images && pl.images.length) ? pl.images[0].url : '';
+    const card = document.createElement('div');
+    card.className = 'playlist-card';
+    card.innerHTML = `
+      ${img ? `<img src="${img}" alt="" loading="lazy" />` : '<div style="width:100%;aspect-ratio:1;background:var(--gray-200);border-radius:2px;"></div>'}
+      <div class="playlist-card-name">${esc(pl.name)}</div>
+      <div class="playlist-card-count">${pl.tracks.total} tracks</div>
+    `;
+    card.addEventListener('click', () => openPlaylist(pl));
+    grid.appendChild(card);
+  });
+  const btn = document.getElementById('load-more-btn');
+  if (playlistsOffset < playlistsTotal) {
+    btn.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Load more';
+  } else {
+    btn.style.display = 'none';
+  }
+}
+
+async function openPlaylist(pl) {
+  currentPlaylist = pl;
+  isDirty = false;
+  activeSortKey = null;
+  document.getElementById('playlists-view').style.display = 'none';
+  const pv = document.getElementById('playlist-view');
+  pv.style.display = 'block';
+  const img = (pl.images && pl.images.length) ? pl.images[0].url : '';
+  document.getElementById('pv-img').src = img;
+  document.getElementById('pv-name').textContent = pl.name;
+  document.getElementById('pv-count').textContent = pl.tracks.total + ' tracks';
+  document.getElementById('save-bar').style.display = 'none';
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  const tl = document.getElementById('track-list');
+  tl.innerHTML = '<div class="loading"><span class="loading-dots">Loading tracks</span></div>';
+  tracks = await fetchAllTracks(pl.id);
+  originalTracks = tracks.map(t => ({ ...t }));
+  renderTracks();
+}
+
+async function fetchAllTracks(playlistId) {
+  let results = [];
+  let url = `/playlists/${playlistId}/tracks?limit=100&fields=items(track(id,name,artists,album(name,release_date,images,album_type,track_number),duration_ms,popularity)),next,total`;
+  while (url) {
+    const data = await api(url.startsWith('/') ? url : url.replace('https://api.spotify.com/v1', ''));
+    if (!data || !data.items) break;
+    const valid = data.items.filter(i => i.track && i.track.id);
+    results = results.concat(valid.map(i => i.track));
+    url = data.next ? data.next.replace('https://api.spotify.com/v1', '') : null;
+  }
+  return results;
+}
+
+function msToTime(ms) {
+  const s = Math.floor(ms / 1000);
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return m + ':' + String(sec).padStart(2, '0');
+}
+
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function naturalCompare(a, b) {
+  const re = /(\d+)|(\D+)/g;
+  const pa = String(a).match(re) || [];
+  const pb = String(b).match(re) || [];
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    if (pa[i] === undefined) return -1;
+    if (pb[i] === undefined) return 1;
+    const na = parseInt(pa[i]), nb = parseInt(pb[i]);
+    if (!isNaN(na) && !isNaN(nb)) { if (na !== nb) return na - nb; }
+    else { const c = pa[i].localeCompare(pb[i]); if (c !== 0) return c; }
+  }
+  return 0;
+}
+
+function sortTracks(key) {
+  activeSortKey = key;
+  document.querySelectorAll('.sort-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.sort === key);
+  });
+
+  const sorted = [...tracks];
+
+  if (key === 'title-asc') {
+    sorted.sort((a, b) => naturalCompare(a.name, b.name));
+  } else if (key === 'title-desc') {
+    sorted.sort((a, b) => naturalCompare(b.name, a.name));
+  } else if (key === 'artist-asc') {
+    sorted.sort((a, b) => naturalCompare(a.artists[0]?.name || '', b.artists[0]?.name || ''));
+  } else if (key === 'artist-desc') {
+    sorted.sort((a, b) => naturalCompare(b.artists[0]?.name || '', a.artists[0]?.name || ''));
+  } else if (key === 'release-asc') {
+    sorted.sort((a, b) => (a.album.release_date || '').localeCompare(b.album.release_date || ''));
+  } else if (key === 'release-desc') {
+    sorted.sort((a, b) => (b.album.release_date || '').localeCompare(a.album.release_date || ''));
+  } else if (key === 'duration-asc') {
+    sorted.sort((a, b) => a.duration_ms - b.duration_ms);
+  } else if (key === 'duration-desc') {
+    sorted.sort((a, b) => b.duration_ms - a.duration_ms);
+  } else if (key === 'album') {
+    sorted.sort((a, b) => {
+      const albumCmp = naturalCompare(a.album.name, b.album.name);
+      if (albumCmp !== 0) return albumCmp;
+      return (a.album.track_number || 0) - (b.album.track_number || 0);
+    });
+  } else if (key === 'popularity-asc') {
+    sorted.sort((a, b) => (a.popularity || 0) - (b.popularity || 0));
+  } else if (key === 'popularity-desc') {
+    sorted.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+  }
+
+  tracks = sorted;
+  markDirty();
+  renderTracks();
+}
+
+function markDirty() {
+  isDirty = true;
+  document.getElementById('save-bar').style.display = 'flex';
+}
+
+function renderTracks() {
+  const tl = document.getElementById('track-list');
+  tl.innerHTML = '';
+  if (!tracks.length) {
+    tl.innerHTML = '<div class="empty-state">No tracks found.</div>';
+    return;
+  }
+  tracks.forEach((t, i) => {
+    const img = (t.album.images && t.album.images.length) ? t.album.images[t.album.images.length - 1].url : '';
+    const artist = t.artists.map(a => a.name).join(', ');
+    const row = document.createElement('div');
+    row.className = 'track-row';
+    row.draggable = true;
+    row.dataset.index = i;
+    row.innerHTML = `
+      <div class="drag-handle" title="Drag to reorder"><span></span><span></span><span></span></div>
+      <div class="track-num">${i + 1}</div>
+      ${img ? `<img class="track-img" src="${img}" alt="" loading="lazy" />` : '<div class="track-img"></div>'}
+      <div class="track-info">
+        <div class="track-name">${esc(t.name)}</div>
+        <div class="track-artist">${esc(artist)}</div>
+      </div>
+      <div class="track-meta">
+        <div class="track-duration">${msToTime(t.duration_ms)}</div>
+        <div class="track-popularity">${t.popularity !== undefined ? t.popularity : '—'}</div>
+      </div>
+    `;
+    row.addEventListener('dragstart', onDragStart);
+    row.addEventListener('dragover', onDragOver);
+    row.addEventListener('drop', onDrop);
+    row.addEventListener('dragend', onDragEnd);
+    tl.appendChild(row);
+  });
+}
+
+function onDragStart(e) {
+  dragSrcIndex = parseInt(e.currentTarget.dataset.index);
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function onDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.track-row').forEach(r => r.classList.remove('drag-over'));
+  e.currentTarget.classList.add('drag-over');
+}
+
+function onDrop(e) {
+  e.preventDefault();
+  const targetIndex = parseInt(e.currentTarget.dataset.index);
+  if (dragSrcIndex === null || dragSrcIndex === targetIndex) return;
+  const moved = tracks.splice(dragSrcIndex, 1)[0];
+  tracks.splice(targetIndex, 0, moved);
+  activeSortKey = null;
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  markDirty();
+  renderTracks();
+}
+
+function onDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.track-row').forEach(r => r.classList.remove('drag-over'));
+  dragSrcIndex = null;
+}
+
+async function saveOrder() {
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  const uris = tracks.map(t => 'spotify:track:' + t.id);
+  const chunks = [];
+  for (let i = 0; i < uris.length; i += 100) chunks.push(uris.slice(i, i + 100));
+
+  const first = await api(`/playlists/${currentPlaylist.id}/tracks`, {
+    method: 'PUT',
+    body: JSON.stringify({ uris: chunks[0] }),
+  });
+
+  if (!first) { showToast('Failed to save.'); btn.disabled = false; btn.textContent = 'Save to Spotify'; return; }
+
+  for (let i = 1; i < chunks.length; i++) {
+    await api(`/playlists/${currentPlaylist.id}/tracks`, {
+      method: 'POST',
+      body: JSON.stringify({ uris: chunks[i] }),
+    });
+  }
+
+  originalTracks = tracks.map(t => ({ ...t }));
+  isDirty = false;
+  document.getElementById('save-bar').style.display = 'none';
+  btn.disabled = false;
+  btn.textContent = 'Save to Spotify';
+  showToast('Playlist updated.');
+}
+
+function discard() {
+  tracks = originalTracks.map(t => ({ ...t }));
+  isDirty = false;
+  activeSortKey = null;
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('save-bar').style.display = 'none';
+  renderTracks();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+document.getElementById('auth-btn').addEventListener('click', login);
+document.getElementById('logout-btn').addEventListener('click', logout);
+document.getElementById('back-btn').addEventListener('click', () => {
+  document.getElementById('playlist-view').style.display = 'none';
+  document.getElementById('playlists-view').style.display = 'block';
+});
+document.getElementById('save-btn').addEventListener('click', saveOrder);
+document.getElementById('discard-btn').addEventListener('click', discard);
+document.querySelectorAll('.sort-btn').forEach(btn => {
+  btn.addEventListener('click', () => sortTracks(btn.dataset.sort));
+});
+document.getElementById('load-more-btn').addEventListener('click', async (e) => {
+  e.target.disabled = true;
+  e.target.textContent = 'Loading…';
+  await loadPlaylists(false);
+});
+
+(async () => {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  if (code) {
+    await exchangeCode(code);
+    return;
+  }
+  const stored = localStorage.getItem('sp_token');
+  if (stored) {
+    accessToken = stored;
+    const expiry = parseInt(localStorage.getItem('sp_expiry') || '0');
+    if (Date.now() > expiry - 60000) {
+      const ok = await refreshToken();
+      if (!ok) { showLanding(); return; }
+    }
+    await initApp();
+  }
+})();
+</script>
 </body>
 </html>
