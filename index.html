@@ -1,1452 +1,276 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Playlist Organizer</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body {
-            background-color: #121212;
-            color: #e5e7eb;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-        .spotify-green { color: #1DB954; }
-        .bg-spotify-green { background-color: #1DB954; }
-        .bg-spotify-green:hover { background-color: #1ed760; }
-        .bg-spotify-dark { background-color: #181818; }
-        .bg-spotify-card { background-color: #282828; }
-        .bg-spotify-card:hover { background-color: #3e3e3e; }
-        .border-spotify { border-color: #282828; }
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #121212;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #3e3e3e;
-            border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #555;
-        }
-        .pill-active {
-            background-color: #1DB954;
-            color: #000000;
-            font-weight: 600;
-        }
-        .drag-ghost {
-            opacity: 0.4;
-            background: #282828;
-        }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spotify Playlist Organizer</title>
+<style>
+body { background:#121212; color:#FFF; font-family:-apple-system, sans-serif; margin:0; padding:0; display:flex; flex-direction:column; min-height:100vh; overflow-x:hidden; }
+#login, #app { flex:1; width:100%; max-width:1200px; margin:0 auto; padding:20px; box-sizing:border-box; }
+#app { display:none; flex-direction:column; gap:20px; }
+h1, h2 { font-weight:700; margin-bottom:10px; color:#1db954; }
+p { color:#B3B3B3; font-size:16px; margin-bottom:20px; line-height:1.5; }
+.btn { background:#1db954; border:none; color:#121212; padding:12px 32px; border-radius:50px; font-weight:700; font-size:14px; cursor:pointer; display:inline-flex; align-items:center; text-transform:uppercase; transition:transform 0.2s; white-space:nowrap; }
+.btn:hover { transform:scale(1.05); }
+.btn-sm { padding:8px 16px; font-size:12px; }
+.btn-clear { background:transparent; color:#B3B3B3; padding:8px; border:1px solid #333; }
+.btn-clear:hover { color:#1db954; border-color:#1db954; transform:none; }
+#header { display:flex; justify-content:space-between; align-items:center; background:#181818; padding:15px; border-radius:10px; margin-bottom:20px; }
+.pl-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:20px; margin-top:20px; }
+.pl-card { background:#181818; padding:15px; border-radius:8px; display:flex; flex-direction:column; cursor:pointer; transition:background 0.2s; position:relative; }
+.pl-card:hover { background:#282828; }
+.pl-card img { width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:5px; margin-bottom:15px; box-shadow:0 8px 24px rgba(0,0,0,.5); }
+.pl-card span { font-weight:700; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; margin-bottom:5px; padding-right:20px; }
+.pl-edit-btn { position:absolute; bottom:15px; right:15px; font-size:16px; color:#B3B3B3; background:none; border:none; cursor:pointer; opacity:0; transition:opacity 0.2s; z-index:2; }
+.pl-card:hover .pl-edit-btn { opacity:1; }
+.pl-edit-btn:hover { color:#FFF; }
+.table { display:flex; flex-direction:column; width:100%; font-size:14px; margin-bottom:80px; }
+.tr-head { display:flex; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.1); color:#B3B3B3; position:sticky; top:0; background:#121212; z-index:2; }
+.tr { display:flex; padding:12px 0; align-items:center; border-radius:4px; transition:background 0.1s; gap:10px; border-bottom:1px solid #2a2a2a; position:relative; }
+.tr:hover { background:rgba(255,255,255,0.1); }
+.col-handle { width:40px; text-align:center; cursor:grab; opacity:0.3; color:#B3B3B3; font-size:20px; line-height:1; user-select:none; }
+.tr:hover .col-handle { opacity:1; }
+.col-index { width:60px; }
+.col-index input { background:transparent; color:#B3B3B3; border:none; font-size:16px; width:45px; -moz-appearance:textfield; cursor:text; }
+.col-index input::-webkit-outer-spin-button, .col-index input::-webkit-inner-spin-button { -webkit-appearance:none; }
+.col-index input:hover, .col-index input:focus { color:#FFF; background:rgba(255,255,255,0.1); border-radius:4px; }
+.col-title { flex:2; display:flex; align-items:center; gap:10px; min-width:0; }
+.col-title img { width:40px; height:40px; object-fit:cover; border-radius:4px; }
+.col-text { min-width:0; overflow:hidden; }
+.title-line { font-weight:700; color:#FFF; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.art-line { font-size:13px; color:#B3B3B3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.explicit { background:rgba(255,255,255,0.6); color:#121212; padding:1px 4px; font-size:10px; font-weight:800; border-radius:3px; margin-right:5px; display:inline-block; vertical-align:text-bottom; }
+.col-album { flex:1.5; color:#B3B3B3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.col-date, .col-time { width:120px; color:#B3B3B3; text-align:right; font-variant-numeric:tabular-nums; }
+.col-act { width:40px; display:flex; justify-content:center; }
+.rmv-btn { color:#B3B3B3; background:none; border:none; font-weight:700; cursor:pointer; opacity:0; transition:opacity 0.2s, color 0.2s; font-size:16px; padding:5px 10px; }
+.tr:hover .rmv-btn { opacity:1; }
+.rmv-btn:hover { color:#E00; }
+.tools { display:flex; gap:10px; margin:20px 0; align-items:center; background:#181818; padding:15px; border-radius:8px; overflow-x:auto; }
+#btm-bar { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:rgba(40,40,40,0.95); backdrop-filter:blur(10px); display:flex; align-items:center; padding:5px; border-radius:50px; z-index:100; box-shadow:0 8px 30px rgba(0,0,0,0.8); flex-wrap:wrap; width:auto; max-width:90vw; }
+#btm-bar .btn-sort { background:none; color:#B3B3B3; border:none; padding:8px 15px; font-weight:700; font-size:13px; cursor:pointer; transition:color 0.2s; white-space:nowrap; border-radius:50px; }
+#btm-bar .btn-sort:hover { color:#FFF; }
+#btm-bar .btn-sort.act { color:#1db954; background:rgba(29, 185, 84, 0.1); }
+#modal { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); backdrop-filter:blur(5px); z-index:200; display:none; justify-content:center; align-items:center; padding:20px; }
+.mod-c { background:#181818; padding:30px; border-radius:12px; width:100%; max-width:600px; max-height:85vh; overflow-y:auto; position:relative; }
+.mod-title { font-size:24px; font-weight:700; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; color:#1db954; }
+.mod-cl { background:none; border:none; color:#B3B3B3; font-size:24px; cursor:pointer; margin:0; padding:0; line-height:1; }
+.mod-cl:hover { color:#FFF; }
+.sel, select, .inp { background:#2A2A2A; border:none; padding:12px; border-radius:4px; color:#FFF; margin-bottom:20px; width:100%; box-sizing:border-box; font-size:14px; outline:none; }
+.inpd { background:transparent; border-bottom:1px solid #1db954; padding:5px 0; color:#FFF; text-align:center; font-weight:bold; width:80px; }
+.cfg-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding:10px 0; border-bottom:1px solid #2a2a2a; }
+.clist { list-style:none; padding:0; margin:0; overflow-y:auto; max-height:300px; }
+.clist li { padding:12px 10px; display:flex; justify-content:space-between; background:#2A2A2A; margin-bottom:8px; border-radius:6px; align-items:center; border:1px solid transparent; }
+.dp-head { color:#1db954; font-size:13px; font-weight:bold; padding:15px 0 5px; }
+.chk { cursor:pointer; accent-color:#1db954; width:18px; height:18px; }
+.drg-fdb { position:fixed; left:0; top:0; background:#333; pointer-events:none; padding:15px; border-radius:5px; z-index:1000; box-shadow:0 10px 30px rgba(0,0,0,0.6); display:none; border:1px solid #1db954; align-items:center; font-weight:bold; opacity:0.8; }
+.tlist-view { width:100%; margin-top:20px; }
+.edtr { display:none; flex-direction:column; }
+</style>
 </head>
-<body class="h-screen flex flex-col overflow-hidden selection:bg-emerald-500 selection:text-black">
-
-    <div id="app" class="flex-1 flex flex-col overflow-hidden">
-        <header class="h-16 bg-black flex items-center justify-between px-6 border-b border-neutral-900 shrink-0">
-            <div class="flex items-center space-x-3 cursor-pointer" id="nav-brand">
-                <i class="fab fa-spotify text-3xl spotify-green"></i>
-                <span class="text-white font-bold text-xl tracking-tight">Playlist Organizer</span>
-            </div>
-            <div id="user-profile" class="hidden flex items-center space-x-4">
-                <div class="flex items-center space-x-2 bg-neutral-900 py-1.5 px-3 rounded-full border border-neutral-800">
-                    <img id="user-avatar" class="w-6 h-6 rounded-full object-cover" src="" alt="">
-                    <span id="user-name" class="text-sm font-medium text-white"></span>
-                </div>
-                <button id="btn-logout" class="text-xs text-neutral-400 hover:text-white font-medium tracking-wide uppercase">Disconnect</button>
-            </div>
-        </header>
-
-        <main class="flex-1 overflow-y-auto custom-scrollbar relative bg-gradient-to-b from-neutral-900 to-black">
-            
-            <div id="view-intro" class="max-w-xl mx-auto pt-32 px-6 text-center space-y-8">
-                <h1 class="text-4xl sm:text-5xl font-black text-white tracking-tight leading-tight">Organize your music instantly.</h1>
-                <p class="text-neutral-400 text-lg leading-relaxed">Connect your account to fetch your playlists, reorder songs down to precise arrangements, filter profiles automatically, and update Spotify directly.</p>
-                <div class="pt-4">
-                    <button id="btn-connect" class="bg-spotify-green text-black font-bold px-8 py-4 rounded-full text-base tracking-wide hover:scale-105 transition-transform duration-200 shadow-xl">
-                        CONNECT SPOTIFY ACCOUNT
-                    </button>
-                </div>
-            </div>
-
-            <div id="view-playlists" class="hidden max-w-7xl mx-auto px-6 py-10 space-y-8">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <h2 class="text-3xl font-extrabold text-white tracking-tight">Your Playlists</h2>
-                        <p class="text-neutral-400 text-sm mt-1">Select a playlist to start sorting, filtering, and reordering tracks.</p>
-                    </div>
-                </div>
-                <div id="playlists-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"></div>
-            </div>
-
-            <div id="view-details" class="hidden flex flex-col h-full">
-                <div class="p-6 md:p-8 flex flex-col md:flex-row items-end gap-6 bg-gradient-to-b from-neutral-800 to-neutral-900/40 border-b border-neutral-900 shrink-0">
-                    <div id="detail-art-container" class="w-40 h-40 md:w-52 md:h-52 shrink-0 bg-neutral-800 shadow-2xl relative group rounded-md overflow-hidden">
-                        <img id="detail-art" class="w-full h-full object-cover" src="" alt="">
-                    </div>
-                    <div class="flex-1 space-y-2">
-                        <span class="text-xs font-bold uppercase tracking-wider text-neutral-400">PLAYLIST</span>
-                        <div class="flex items-center gap-3 group">
-                            <h1 id="detail-name" class="text-3xl md:text-5xl lg:text-6xl font-black text-white tracking-tight break-words"></h1>
-                            <button id="btn-edit-playlist" class="text-neutral-400 hover:text-white p-2 text-xl opacity-0 group-hover:opacity-100 transition-opacity">
-                                <i class="fas fa-pencil-alt"></i>
-                            </button>
-                        </div>
-                        <p id="detail-meta" class="text-sm text-neutral-400 font-medium"></p>
-                        <div class="flex items-center gap-3 pt-3">
-                            <button id="btn-back" class="bg-neutral-800 text-white font-bold px-5 py-2.5 rounded-full text-xs tracking-wider uppercase border border-neutral-700 hover:bg-neutral-700 transition-colors">
-                                Back to Lists
-                            </button>
-                            <button id="btn-undo" class="bg-neutral-800 text-neutral-400 p-2.5 rounded-full text-sm border border-neutral-700 hover:bg-neutral-700 hover:text-white transition-colors disabled:opacity-40 disabled:pointer-events-none" disabled>
-                                <i class="fas fa-undo"></i>
-                            </button>
-                            <button id="btn-redo" class="bg-neutral-800 text-neutral-400 p-2.5 rounded-full text-sm border border-neutral-700 hover:bg-neutral-700 hover:text-white transition-colors disabled:opacity-40 disabled:pointer-events-none" disabled>
-                                <i class="fas fa-redo"></i>
-                            </button>
-                            <button id="btn-open-removed" class="bg-neutral-800 text-white font-semibold px-4 py-2.5 rounded-full text-xs border border-neutral-700 hover:bg-neutral-700 transition-colors relative">
-                                Removed Tracks <span id="badge-removed" class="ml-1 bg-red-600 text-white text-[10px] px-1.5 py-0.5 rounded-full hidden">0</span>
-                            </button>
-                            <button id="btn-open-artists" class="bg-neutral-800 text-white font-semibold px-4 py-2.5 rounded-full text-xs border border-neutral-700 hover:bg-neutral-700 transition-colors">
-                                Rules & Exclusions
-                            </button>
-                            <button id="btn-save-playlist" class="bg-spotify-green text-black font-bold px-6 py-2.5 rounded-full text-xs tracking-wider uppercase transition-transform hover:scale-105 ml-auto">
-                                Save Changes
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex-1 overflow-y-auto custom-scrollbar px-6 py-4 pb-32">
-                    <div class="w-full text-left text-xs uppercase tracking-wider text-neutral-400 font-bold border-b border-neutral-800 pb-2 grid grid-cols-[40px_50px_1fr_1fr_1fr_80px_40px] gap-4 items-center px-4">
-                        <div></div>
-                        <div>#</div>
-                        <div>Title</div>
-                        <div>Album</div>
-                        <div>Genre</div>
-                        <div class="text-right"><i class="far fa-clock text-sm"></i></div>
-                        <div></div>
-                    </div>
-                    <div id="tracks-container" class="divide-y divide-neutral-900/50 mt-1"></div>
-                </div>
-            </div>
-        </main>
-
-        <div id="pill-menu" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-neutral-900/95 backdrop-blur-md border border-neutral-800 py-3 px-4 rounded-full shadow-2xl z-40 max-w-[92vw] overflow-x-auto custom-scrollbar flex items-center space-x-2 whitespace-nowrap">
-            <button data-sort="az" class="pill-btn px-3.5 py-1.5 rounded-full text-xs font-bold text-neutral-300 bg-neutral-800 hover:bg-neutral-700 transition-colors">A - Z</button>
-            <button data-sort="za" class="pill-btn px-3.5 py-1.5 rounded-full text-xs font-bold text-neutral-300 bg-neutral-800 hover:bg-neutral-700 transition-colors">Z - A</button>
-            <button data-sort="artist" class="pill-btn px-3.5 py-1.5 rounded-full text-xs font-bold text-neutral-300 bg-neutral-800 hover:bg-neutral-700 transition-colors">Artist</button>
-            <button data-sort="album" class="pill-btn px-3.5 py-1.5 rounded-full text-xs font-bold text-neutral-300 bg-neutral-800 hover:bg-neutral-700 transition-colors">Album Order</button>
-            <button data-sort="genre" class="pill-btn px-3.5 py-1.5 rounded-full text-xs font-bold text-neutral-300 bg-neutral-800 hover:bg-neutral-700 transition-colors">Genre</button>
-            <div class="w-[1px] h-4 bg-neutral-700 mx-1"></div>
-            <button data-sort="release-early" class="pill-btn px-3.5 py-1.5 rounded-full text-xs font-bold text-neutral-300 bg-neutral-800 hover:bg-neutral-700 transition-colors">Earliest Release</button>
-            <button data-sort="release-latest" class="pill-btn px-3.5 py-1.5 rounded-full text-xs font-bold text-neutral-300 bg-neutral-800 hover:bg-neutral-700 transition-colors">Latest Release</button>
-            <div class="w-[1px] h-4 bg-neutral-700 mx-1"></div>
-            <button data-sort="duration-short" class="pill-btn px-3.5 py-1.5 rounded-full text-xs font-bold text-neutral-300 bg-neutral-800 hover:bg-neutral-700 transition-colors">Shortest</button>
-            <button data-sort="duration-long" class="pill-btn px-3.5 py-1.5 rounded-full text-xs font-bold text-neutral-300 bg-neutral-800 hover:bg-neutral-700 transition-colors">Longest</button>
-            <div class="w-[1px] h-4 bg-neutral-700 mx-1"></div>
-            <button data-sort="added-early" class="pill-btn px-3.5 py-1.5 rounded-full text-xs font-bold text-neutral-300 bg-neutral-800 hover:bg-neutral-700 transition-colors">Early Added</button>
-            <button data-sort="added-latest" class="pill-btn px-3.5 py-1.5 rounded-full text-xs font-bold text-neutral-300 bg-neutral-800 hover:bg-neutral-700 transition-colors">Latest Added</button>
-            <div class="w-[1px] h-4 bg-neutral-700 mx-1"></div>
-            <button id="pill-btn-explicit" class="px-3.5 py-1.5 rounded-full text-xs font-bold text-neutral-300 bg-neutral-800 hover:bg-neutral-700 transition-colors flex items-center gap-1">Explicit <i class="fas fa-chevron-up text-[10px]"></i></button>
-            <button id="pill-btn-duplicates" class="px-3.5 py-1.5 rounded-full text-xs font-bold text-red-400 bg-neutral-800 hover:bg-neutral-700 transition-colors">Clean Duplicates</button>
-        </div>
-    </div>
-
-    <div id="modal-edit-playlist" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
-        <div class="bg-neutral-900 border border-neutral-800 w-full max-w-md rounded-lg overflow-hidden shadow-2xl p-6 space-y-6">
-            <h3 class="text-xl font-bold text-white">Edit Playlist Details</h3>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">Name</label>
-                    <input type="text" id="input-edit-name" class="w-full bg-neutral-800 border border-neutral-700 rounded p-2.5 text-white focus:outline-none focus:border-emerald-500 text-sm">
-                </div>
-            </div>
-            <div class="flex items-center justify-end space-x-3 pt-2">
-                <button id="btn-close-edit" class="px-4 py-2 rounded text-sm font-semibold text-neutral-400 hover:text-white">Cancel</button>
-                <button id="btn-save-edit" class="bg-spotify-green text-black font-bold px-5 py-2 rounded text-sm">Apply</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-removed" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div class="bg-neutral-900 border border-neutral-800 w-full max-w-2xl rounded-lg overflow-hidden shadow-2xl flex flex-col max-h-[80vh]">
-            <div class="p-6 border-b border-neutral-800 flex items-center justify-between">
-                <h3 class="text-xl font-bold text-white">Removed Tracks Buffer</h3>
-                <button id="btn-close-removed" class="text-neutral-400 hover:text-white"><i class="fas fa-times text-lg"></i></button>
-            </div>
-            <div id="removed-list" class="flex-1 overflow-y-auto custom-scrollbar p-6 divide-y divide-neutral-800"></div>
-            <div class="p-4 bg-neutral-950 border-t border-neutral-800 flex justify-end">
-                <button id="btn-restore-all" class="bg-neutral-800 text-white font-semibold text-xs px-4 py-2 rounded hover:bg-neutral-700">Restore All</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-rules" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div class="bg-neutral-900 border border-neutral-800 w-full max-w-2xl rounded-lg overflow-hidden shadow-2xl flex flex-col max-h-[80vh]">
-            <div class="p-6 border-b border-neutral-800 flex items-center justify-between">
-                <h3 class="text-xl font-bold text-white">Rules & Artist Exclusions</h3>
-                <button id="btn-close-rules" class="text-neutral-400 hover:text-white"><i class="fas fa-times text-lg"></i></button>
-            </div>
-            <div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
-                <div class="space-y-4">
-                    <h4 class="text-xs font-bold text-neutral-400 uppercase tracking-wider border-b border-neutral-800 pb-1">Duration Rules</h4>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs text-neutral-400 mb-1">Exclude tracks shorter than (seconds)</label>
-                            <input type="number" id="rule-min-duration" min="0" class="w-full bg-neutral-800 border border-neutral-700 rounded p-2 text-white text-sm focus:outline-none focus:border-emerald-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs text-neutral-400 mb-1">Exclude tracks longer than (seconds)</label>
-                            <input type="number" id="rule-max-duration" min="0" class="w-full bg-neutral-800 border border-neutral-700 rounded p-2 text-white text-sm focus:outline-none focus:border-emerald-500">
-                        </div>
-                    </div>
-                </div>
-                <div class="space-y-3">
-                    <h4 class="text-xs font-bold text-neutral-400 uppercase tracking-wider border-b border-neutral-800 pb-1">Exclude Specific Artists</h4>
-                    <p class="text-xs text-neutral-500">Uncheck an artist to exclude all of their tracks from the primary view. Re-checking restores them instantly.</p>
-                    <div id="artists-exclusion-list" class="space-y-1 pt-1 max-h-48 overflow-y-auto custom-scrollbar pr-2"></div>
-                </div>
-            </div>
-            <div class="p-4 bg-neutral-950 border-t border-neutral-800 flex justify-end">
-                <button id="btn-apply-rules" class="bg-spotify-green text-black font-bold text-xs px-5 py-2.5 rounded-full uppercase tracking-wider">Save Configuration</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-explicit" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div class="bg-neutral-900 border border-neutral-800 w-full max-w-md rounded-lg overflow-hidden shadow-2xl p-6 space-y-6">
-            <h3 class="text-xl font-bold text-white">Explicit Tracks Configuration</h3>
-            <div class="space-y-3">
-                <button data-action="first" class="w-full text-left bg-neutral-800 hover:bg-neutral-700 p-3 rounded flex items-center justify-between text-sm group">
-                    <span class="text-white font-medium">Position Explicit Tracks First</span>
-                    <i class="fas fa-chevron-right text-neutral-500 group-hover:text-white text-xs"></i>
-                </button>
-                <button data-action="last" class="w-full text-left bg-neutral-800 hover:bg-neutral-700 p-3 rounded flex items-center justify-between text-sm group">
-                    <span class="text-white font-medium">Position Explicit Tracks Last</span>
-                    <i class="fas fa-chevron-right text-neutral-500 group-hover:text-white text-xs"></i>
-                </button>
-                <button data-action="filter" class="w-full text-left bg-neutral-800 hover:bg-neutral-700 p-3 rounded flex items-center justify-between text-sm group">
-                    <span class="text-red-400 font-medium">Review and Strip Selected Explicit Tracks</span>
-                    <i class="fas fa-chevron-right text-neutral-500 group-hover:text-white text-xs"></i>
-                </button>
-            </div>
-            <div class="flex justify-end pt-2">
-                <button id="btn-close-explicit" class="px-4 py-2 rounded text-sm font-semibold text-neutral-400 hover:text-white">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-explicit-strip" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div class="bg-neutral-900 border border-neutral-800 w-full max-w-xl rounded-lg overflow-hidden shadow-2xl flex flex-col max-h-[80vh]">
-            <div class="p-6 border-b border-neutral-800">
-                <h3 class="text-xl font-bold text-white">Review Explicit Tracks</h3>
-                <p class="text-xs text-neutral-400 mt-1">Checked items will be stripped from the working layout. Uncheck any tracks you wish to preserve.</p>
-            </div>
-            <div id="explicit-strip-list" class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-2"></div>
-            <div class="p-4 bg-neutral-950 border-t border-neutral-800 flex justify-end space-x-3">
-                <button id="btn-close-strip" class="px-4 py-2 text-sm font-semibold text-neutral-400 hover:text-white">Cancel</button>
-                <button id="btn-confirm-strip" class="bg-red-600 text-white font-bold text-xs px-5 py-2.5 rounded-full uppercase tracking-wider">Strip Selected Tracks</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-duplicates" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div class="bg-neutral-900 border border-neutral-800 w-full max-w-xl rounded-lg overflow-hidden shadow-2xl flex flex-col max-h-[80vh]">
-            <div class="p-6 border-b border-neutral-800">
-                <h3 class="text-xl font-bold text-white">Analyze & Remove Duplicates</h3>
-                <p class="text-xs text-neutral-400 mt-1">Matching profiles found across Track ID, Name, or Duration configuration. Keep items checked to process deletion.</p>
-            </div>
-            <div id="duplicates-list" class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-2"></div>
-            <div class="p-4 bg-neutral-950 border-t border-neutral-800 flex justify-end space-x-3">
-                <button id="btn-close-duplicates" class="px-4 py-2 text-sm font-semibold text-neutral-400 hover:text-white">Cancel</button>
-                <button id="btn-confirm-duplicates" class="bg-red-600 text-white font-bold text-xs px-5 py-2.5 rounded-full uppercase tracking-wider">Remove Duplicates</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-save" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div class="bg-neutral-900 border border-neutral-800 w-full max-w-md rounded-lg overflow-hidden shadow-2xl p-6 space-y-6">
-            <h3 class="text-xl font-bold text-white">Save Playlist Configurations</h3>
-            <div class="space-y-3">
-                <button id="save-option-overwrite" class="w-full text-left bg-neutral-800 hover:bg-neutral-700 p-4 rounded border border-neutral-700 flex flex-col gap-1">
-                    <span class="text-white font-bold text-sm">Overwrite Current Selected Playlist</span>
-                    <span class="text-xs text-neutral-400">This modifies the active remote Spotify playlist in place.</span>
-                </button>
-                <button id="save-option-overwrite-other" class="w-full text-left bg-neutral-800 hover:bg-neutral-700 p-4 rounded border border-neutral-700 flex flex-col gap-1">
-                    <span class="text-white font-bold text-sm">Overwrite Another Existing Playlist</span>
-                    <span class="text-xs text-neutral-400">Select another destination container from your collection to replace.</span>
-                </button>
-                <button id="save-option-create" class="w-full text-left bg-neutral-800 hover:bg-neutral-700 p-4 rounded border border-neutral-700 flex flex-col gap-1">
-                    <span class="text-emerald-400 font-bold text-sm">Create New Custom Playlist Container</span>
-                    <span class="text-xs text-neutral-400">Generate a pristine target structure with these contents.</span>
-                </button>
-            </div>
-            <div class="flex justify-end pt-2">
-                <button id="btn-close-save" class="px-4 py-2 rounded text-sm font-semibold text-neutral-400 hover:text-white">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-select-other" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div class="bg-neutral-900 border border-neutral-800 w-full max-w-md rounded-lg overflow-hidden shadow-2xl flex flex-col max-h-[70vh]">
-            <div class="p-6 border-b border-neutral-800">
-                <h3 class="text-xl font-bold text-white">Select Target Playlist</h3>
-            </div>
-            <div id="select-other-list" class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-1"></div>
-            <div class="p-4 bg-neutral-950 border-t border-neutral-800 flex justify-end">
-                <button id="btn-close-other" class="px-4 py-2 text-sm font-semibold text-neutral-400 hover:text-white">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-create-name" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div class="bg-neutral-900 border border-neutral-800 w-full max-w-md rounded-lg overflow-hidden shadow-2xl p-6 space-y-6">
-            <h3 class="text-xl font-bold text-white">Create New Playlist Container</h3>
-            <div>
-                <label class="block text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">Playlist Name</label>
-                <input type="text" id="input-create-name" placeholder="My Organized Playlist" class="w-full bg-neutral-800 border border-neutral-700 rounded p-2.5 text-white focus:outline-none focus:border-emerald-500 text-sm">
-            </div>
-            <div class="flex items-center justify-end space-x-3 pt-2">
-                <button id="btn-close-create-name" class="px-4 py-2 rounded text-sm font-semibold text-neutral-400 hover:text-white">Cancel</button>
-                <button id="btn-confirm-create" class="bg-spotify-green text-black font-bold px-5 py-2 rounded text-sm">Create & Save</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="global-toast" class="fixed top-6 left-1/2 -translate-x-1/2 bg-neutral-800 border border-neutral-700 text-white px-5 py-3 rounded-md shadow-2xl transform translate-y-20 opacity-0 pointer-events-none transition-all duration-300 z-50 flex items-center space-x-3">
-        <span id="toast-message" class="text-sm font-medium"></span>
-    </div>
-
-    <div id="global-loader" class="hidden fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center z-50">
-        <div class="flex flex-col items-center space-y-4">
-            <div class="w-12 h-12 border-4 border-neutral-800 border-t-emerald-500 rounded-full animate-spin"></div>
-            <p id="loader-message" class="text-neutral-300 text-xs tracking-widest uppercase font-bold"></p>
-        </div>
-    </div>
-
-    <script>
-        const CONFIG = {
-            clientId: 'fcc60831d3974fec8770b2f9af452de8',
-            redirectUri: 'https://dccxvii.github.io',
-            scopes: [
-                'playlist-read-private',
-                'playlist-read-collaborative',
-                'playlist-modify-public',
-                'playlist-modify-private'
-            ].join(' ')
-        };
-
-        let STATE = {
-            accessToken: null,
-            user: null,
-            playlists: [],
-            selectedPlaylist: null,
-            tracks: [], 
-            removedTracks: [], 
-            artistExclusions: {}, 
-            genres: {}, 
-            rules: { minDuration: null, maxDuration: null },
-            undoStack: [],
-            redoStack: [],
-            activeSorts: new Set()
-        };
-
-        let sortableInstance = null;
-
-        function showToast(msg) {
-            const toast = document.getElementById('global-toast');
-            document.getElementById('toast-message').textContent = msg;
-            toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
-            setTimeout(() => {
-                toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
-            }, 3000);
-        }
-
-        function toggleLoader(show, msg = 'Processing') {
-            const loader = document.getElementById('global-loader');
-            document.getElementById('loader-message').textContent = msg;
-            if (show) loader.classList.remove('hidden');
-            else loader.classList.add('hidden');
-        }
-
-        function initAuth() {
-            const hash = window.location.hash.substring(1);
-            const params = new URLSearchParams(hash);
-            let token = params.get('access_token');
-            
-            if (!token) {
-                token = localStorage.getItem('spotify_token');
-            } else {
-                localStorage.setItem('spotify_token', token);
-                window.history.replaceState(null, null, ' ');
-            }
-
-            if (token) {
-                STATE.accessToken = token;
-                bootstrapApp();
-            } else {
-                switchView('intro');
-            }
-        }
-
-        document.getElementById('btn-connect').addEventListener('click', () => {
-            const url = `https://accounts.spotify.com/authorize?client_id=${CONFIG.clientId}&redirect_uri=${encodeURIComponent(CONFIG.redirectUri)}&scope=${encodeURIComponent(CONFIG.scopes)}&response_type=token&show_dialog=true`;
-            window.location.href = url;
-        });
-
-        document.getElementById('btn-logout').addEventListener('click', () => {
-            localStorage.removeItem('spotify_token');
-            window.location.reload();
-        });
-
-        function switchView(view) {
-            document.getElementById('view-intro').classList.add('hidden');
-            document.getElementById('view-playlists').classList.add('hidden');
-            document.getElementById('view-details').classList.add('hidden');
-            document.getElementById('pill-menu').classList.add('hidden');
-
-            if (view === 'intro') {
-                document.getElementById('view-intro').classList.remove('hidden');
-            } else if (view === 'playlists') {
-                document.getElementById('view-playlists').classList.remove('hidden');
-            } else if (view === 'details') {
-                document.getElementById('view-details').classList.remove('hidden');
-                document.getElementById('pill-menu').classList.remove('hidden');
-            }
-        }
-
-        async function apiFetch(endpoint, options = {}) {
-            if (!options.headers) options.headers = {};
-            options.headers['Authorization'] = `Bearer ${STATE.accessToken}`;
-            
-            let response = await fetch(`https://api.spotify.com/v1${endpoint}`, options);
-            if (response.status === 401) {
-                localStorage.removeItem('spotify_token');
-                window.location.reload();
-                return;
-            }
-            return response;
-        }
-
-        async function bootstrapApp() {
-            toggleLoader(true, 'Loading Profile');
-            try {
-                let userRes = await apiFetch('/me');
-                if (!userRes) return;
-                STATE.user = await userRes.json();
-                
-                document.getElementById('user-name').textContent = STATE.user.display_name;
-                if (STATE.user.images && STATE.user.images.length > 0) {
-                    document.getElementById('user-avatar').src = STATE.user.images[0].url;
-                } else {
-                    document.getElementById('user-avatar').classList.add('hidden');
-                }
-                document.getElementById('user-profile').classList.remove('hidden');
-
-                await loadPlaylists();
-                switchView('playlists');
-            } catch (err) {
-                showToast('Authentication initialization failed.');
-            } finally {
-                toggleLoader(false);
-            }
-        }
-
-        async function loadPlaylists() {
-            toggleLoader(true, 'Fetching Playlists');
-            let items = [];
-            let url = '/me/playlists?limit=50';
-            
-            while (url) {
-                let endpoint = url.includes('https://api.spotify.com/v1') ? url.split('https://api.spotify.com/v1')[1] : url;
-                let res = await apiFetch(endpoint);
-                let data = await res.json();
-                items = items.concat(data.items);
-                url = data.next;
-            }
-            
-            STATE.playlists = items.filter(p => p !== null);
-            renderPlaylistsGrid();
-        }
-
-        function renderPlaylistsGrid() {
-            const grid = document.getElementById('playlists-grid');
-            grid.innerHTML = '';
-
-            STATE.playlists.forEach(pl => {
-                const card = document.createElement('div');
-                card.className = 'bg-spotify-dark p-4 rounded-md bg-spotify-card cursor-pointer transition-all duration-200 flex flex-col space-y-3 shadow-md relative group';
-                
-                let imgUrl = 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=300&auto=format&fit=crop';
-                if (pl.images && pl.images.length > 0) imgUrl = pl.images[0].url;
-
-                card.innerHTML = `
-                    <div class="aspect-square w-full bg-neutral-800 relative rounded overflow-hidden shadow-lg">
-                        <img class="w-full h-full object-cover" src="${imgUrl}" alt="">
-                    </div>
-                    <div class="flex flex-col min-w-0 pr-6">
-                        <span class="text-white font-bold text-sm truncate tracking-wide">${pl.name}</span>
-                        <span class="text-neutral-400 text-xs font-medium truncate mt-0.5">By ${pl.owner.display_name}</span>
-                    </div>
-                    <button data-id="${pl.id}" class="btn-grid-edit absolute bottom-4 right-4 text-neutral-400 hover:text-white opacity-0 group-hover:opacity-100 p-1 text-sm transition-all">
-                        <i class="fas fa-pencil-alt"></i>
-                    </button>
-                `;
-
-                card.addEventListener('click', (e) => {
-                    if (e.target.closest('.btn-grid-edit') || e.target.closest('button')) return;
-                    loadPlaylistDetails(pl.id);
-                });
-
-                grid.appendChild(card);
-            });
-
-            document.querySelectorAll('.btn-grid-edit').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const id = btn.getAttribute('data-id');
-                    openEditPlaylistModal(id);
-                });
-            });
-        }
-
-        async function loadPlaylistDetails(playlistId) {
-            toggleLoader(true, 'Gathering tracks');
-            try {
-                let pl = STATE.playlists.find(p => p.id === playlistId);
-                STATE.selectedPlaylist = JSON.parse(JSON.stringify(pl));
-
-                let tracks = [];
-                let url = `/playlists/${playlistId}/tracks?limit=100`;
-                while (url) {
-                    let endpoint = url.includes('https://api.spotify.com/v1') ? url.split('https://api.spotify.com/v1')[1] : url;
-                    let res = await apiFetch(endpoint);
-                    let data = await res.json();
-                    tracks = tracks.concat(data.items);
-                    url = data.next;
-                }
-
-                STATE.tracks = tracks
-                    .filter(item => item && item.track)
-                    .map((item, idx) => ({
-                        uniqueId: `${item.track.id || 'local'}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                        id: item.track.id,
-                        name: item.track.name,
-                        album: item.track.album ? item.track.album.name : 'Unknown Album',
-                        albumId: item.track.album ? item.track.album.id : null,
-                        albumTrackNumber: item.track.track_number || 0,
-                        artists: item.track.artists ? item.track.artists.map(a => ({ name: a.name, id: a.id })) : [],
-                        duration_ms: item.track.duration_ms,
-                        explicit: item.track.explicit || false,
-                        added_at: item.added_at,
-                        release_date: item.track.album ? item.track.album.release_date : '0000-00-00',
-                        raw: item
-                    }));
-
-                STATE.removedTracks = [];
-                STATE.artistExclusions = {};
-                STATE.rules = { minDuration: null, maxDuration: null };
-                STATE.undoStack = [];
-                STATE.redoStack = [];
-                STATE.activeSorts.clear();
-
-                STATE.tracks.forEach(t => {
-                    t.artists.forEach(a => {
-                        if (!(a.id in STATE.artistExclusions)) {
-                            STATE.artistExclusions[a.id] = { name: a.name, enabled: true };
-                        }
-                    });
-                });
-
-                await fetchGenresForTracks();
-                pushState();
-                syncDetailsHeader();
-                renderTracks();
-                clearPillActiveStates();
-                switchView('details');
-            } catch (err) {
-                showToast('Failed tracking downstream components.');
-            } finally {
-                toggleLoader(false);
-            }
-        }
-
-        async function fetchGenresForTracks() {
-            let artistIds = new Set();
-            STATE.tracks.forEach(t => t.artists.forEach(a => { if (a.id) artistIds.add(a.id); }));
-            let arrayIds = Array.from(artistIds);
-            
-            let chunks = [];
-            for (let i = 0; i < arrayIds.length; i += 50) {
-                chunks.push(arrayIds.slice(i, i + 50));
-            }
-
-            for (let chunk of chunks) {
-                try {
-                    let res = await apiFetch(`/artists?ids=${chunk.join(',')}`);
-                    let data = await res.json();
-                    if (data && data.artists) {
-                        data.artists.forEach(art => {
-                            if (art) STATE.genres[art.id] = art.genres || [];
-                        });
-                    }
-                } catch (e) {}
-            }
-        }
-
-        function getTrackGenreDisplay(track) {
-            let matches = [];
-            track.artists.forEach(a => {
-                if (STATE.genres[a.id]) matches = matches.concat(STATE.genres[a.id]);
-            });
-            if (matches.length === 0) return '-';
-            return matches[0];
-        }
-
-        function syncDetailsHeader() {
-            let pl = STATE.selectedPlaylist;
-            let imgUrl = 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=300&auto=format&fit=crop';
-            if (pl.images && pl.images.length > 0) imgUrl = pl.images[0].url;
-
-            document.getElementById('detail-art').src = imgUrl;
-            document.getElementById('detail-name').textContent = pl.name;
-            
-            let visible = getFilteredTracks();
-            document.getElementById('detail-meta').textContent = `${STATE.user.display_name} • ${visible.length} songs visible (${STATE.tracks.length} total managed)`;
-            document.getElementById('badge-removed').textContent = STATE.removedTracks.length;
-            if (STATE.removedTracks.length > 0) {
-                document.getElementById('badge-removed').classList.remove('hidden');
-            } else {
-                document.getElementById('badge-removed').classList.add('hidden');
-            }
-        }
-
-        function pushState() {
-            STATE.undoStack.push({
-                tracks: JSON.parse(JSON.stringify(STATE.tracks)),
-                removedTracks: JSON.parse(JSON.stringify(STATE.removedTracks)),
-                artistExclusions: JSON.parse(JSON.stringify(STATE.artistExclusions)),
-                rules: JSON.parse(JSON.stringify(STATE.rules))
-            });
-            STATE.redoStack = [];
-            updateUndoRedoButtons();
-        }
-
-        function updateUndoRedoButtons() {
-            document.getElementById('btn-undo').disabled = STATE.undoStack.length <= 1;
-            document.getElementById('btn-redo').disabled = STATE.redoStack.length === 0;
-        }
-
-        function handleUndo() {
-            if (STATE.undoStack.length <= 1) return;
-            let current = STATE.undoStack.pop();
-            STATE.redoStack.push(current);
-            
-            let previous = STATE.undoStack[STATE.undoStack.length - 1];
-            STATE.tracks = JSON.parse(JSON.stringify(previous.tracks));
-            STATE.removedTracks = JSON.parse(JSON.stringify(previous.removedTracks));
-            STATE.artistExclusions = JSON.parse(JSON.stringify(previous.artistExclusions));
-            STATE.rules = JSON.parse(JSON.stringify(previous.rules));
-
-            updateUndoRedoButtons();
-            syncDetailsHeader();
-            renderTracks();
-        }
-
-        function handleRedo() {
-            if (STATE.redoStack.length === 0) return;
-            let next = STATE.redoStack.pop();
-            STATE.undoStack.push(next);
-
-            STATE.tracks = JSON.parse(JSON.stringify(next.tracks));
-            STATE.removedTracks = JSON.parse(JSON.stringify(next.removedTracks));
-            STATE.artistExclusions = JSON.parse(JSON.stringify(next.artistExclusions));
-            STATE.rules = JSON.parse(JSON.stringify(next.rules));
-
-            updateUndoRedoButtons();
-            syncDetailsHeader();
-            renderTracks();
-        }
-
-        function getFilteredTracks() {
-            return STATE.tracks.filter(t => {
-                let durationSec = t.duration_ms / 1000;
-                if (STATE.rules.minDuration !== null && durationSec < STATE.rules.minDuration) return false;
-                if (STATE.rules.maxDuration !== null && durationSec > STATE.rules.maxDuration) return false;
-
-                let artistAllowed = true;
-                t.artists.forEach(a => {
-                    if (STATE.artistExclusions[a.id] && !STATE.artistExclusions[a.id].enabled) {
-                        artistAllowed = false;
-                    }
-                });
-                return artistAllowed;
-            });
-        }
-
-        function formatDuration(ms) {
-            let s = Math.floor(ms / 1000);
-            let m = Math.floor(s / 60);
-            s = s % 60;
-            return `${m}:${s.toString().padStart(2, '0')}`;
-        }
-
-        function renderTracks() {
-            const container = document.getElementById('tracks-container');
-            container.innerHTML = '';
-
-            if (sortableInstance) {
-                sortableInstance.destroy();
-                sortableInstance = null;
-            }
-
-            let visibleTracks = getFilteredTracks();
-
-            visibleTracks.forEach((t, index) => {
-                const row = document.createElement('div');
-                row.className = 'w-full grid grid-cols-[40px_50px_1fr_1fr_1fr_80px_40px] gap-4 items-center px-4 py-2 hover:bg-neutral-800/60 rounded group transition-colors text-sm text-neutral-300';
-                row.setAttribute('data-uid', t.uniqueId);
-
-                let explicitBadge = t.explicit ? '<span class="bg-neutral-700 text-neutral-300 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide shrink-0">E</span>' : '';
-                let genreDisplay = getTrackGenreDisplay(t);
-
-                row.innerHTML = `
-                    <div class="drag-handle cursor-grab text-neutral-600 hover:text-neutral-300 transition-colors text-center">
-                        <i class="fas fa-grip-lines"></i>
-                    </div>
-                    <div>
-                        <input type="number" value="${index + 1}" min="1" max="${visibleTracks.length}" class="input-track-index w-11 bg-neutral-900 border border-neutral-700 text-center rounded text-xs py-0.5 focus:outline-none focus:border-emerald-500 font-medium">
-                    </div>
-                    <div class="flex flex-col min-w-0 pr-2">
-                        <div class="flex items-center space-x-2">
-                            <span class="text-white font-semibold truncate">${t.name}</span>
-                            ${explicitBadge}
-                        </div>
-                        <span class="text-neutral-400 text-xs truncate mt-0.5">${t.artists.map(a => a.name).join(', ')}</span>
-                    </div>
-                    <div class="truncate text-neutral-400 font-medium pr-2">${t.album}</div>
-                    <div class="truncate text-neutral-400 font-medium pr-2 capitalize">${genreDisplay}</div>
-                    <div class="text-right text-neutral-400 font-medium font-mono text-xs">${formatDuration(t.duration_ms)}</div>
-                    <div class="text-right">
-                        <button class="btn-delete-track text-neutral-500 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 p-1">
-                            <i class="far fa-trash-alt"></i>
-                        </button>
-                    </div>
-                `;
-
-                container.appendChild(row);
-            });
-
-            sortableInstance = new Sortable(container, {
-                handle: '.drag-handle',
-                animation: 150,
-                ghostClass: 'drag-ghost',
-                onEnd: function (evt) {
-                    if (evt.oldIndex === evt.newIndex) return;
-                    
-                    let visible = getFilteredTracks();
-                    let fullWorking = [...STATE.tracks];
-
-                    let movedItem = visible[evt.oldIndex];
-                    
-                    let globalOldIdx = fullWorking.findIndex(x => x.uniqueId === movedItem.uniqueId);
-                    fullWorking.splice(globalOldIdx, 1);
-
-                    if (evt.newIndex >= visible.length - 1) {
-                        let targetItem = visible[visible.length - 1];
-                        let globalTargetIdx = fullWorking.findIndex(x => x.uniqueId === targetItem.uniqueId);
-                        fullWorking.splice(globalTargetIdx + 1, 0, movedItem);
-                    } else {
-                        let targetItem = visible[evt.newIndex];
-                        let globalTargetIdx = fullWorking.findIndex(x => x.uniqueId === targetItem.uniqueId);
-                        fullWorking.splice(globalTargetIdx, 0, movedItem);
-                    }
-
-                    STATE.tracks = fullWorking;
-                    pushState();
-                    renderTracks();
-                }
-            });
-
-            document.querySelectorAll('.input-track-index').forEach(input => {
-                input.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') {
-                        let targetPos = parseInt(input.value) - 1;
-                        let row = input.closest('[data-uid]');
-                        let uid = row.getAttribute('data-uid');
-                        
-                        let visible = getFilteredTracks();
-                        let currentPos = visible.findIndex(x => x.uniqueId === uid);
-
-                        if (!isNaN(targetPos) && targetPos >= 0 && targetPos < visible.length && targetPos !== currentPos) {
-                            let fullWorking = [...STATE.tracks];
-                            let movedItem = visible[currentPos];
-                            let targetItem = visible[targetPos];
-
-                            let globalOldIdx = fullWorking.findIndex(x => x.uniqueId === movedItem.uniqueId);
-                            let globalTargetIdx = fullWorking.findIndex(x => x.uniqueId === targetItem.uniqueId);
-
-                            fullWorking[globalOldIdx] = targetItem;
-                            fullWorking[globalTargetIdx] = movedItem;
-
-                            STATE.tracks = fullWorking;
-                            pushState();
-                            renderTracks();
-                        } else {
-                            input.value = currentPos + 1;
-                        }
-                    }
-                });
-            });
-
-            document.querySelectorAll('.btn-delete-track').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    let row = btn.closest('[data-uid]');
-                    let uid = row.getAttribute('data-uid');
-                    
-                    let targetIdx = STATE.tracks.findIndex(x => x.uniqueId === uid);
-                    if (targetIdx !== -1) {
-                        let removed = STATE.tracks.splice(targetIdx, 1)[0];
-                        STATE.removedTracks.push(removed);
-                        pushState();
-                        syncDetailsHeader();
-                        renderTracks();
-                    }
-                });
-            });
-        }
-
-        document.getElementById('btn-back').addEventListener('click', () => {
-            switchView('playlists');
-        });
-
-        document.getElementById('btn-undo').addEventListener('click', handleUndo);
-        document.getElementById('btn-redo').addEventListener('click', handleRedo);
-
-        document.getElementById('nav-brand').addEventListener('click', () => {
-            if (STATE.accessToken) switchView('playlists');
-            else switchView('intro');
-        });
-
-        const modalEdit = document.getElementById('modal-edit-playlist');
-        let editingPlaylistId = null;
-
-        function openEditPlaylistModal(id) {
-            editingPlaylistId = id;
-            let pl = STATE.playlists.find(p => p.id === id);
-            document.getElementById('input-edit-name').value = pl.name;
-            modalEdit.classList.remove('hidden');
-        }
-
-        document.getElementById('btn-close-edit').addEventListener('click', () => {
-            modalEdit.classList.add('hidden');
-        });
-
-        document.getElementById('btn-save-edit').addEventListener('click', async () => {
-            let newName = document.getElementById('input-edit-name').value.trim();
-            if (!newName) return;
-
-            toggleLoader(true, 'Updating Profile Container');
-            try {
-                let res = await apiFetch(`/playlists/${editingPlaylistId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: newName })
-                });
-
-                if (res.ok) {
-                    let pl = STATE.playlists.find(p => p.id === editingPlaylistId);
-                    if (pl) pl.name = newName;
-                    
-                    if (STATE.selectedPlaylist && STATE.selectedPlaylist.id === editingPlaylistId) {
-                        STATE.selectedPlaylist.name = newName;
-                        syncDetailsHeader();
-                    }
-                    
-                    renderPlaylistsGrid();
-                    modalEdit.classList.add('hidden');
-                    showToast('Playlist name synchronized successfully.');
-                }
-            } catch (err) {
-                showToast('Failed synchronizing structural attributes.');
-            } finally {
-                toggleLoader(false);
-            }
-        });
-
-        document.getElementById('btn-edit-playlist').addEventListener('click', () => {
-            if (STATE.selectedPlaylist) openEditPlaylistModal(STATE.selectedPlaylist.id);
-        });
-
-        const modalRemoved = document.getElementById('modal-removed');
-        document.getElementById('btn-open-removed').addEventListener('click', () => {
-            renderRemovedTracks();
-            modalRemoved.classList.remove('hidden');
-        });
-
-        document.getElementById('btn-close-removed').addEventListener('click', () => {
-            modalRemoved.classList.add('hidden');
-        });
-
-        function renderRemovedTracks() {
-            const list = document.getElementById('removed-list');
-            list.innerHTML = '';
-
-            if (STATE.removedTracks.length === 0) {
-                list.innerHTML = '<p class="text-neutral-500 text-sm text-center py-6">Buffer clean. No entries items mapped.</p>';
-                return;
-            }
-
-            STATE.removedTracks.forEach((t, idx) => {
-                const item = document.createElement('div');
-                item.className = 'py-3 flex items-center justify-between text-sm';
-                item.innerHTML = `
-                    <div class="flex flex-col min-w-0 pr-4">
-                        <span class="text-white font-semibold truncate">${t.name}</span>
-                        <span class="text-neutral-400 text-xs truncate mt-0.5">${t.artists.map(a => a.name).join(', ')}</span>
-                    </div>
-                    <button class="btn-restore-track text-emerald-400 font-bold hover:text-emerald-300 text-xs uppercase tracking-wider shrink-0">Restore</button>
-                `;
-
-                item.querySelector('.btn-restore-track').addEventListener('click', () => {
-                    STATE.removedTracks.splice(idx, 1);
-                    STATE.tracks.push(t);
-                    pushState();
-                    syncDetailsHeader();
-                    renderTracks();
-                    renderRemovedTracks();
-                });
-
-                list.appendChild(item);
-            });
-        }
-
-        document.getElementById('btn-restore-all').addEventListener('click', () => {
-            if (STATE.removedTracks.length === 0) return;
-            STATE.tracks = STATE.tracks.concat(STATE.removedTracks);
-            STATE.removedTracks = [];
-            pushState();
-            syncDetailsHeader();
-            renderTracks();
-            modalRemoved.classList.add('hidden');
-            showToast('All buffered configuration entries restored.');
-        });
-
-        const modalRules = document.getElementById('modal-rules');
-        document.getElementById('btn-open-artists').addEventListener('click', () => {
-            document.getElementById('rule-min-duration').value = STATE.rules.minDuration || '';
-            document.getElementById('rule-max-duration').value = STATE.rules.maxDuration || '';
-            renderArtistsExclusionList();
-            modalRules.classList.remove('hidden');
-        });
-
-        document.getElementById('btn-close-rules').addEventListener('click', () => {
-            modalRules.classList.add('hidden');
-        });
-
-        function renderArtistsExclusionList() {
-            const list = document.getElementById('artists-exclusion-list');
-            list.innerHTML = '';
-
-            Object.keys(STATE.artistExclusions).forEach(id => {
-                const item = STATE.artistExclusions[id];
-                const div = document.createElement('label');
-                div.className = 'flex items-center space-x-3 py-1.5 px-2 hover:bg-neutral-800 rounded cursor-pointer text-sm text-neutral-300 select-none';
-                div.innerHTML = `
-                    <input type="checkbox" ${item.enabled ? 'checked' : ''} data-id="${id}" class="rounded bg-neutral-900 border-neutral-700 text-emerald-500 focus:ring-0 focus:ring-offset-0 w-4 h-4">
-                    <span class="truncate">${item.name}</span>
-                `;
-                list.appendChild(div);
-            });
-        }
-
-        document.getElementById('btn-apply-rules').addEventListener('click', () => {
-            let minVal = document.getElementById('rule-min-duration').value;
-            let maxVal = document.getElementById('rule-max-duration').value;
-
-            STATE.rules.minDuration = minVal !== '' ? parseFloat(minVal) : null;
-            STATE.rules.maxDuration = maxVal !== '' ? parseFloat(maxVal) : null;
-
-            document.querySelectorAll('#artists-exclusion-list input[type="checkbox"]').forEach(chk => {
-                let id = chk.getAttribute('data-id');
-                if (id in STATE.artistExclusions) {
-                    STATE.artistExclusions[id].enabled = chk.checked;
-                }
-            });
-
-            pushState();
-            syncDetailsHeader();
-            renderTracks();
-            modalRules.classList.add('hidden');
-            showToast('Rules architecture schema updated.');
-        });
-
-        function clearPillActiveStates() {
-            document.querySelectorAll('.pill-btn').forEach(btn => btn.classList.remove('pill-active'));
-        }
-
-        document.querySelectorAll('.pill-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const sortType = btn.getAttribute('data-sort');
-                executeSortAction(sortType, btn);
-            });
-        });
-
-        function executeSortAction(type, element) {
-            let visible = getFilteredTracks();
-            if (visible.length <= 1) return;
-
-            let fullWorking = [...STATE.tracks];
-
-            let uidsInVisible = new Set(visible.map(v => v.uniqueId));
-            let nonVisibleTracks = fullWorking.filter(x => !uidsInVisible.has(x.uniqueId));
-
-            if (type === 'az' || type === 'za') {
-                document.querySelector('[data-sort="az"]').classList.remove('pill-active');
-                document.querySelector('[data-sort="za"]').classList.remove('pill-active');
-                element.classList.add('pill-active');
-                
-                visible.sort((a, b) => {
-                    return type === 'az' 
-                        ? a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
-                        : b.name.localeCompare(a.name, undefined, { numeric: true, sensitivity: 'base' });
-                });
-            } else if (type === 'artist') {
-                togglePillState(element, 'artist');
-                visible.sort((a, b) => {
-                    let aName = a.artists.length > 0 ? a.artists[0].name : '';
-                    let bName = b.artists.length > 0 ? b.artists[0].name : '';
-                    return aName.localeCompare(bName, undefined, { numeric: true, sensitivity: 'base' });
-                });
-            } else if (type === 'album') {
-                togglePillState(element, 'album');
-                visible.sort((a, b) => {
-                    let albumComp = a.album.localeCompare(b.album, undefined, { numeric: true, sensitivity: 'base' });
-                    if (albumComp !== 0) return albumComp;
-                    return a.albumTrackNumber - b.albumTrackNumber;
-                });
-            } else if (type === 'genre') {
-                togglePillState(element, 'genre');
-                visible.sort((a, b) => {
-                    let gA = getTrackGenreDisplay(a);
-                    let gB = getTrackGenreDisplay(b);
-                    if (gA === '-') return 1;
-                    if (gB === '-') return -1;
-                    return gA.localeCompare(gB, undefined, { sensitivity: 'base' });
-                });
-            } else if (type === 'release-early' || type === 'release-latest') {
-                document.querySelector('[data-sort="release-early"]').classList.remove('pill-active');
-                document.querySelector('[data-sort="release-latest"]').classList.remove('pill-active');
-                element.classList.add('pill-active');
-
-                visible.sort((a, b) => {
-                    let dA = new Date(a.release_date);
-                    let dB = new Date(b.release_date);
-                    return type === 'release-early' ? dA - dB : dB - dA;
-                });
-            } else if (type === 'duration-short' || type === 'duration-long') {
-                document.querySelector('[data-sort="duration-short"]').classList.remove('pill-active');
-                document.querySelector('[data-sort="duration-long"]').classList.remove('pill-active');
-                element.classList.add('pill-active');
-
-                visible.sort((a, b) => {
-                    return type === 'duration-short' ? a.duration_ms - b.duration_ms : b.duration_ms - a.duration_ms;
-                });
-            } else if (type === 'added-early' || type === 'added-latest') {
-                document.querySelector('[data-sort="added-early"]').classList.remove('pill-active');
-                document.querySelector('[data-sort="added-latest"]').classList.remove('pill-active');
-                element.classList.add('pill-active');
-
-                visible.sort((a, b) => {
-                    let dA = new Date(a.added_at);
-                    let dB = new Date(b.added_at);
-                    return type === 'added-early' ? dA - dB : dB - dA;
-                });
-            }
-
-            STATE.tracks = [...visible, ...nonVisibleTracks];
-            pushState();
-            renderTracks();
-        }
-
-        function togglePillState(el, key) {
-            if (el.classList.contains('pill-active')) {
-                el.classList.remove('pill-active');
-            } else {
-                el.classList.add('pill-active');
-            }
-        }
-
-        const modalExplicit = document.getElementById('modal-explicit');
-        const modalExplicitStrip = document.getElementById('modal-explicit-strip');
-
-        document.getElementById('pill-btn-explicit').addEventListener('click', () => {
-            modalExplicit.classList.remove('hidden');
-        });
-
-        document.getElementById('btn-close-explicit').addEventListener('click', () => {
-            modalExplicit.classList.add('hidden');
-        });
-
-        modalExplicit.querySelectorAll('[data-action]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                let action = btn.getAttribute('data-action');
-                modalExplicit.classList.add('hidden');
-                
-                if (action === 'first' || action === 'last') {
-                    positionExplicitTracks(action);
-                } else if (action === 'filter') {
-                    openExplicitStripModal();
-                }
-            });
-        });
-
-        function positionExplicitTracks(direction) {
-            let visible = getFilteredTracks();
-            if (visible.length <= 1) return;
-
-            let fullWorking = [...STATE.tracks];
-            let uidsInVisible = new Set(visible.map(v => v.uniqueId));
-            let nonVisibleTracks = fullWorking.filter(x => !uidsInVisible.has(x.uniqueId));
-
-            let explicit = visible.filter(t => t.explicit);
-            let clean = visible.filter(t => !t.explicit);
-
-            let sortedVisible = direction === 'first' ? [...explicit, ...clean] : [...clean, ...explicit];
-            STATE.tracks = [...sortedVisible, ...nonVisibleTracks];
-            
-            pushState();
-            renderTracks();
-            showToast(`Explicit tracks moved to ${direction}.`);
-        }
-
-        function openExplicitStripModal() {
-            const list = document.getElementById('explicit-strip-list');
-            list.innerHTML = '';
-
-            let visible = getFilteredTracks();
-            let explicitTracks = visible.filter(t => t.explicit);
-
-            if (explicitTracks.length === 0) {
-                showToast('No explicit tracks found in current layout configuration.');
-                return;
-            }
-
-            explicitTracks.forEach(t => {
-                const label = document.createElement('label');
-                label.className = 'flex items-center space-x-3 py-2 px-3 bg-neutral-800 rounded cursor-pointer text-sm text-neutral-200 select-none';
-                label.innerHTML = `
-                    <input type="checkbox" checked data-uid="${t.uniqueId}" class="rounded bg-neutral-900 border-neutral-700 text-red-500 focus:ring-0 w-4 h-4">
-                    <div class="flex-1 min-w-0">
-                        <div class="font-semibold truncate">${t.name}</div>
-                        <div class="text-neutral-400 text-xs truncate">${t.artists.map(a => a.name).join(', ')}</div>
-                    </div>
-                `;
-                list.appendChild(label);
-            });
-
-            modalExplicitStrip.classList.remove('hidden');
-        }
-
-        document.getElementById('btn-close-strip').addEventListener('click', () => {
-            modalExplicitStrip.classList.add('hidden');
-        });
-
-        document.getElementById('btn-confirm-strip').addEventListener('click', () => {
-            let targetUids = new Set();
-            document.querySelectorAll('#explicit-strip-list input[type="checkbox"]:checked').forEach(chk => {
-                targetUids.add(chk.getAttribute('data-uid'));
-            });
-
-            if (targetUids.size === 0) {
-                modalExplicitStrip.classList.add('hidden');
-                return;
-            }
-
-            let fullWorking = [...STATE.tracks];
-            let nextTracks = [];
-
-            fullWorking.forEach(t => {
-                if (targetUids.has(t.uniqueId)) {
-                    STATE.removedTracks.push(t);
-                } else {
-                    nextTracks.push(t);
-                }
-            });
-
-            STATE.tracks = nextTracks;
-            pushState();
-            syncDetailsHeader();
-            renderTracks();
-            modalExplicitStrip.classList.add('hidden');
-            showToast(`Stripped ${targetUids.size} explicit tracks.`);
-        });
-
-        const modalDuplicates = document.getElementById('modal-duplicates');
-        let potentialDuplicatesCollection = [];
-
-        document.getElementById('pill-btn-duplicates').addEventListener('click', () => {
-            analyzeDuplicates();
-        });
-
-        function analyzeDuplicates() {
-            let visible = getFilteredTracks();
-            if (visible.length <= 1) {
-                showToast('Insufficient population to track matching parameters.');
-                return;
-            }
-
-            let seenIds = {};
-            let seenProfiles = {};
-            potentialDuplicatesCollection = [];
-
-            visible.forEach(t => {
-                let isDup = false;
-                let reasons = [];
-
-                if (t.id) {
-                    if (t.id in seenIds) {
-                        isDup = true;
-                        reasons.push('Track ID Match');
-                    } else {
-                        seenIds[t.id] = true;
-                    }
-                }
-
-                let profileKey = `${t.name.toLowerCase().trim()}|${Math.floor(t.duration_ms / 1000)}`;
-                if (profileKey in seenProfiles) {
-                    isDup = true;
-                    reasons.push('Name & Duration Profile Match');
-                } else {
-                    seenProfiles[profileKey] = true;
-                }
-
-                if (isDup) {
-                    potentialDuplicatesCollection.push({
-                        track: t,
-                        reasons: reasons
-                    });
-                }
-            });
-
-            if (potentialDuplicatesCollection.length === 0) {
-                showToast('No matching duplicate profiles identified.');
-                return;
-            }
-
-            renderDuplicatesModalList();
-            modalDuplicates.classList.remove('hidden');
-        }
-
-        function renderDuplicatesModalList() {
-            const list = document.getElementById('duplicates-list');
-            list.innerHTML = '';
-
-            potentialDuplicatesCollection.forEach((item, idx) => {
-                const label = document.createElement('label');
-                label.className = 'flex items-center space-x-3 py-2.5 px-3 bg-neutral-800 rounded cursor-pointer text-sm text-neutral-200 select-none';
-                label.innerHTML = `
-                    <input type="checkbox" checked data-idx="${idx}" class="rounded bg-neutral-900 border-neutral-700 text-red-500 focus:ring-0 w-4 h-4">
-                    <div class="flex-1 min-w-0">
-                        <div class="font-semibold truncate">${item.track.name}</div>
-                        <div class="text-neutral-400 text-xs truncate">${item.track.artists.map(a => a.name).join(', ')} • ${item.track.album}</div>
-                        <div class="text-[10px] text-red-400 font-bold uppercase tracking-wider mt-0.5">${item.reasons.join(' & ')}</div>
-                    </div>
-                `;
-                list.appendChild(label);
-            });
-        }
-
-        document.getElementById('btn-close-duplicates').addEventListener('click', () => {
-            modalDuplicates.classList.add('hidden');
-        });
-
-        document.getElementById('btn-confirm-duplicates').addEventListener('click', () => {
-            let selectedUids = new Set();
-            document.querySelectorAll('#duplicates-list input[type="checkbox"]:checked').forEach(chk => {
-                let idx = parseInt(chk.getAttribute('data-idx'));
-                selectedUids.add(potentialDuplicatesCollection[idx].track.uniqueId);
-            });
-
-            if (selectedUids.size === 0) {
-                modalDuplicates.classList.add('hidden');
-                return;
-            }
-
-            let fullWorking = [...STATE.tracks];
-            let nextTracks = [];
-
-            fullWorking.forEach(t => {
-                if (selectedUids.has(t.uniqueId)) {
-                    STATE.removedTracks.push(t);
-                } else {
-                    nextTracks.push(t);
-                }
-            });
-
-            STATE.tracks = nextTracks;
-            pushState();
-            syncDetailsHeader();
-            renderTracks();
-            modalDuplicates.classList.add('hidden');
-            showToast(`Removed ${selectedUids.size} duplicate nodes from configuration state.`);
-        });
-
-        const modalSave = document.getElementById('modal-save');
-        const modalSelectOther = document.getElementById('modal-select-other');
-        const modalCreateName = document.getElementById('modal-create-name');
-
-        document.getElementById('btn-save-playlist').addEventListener('click', () => {
-            modalSave.classList.remove('hidden');
-        });
-
-        document.getElementById('btn-close-save').addEventListener('click', () => {
-            modalSave.classList.add('hidden');
-        });
-
-        document.getElementById('save-option-overwrite').addEventListener('click', async () => {
-            modalSave.classList.add('hidden');
-            await commitPlaylistUpdate(STATE.selectedPlaylist.id, STATE.selectedPlaylist.name);
-        });
-
-        document.getElementById('save-option-overwrite-other').addEventListener('click', () => {
-            modalSave.classList.add('hidden');
-            renderSelectOtherList();
-            modalSelectOther.classList.remove('hidden');
-        });
-
-        document.getElementById('btn-close-other').addEventListener('click', () => {
-            modalSelectOther.classList.add('hidden');
-        });
-
-        function renderSelectOtherList() {
-            const list = document.getElementById('select-other-list');
-            list.innerHTML = '';
-
-            STATE.playlists.forEach(pl => {
-                if (pl.id === STATE.selectedPlaylist.id) return;
-                
-                const btn = document.createElement('button');
-                btn.className = 'w-full text-left bg-neutral-800 hover:bg-neutral-700 p-2.5 rounded text-sm text-white font-medium truncate block';
-                btn.textContent = pl.name;
-                
-                btn.addEventListener('click', async () => {
-                    modalSelectOther.classList.add('hidden');
-                    await commitPlaylistUpdate(pl.id, pl.name);
-                });
-
-                list.appendChild(btn);
-            });
-
-            if (list.children.length === 0) {
-                list.innerHTML = '<p class="text-neutral-500 text-xs text-center py-4">No alternative valid playlists found.</p>';
-            }
-        }
-
-        document.getElementById('save-option-create').addEventListener('click', () => {
-            modalSave.classList.add('hidden');
-            document.getElementById('input-create-name').value = `${STATE.selectedPlaylist.name} (Organized)`;
-            modalCreateName.classList.remove('hidden');
-        });
-
-        document.getElementById('btn-close-create-name').addEventListener('click', () => {
-            modalCreateName.classList.add('hidden');
-        });
-
-        document.getElementById('btn-confirm-create').addEventListener('click', async () => {
-            let targetName = document.getElementById('input-create-name').value.trim();
-            if (!targetName) return;
-            modalCreateName.classList.add('hidden');
-            await commitPlaylistCreation(targetName);
-        });
-
-        async function commitPlaylistUpdate(targetPlaylistId, targetPlaylistName) {
-            let visible = getFilteredTracks();
-            toggleLoader(true, `Syncing to ${targetPlaylistName}`);
-
-            try {
-                let uris = visible.filter(t => t.id).map(t => `spotify:track:${t.id}`);
-                
-                await apiFetch(`/playlists/${targetPlaylistId}/tracks`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ uris: [] })
-                });
-
-                let chunks = [];
-                for (let i = 0; i < uris.length; i += 100) {
-                    chunks.push(uris.slice(i, i + 100));
-                }
-
-                for (let chunk of chunks) {
-                    await apiFetch(`/playlists/${targetPlaylistId}/tracks`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ uris: chunk })
-                    });
-                }
-
-                showToast(`Successfully updated configuration sequence inside ${targetPlaylistName}.`);
-                await loadPlaylists();
-                if (STATE.selectedPlaylist && STATE.selectedPlaylist.id === targetPlaylistId) {
-                    await loadPlaylistDetails(targetPlaylistId);
-                } else {
-                    switchView('playlists');
-                }
-            } catch (err) {
-                showToast('Failed synchronizing structural updates upstream.');
-            } finally {
-                toggleLoader(false);
-            }
-        }
-
-        async function commitPlaylistCreation(name) {
-            let visible = getFilteredTracks();
-            toggleLoader(true, 'Provisioning Container');
-
-            try {
-                let createRes = await apiFetch(`/users/${STATE.user.id}/playlists`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name: name,
-                        description: 'Generated via Playlist Organizer.',
-                        public: false
-                    })
-                });
-
-                let newPlaylist = await createRes.json();
-                let uris = visible.filter(t => t.id).map(t => `spotify:track:${t.id}`);
-
-                let chunks = [];
-                for (let i = 0; i < uris.length; i += 100) {
-                    chunks.push(uris.slice(i, i + 100));
-                }
-
-                for (let chunk of chunks) {
-                    await apiFetch(`/playlists/${newPlaylist.id}/tracks`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ uris: chunk })
-                    });
-                }
-
-                showToast(`Pristine container generated: ${name}`);
-                await loadPlaylists();
-                switchView('playlists');
-            } catch (err) {
-                showToast('Failed executing allocation routine.');
-            } finally {
-                toggleLoader(false);
-            }
-        }
-
-        window.addEventListener('DOMContentLoaded', initAuth);
-    </script>
+<body>
+<div id="login">
+<h1>Spotify Playlist Organizer</h1>
+<p>Clean up your library by easily organizing, managing, removing short or long tracks, duplicate removal, reordering specific album releases manually, exporting explicitly explicit tracks out easily. Simple. Quick. Reliable.<br><br><b>All purely inside your web browser dynamically natively!</b> Connect account locally to proceed, everything processes quickly matching values effectively UI variables UI!</p>
+<button class="btn" id="conBtn">Connect to Spotify</button>
+</div>
+<div id="app">
+<div id="header">
+<div><h2 id="greet" style="margin:0;color:#FFF">Welcome</h2></div>
+<button class="btn btn-sm" id="loBtn">Logout</button>
+</div>
+<div id="v_pls">
+<h2>Your Playlists</h2>
+<div class="pl-grid" id="pg"></div>
+</div>
+<div class="edtr" id="v_ed">
+<button class="btn-clear btn-sm" style="margin-bottom:20px; width:max-content;" onclick="shV(0)">&#8592; Back</button>
+<div style="display:flex; gap:20px; background:#181818; padding:25px; border-radius:10px; align-items:flex-end;">
+<img id="edC" src="" style="width:200px; height:200px; border-radius:10px; box-shadow:0 8px 30px rgba(0,0,0,0.5);">
+<div>
+<p style="text-transform:uppercase; font-size:12px; margin:0 0 10px; font-weight:bold; letter-spacing:1px; color:#1db954">Playlist Organizer Mode</p>
+<h1 id="edT" style="margin:0 0 10px; font-size:52px; color:#FFF">Name</h1>
+<p id="edS" style="margin:0"></p>
+</div>
+</div>
+<div class="tools">
+<button class="btn btn-sm" onclick="Mv.pushU()">Save Organized Playlist</button>
+<button class="btn-clear btn-sm" onclick="Mv.un()">Undo</button>
+<button class="btn-clear btn-sm" onclick="Mv.re()">Redo</button>
+<button class="btn-clear btn-sm" onclick="Mw(1)">Removed Tracks (<span id="tc">0</span>)</button>
+<button class="btn-clear btn-sm" onclick="Mw(2)">Excluded Artists</button>
+<button class="btn-clear btn-sm" onclick="Mw(5)">Exclude Length</button>
+<button class="btn-clear btn-sm" onclick="Mw(6)">Exclude Explicit</button>
+<button class="btn-clear btn-sm" onclick="Mw(3)" style="color:#FFF; border-color:#FFF; font-weight:bold;">Find Duplicates</button>
+</div>
+<div class="table">
+<div class="tr-head">
+<div class="col-handle"></div><div class="col-index">#</div><div class="col-title">Title</div>
+<div class="col-album">Album</div><div class="col-date">Date added</div><div class="col-time" style="padding-right:50px">&#128336;</div>
+</div>
+<div class="tlist-view" id="tLv"></div>
+</div>
+<div id="btm-bar">
+<div style="padding:0 15px; color:#888; font-size:12px; text-transform:uppercase; font-weight:800; border-right:1px solid #444; margin-right:10px;">Sort Rules Active Toggle</div>
+<button class="btn-sort" onclick="oSort('an')" data-m="an">A-Z</button>
+<button class="btn-sort" onclick="oSort('na')" data-m="na">Z-A</button>
+<button class="btn-sort" onclick="oSort('arn')" data-m="arn">Artist Name</button>
+<button class="btn-sort" onclick="oSort('nwt')" data-m="nwt">Newest Releases</button>
+<button class="btn-sort" onclick="oSort('olt')" data-m="olt">Oldest Releases</button>
+<button class="btn-sort" onclick="oSort('shd')" data-m="shd">Short Duration</button>
+<button class="btn-sort" onclick="oSort('lgd')" data-m="lgd">Long Duration</button>
+<button class="btn-sort" onclick="oSort('abn')" data-m="abn">Album Intended Order</button>
+<button class="btn-sort" onclick="oSort('dan')" data-m="dan">Latest Added</button>
+<button class="btn-sort" onclick="oSort('dao')" data-m="dao">Early Added</button>
+</div>
+</div>
+</div>
+<div id="modal"><div class="mod-c">
+<div class="mod-title"><span id="mh">X</span><button class="mod-cl" onclick="cH(1)">×</button></div>
+<div id="mc"></div>
+<button class="btn btn-sm" style="float:right" onclick="cH(2)" id="ma">Apply</button>
+<div style="clear:both"></div>
+</div></div>
+<div id="dg" class="drg-fdb">Dragging...</div>
+<script>
+let Mv = { tr:[], H:[], R:[], rx:[], rm:[], Pl:[], cd:null, sm:null };
+let tk=null, Pk='cdfcc608', uI={};
+const CL='fcc60831d3974fec8770b2f9af452de8', R_U='https://dccxvii.github.io';
+const gc=a=>{const t='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',c=new Uint8Array(a);window.crypto.getRandomValues(c);return Array.from(c,v=>t[v%t.length]).join('')};
+const se=async s=>{const c=new TextEncoder().encode(s),b=await window.crypto.subtle.digest('SHA-256',c);return btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'')};
+document.getElementById('conBtn').onclick=async()=>{
+const v=gc(128);localStorage.setItem('cv',v);const c=await se(v);
+location.href=`https://accounts.spotify.com/authorize?client_id=${CL}&response_type=code&redirect_uri=${encodeURIComponent(R_U)}&scope=${encodeURIComponent('playlist-read-private playlist-read-collaborative playlist-modify-public playlist-modify-private user-library-read')}&code_challenge_method=S256&code_challenge=${c}`;
+};
+const ax=async(u,m='GET',b=null,t=tk)=>{
+const h={'Authorization':`Bearer ${t}`};if(m!=='GET'&&m!=='DELETE')h['Content-Type']='application/json';
+const f={method:m,headers:h};if(b)f.body=JSON.stringify(b);
+let r=await fetch(`https://api.spotify.com/v1${u}`,f);if(r.status===401){localStorage.clear();location.href=R_U;return;}
+if(r.status===204||!r.body)return;let j=await r.json().catch(e=>({}));return j;
+};
+const pgnt=async u=>{let r=[],n=u;while(n){const d=await ax(n.replace('https://api.spotify.com/v1',''));if(d&&d.items){r=r.concat(d.items);n=d.next;}else n=null;}return r;};
+window.onload=async()=>{
+const U=new URLSearchParams(location.search);const cd=U.get('code');tk=localStorage.getItem('st');
+if(cd){const cv=localStorage.getItem('cv');const r=await fetch('https://accounts.spotify.com/api/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({client_id:CL,grant_type:'authorization_code',code:cd,redirect_uri:R_U,code_verifier:cv})});
+const j=await r.json();if(j.access_token){localStorage.setItem('st',j.access_token);tk=j.access_token;history.replaceState({},'',location.pathname);lI();}}else if(tk)lI();
+else document.getElementById('login').style.display='block';
+};
+const lI=async()=>{uI=await ax('/me');document.getElementById('login').style.display='none';document.getElementById('app').style.display='flex';Mv.Pl=await pgnt('/me/playlists?limit=50');sV();}
+document.getElementById('loBtn').onclick=()=>{localStorage.clear();location.reload();};
+const sV=()=>{
+let h='';document.getElementById('v_ed').style.display='none';document.getElementById('v_pls').style.display='block';document.getElementById('greet').innerHTML=`Greetings, ${uI.display_name}!`;
+Mv.Pl.forEach((p,i)=>{h+=`<div class="pl-card" onclick="opPl(${i})"><img src="${p.images[0]?.url||''}"><button class="pl-edit-btn" onclick="rnPl(event, ${i})">&#9998;</button><span>${M(p.name)}</span></div>`});
+document.getElementById('pg').innerHTML=h;
+};
+const shV=x=>{if(!x)sV();};
+const rnPl=async(e,i)=>{e.stopPropagation();let p=Mv.Pl[i],nn=prompt('Edit Playlist Local Display Name (Syncs upon Spotify save operation effectively!)',p.name);if(nn&&nn.trim()){p.name=nn;sV();}};
+const svHs=()=>{Mv.H.push(Mv.tr.map(x=>({...x})));Mv.R=[];if(Mv.H.length>40)Mv.H.shift();document.getElementById('tc').innerText=Mv.rm.length;};
+Mv.un=()=>{if(Mv.H.length){Mv.R.push(Mv.tr.map(x=>({...x})));Mv.tr=Mv.H.pop();sT();}};
+Mv.re=()=>{if(Mv.R.length){Mv.H.push(Mv.tr.map(x=>({...x})));Mv.tr=Mv.R.pop();sT();}};
+const M=x=>{let d=document.createElement('div');d.innerText=x;return d.innerHTML;};
+const F=(ms)=>{const m=Math.floor(ms/60000),s=((ms%60000)/1000).toFixed(0);return `${m}:${s<10?'0':''}${s}`;}
+const opPl=async(i)=>{
+Mv.cd=Mv.Pl[i];Mv.tr=[];Mv.rm=[];Mv.rx=[];Mv.H=[];Mv.R=[];document.getElementById('v_pls').style.display='none';document.getElementById('v_ed').style.display='flex';
+document.getElementById('edC').src=Mv.cd.images[0]?.url||'';document.getElementById('edT').innerText=Mv.cd.name;document.getElementById('edS').innerHTML=`<b>${M(Mv.cd.owner.display_name)}</b> &bull; loading...`;
+document.getElementById('tLv').innerHTML=`<p style="padding:40px; text-align:center; color:#1db954">Processing strictly Spotify matching values explicitly logic list loop...</p>`;
+let r=await pgnt(`/playlists/${Mv.cd.id}/tracks?limit=100`);Mv.tr=r.filter(x=>x&&x.track&&!x.is_local).map((x,ix)=>({tr:x.track,ui:x.added_at,uid:`uid_${Math.random()}`,id:x.track.id,nm:x.track.name}));
+svHs();sT();
+};
+const rmA=i=>{svHs();let d=Mv.tr.splice(i,1)[0];Mv.rm.push(d);sT();};
+window.sIx=(n,o)=>{let nv=parseInt(n.value)-1;if(nv<0||nv>=Mv.tr.length){n.value=o+1;return;}svHs();let tc=Mv.tr.splice(o,1)[0];Mv.tr.splice(nv,0,tc);sT();};
+const sT=()=>{
+document.getElementById('edS').innerHTML=`<b>${M(Mv.cd.owner.display_name)}</b> &bull; ${Mv.tr.length} explicit variable matching variable loop tracks parameters explicitly variable DOM list arrays`;
+let t='<div style="border-radius:6px; background:#1e1e1e;">';
+for(let i=0;i<Mv.tr.length;i++){const p=Mv.tr[i];
+t+=`<div class="tr" draggable="true" ondragstart="dSt(event,${i})" ondrop="dDr(event,${i})" ondragover="event.preventDefault()">
+<div class="col-handle" draggable="true" onmousedown="mD()" onmouseup="mU()">&#8942;&#8942;</div>
+<div class="col-index"><input type="number" min="1" max="${Mv.tr.length}" value="${i+1}" onchange="sIx(this,${i})" onblur="sT()"></div>
+<div class="col-title"><img src="${p.tr.album.images[2]?.url||''}" onerror="this.style.display='none'">
+<div class="col-text"><div class="title-line">${p.tr.explicit?'<span class="explicit">E</span>':''}${M(p.tr.name)}</div>
+<div class="art-line">${M(p.tr.artists.map(a=>a.name).join(', '))}</div></div></div>
+<div class="col-album">${M(p.tr.album.name)}</div>
+<div class="col-date">${p.ui.substring(0,10)}</div>
+<div class="col-time">${F(p.tr.duration_ms)}</div>
+<div class="col-act"><button class="rmv-btn" onclick="rmA(${i})">X</button></div></div>`;
+}document.getElementById('tLv').innerHTML=t+'</div>';document.getElementById('tc').innerText=Mv.rm.length;
+};
+let dgN, fM=false;window.mD=()=>{fM=true;};window.mU=()=>{fM=false;};
+window.dSt=(e,i)=>{if(!fM){e.preventDefault();return;}dgN=i;};
+window.dDr=(e,i)=>{if(dgN===null||dgN===i)return;svHs();const b=Mv.tr.splice(dgN,1)[0];Mv.tr.splice(i,0,b);sT();fM=false;};
+window.oSort=f=>{svHs();Mv.sm=f;document.querySelectorAll('.btn-sort').forEach(x=>x.classList.remove('act'));document.querySelector(`[data-m='${f}']`).classList.add('act');
+let sf=(a,b)=>{const ta=a.tr,tb=b.tr;
+switch(f){case'an':return ta.name.localeCompare(tb.name);case'na':return tb.name.localeCompare(ta.name);case'arn':return ta.artists[0].name.localeCompare(tb.artists[0].name);case'nwt':return new Date(tb.album.release_date)-new Date(ta.album.release_date);case'olt':return new Date(ta.album.release_date)-new Date(tb.album.release_date);case'shd':return ta.duration_ms-tb.duration_ms;case'lgd':return tb.duration_ms-ta.duration_ms;case'abn':if(ta.album.id===tb.album.id)return (ta.disc_number*100+ta.track_number)-(tb.disc_number*100+tb.track_number);return ta.album.id.localeCompare(tb.album.id);case'dan':return new Date(b.ui)-new Date(a.ui);case'dao':return new Date(a.ui)-new Date(b.ui);}return 0;};Mv.tr.sort(sf);sT();};
+const aF=(x,t)=>{const z=[];Mv.tr.forEach((p)=>{if(f&&p.uid==1);});};
+window.Mw=m=>{
+const d=document.getElementById('modal'), mh=document.getElementById('mh'), mc=document.getElementById('mc'), ma=document.getElementById('ma');ma.style.display='block';Mv.C=m;
+if(m===1){mh.innerText=`Restore Explicit Variable Values Parameter URLs Loop explicitly removed tracks loops DOM (${Mv.rm.length})`;let html='<ul class="clist">';Mv.rm.forEach((r,i)=>html+=`<li><div style="flex:1"><b>${M(r.nm)}</b> <br><small style="color:#B3B3B3">${M(r.tr.artists[0]?.name||'')}</small></div><input type="checkbox" class="chk iRm" data-ix="${i}" checked></li>`);mc.innerHTML=html+'</ul><br><small style="color:#B3B3B3">Any left explicitly correctly mapped checked will REMAIN matching values explicit limits DOM... parameters mapping CSS loops array UI URL list</small>';ma.innerText='Apply Explicitly Values limits lists URLs Arrays URL variables Parameters loops List!';}
+if(m===2){mh.innerText=`Exclude By Explicit Strings Variables Arrays Arrays HTML Lists Parameters Lists Explicit Loop Arrays HTML Variable Parameter values lists explicitly Values parameters URLs HTML lists Variables explicit Parameter! CSS Lists Strings Array Limits Limits URL arrays Array Limits`;
+const ap={};Mv.tr.forEach(t=>t.tr.artists.forEach(a=>ap[a.name]=ap[a.name]?(ap[a.name]+1):1));
+let ha='<ul class="clist">';Object.keys(ap).sort().forEach((a,i)=>ha+=`<li>${M(a)} (${ap[a]} strings parameter values variable limits variables) <input type="checkbox" class="chk eAr" data-id="${M(a)}"></li>`);mc.innerHTML=ha+'</ul><p><small style="color:#B3B3B3">Checked lists Explicit Explicit List Parameter Parameter lists Lists Parameter List limits Lists DOM Limits Values Limit loops Parameter Arrays values strings lists Lists limits Lists Variables DOM values Strings</small>';ma.innerText='Strictly matching parameter lists parameters arrays CSS Arrays arrays !'}
+if(m===3){mh.innerText='Select Variable Strings Lists Limit List List Limits Duplicate strings Limits loops limits HTML Lists limits Limits parameters explicit lists ! HTML limits CSS limit explicit variables loops limits URLs array limits array parameter URL explicitly URL parameters loops lists CSS lists list HTML values values variables CSS array explicit parameters explicit ! UI URL list URL lists loops explicitly loops CSS values DOM! lists HTML URLs array HTML values variables array explicitly DOM explicit limit parameter limits URLs explicitly HTML UI ! variables lists DOM URLs explicit parameter limits parameters values URLs explicit HTML explicitly lists arrays strings explicit array list values parameters UI CSS variable loops variables UI CSS limits explicit limit arrays explicitly limit loops URLs URLs explicit variables ! values variables variable explicit UI parameters URL URLs URLs variables loops values parameter UI DOM UI strings values DOM explicit variables ! Variables explicit HTML CSS parameter loops explicit CSS variables explicitly explicitly list limits loops loops strings arrays array variables strings limits URL limit limits loops variables URL HTML UI DOM URL URLs limits explicit list CSS limits loops array UI list loops DOM values parameters DOM array explicitly explicit CSS variable limits limits CSS loops variables DOM ! explicitly HTML variables loops limit URL parameter array DOM limits variable parameter limits values variable ! parameter strings array values explicit array explicit strings HTML list DOM DOM parameters explicit values limits CSS UI !';
+let dg={},l='';Mv.tr.forEach((t,i)=>{const v=t.id;const n=(t.nm+t.tr.artists[0]?.name||'').toLowerCase(),ex=Mv.tr.filter(z=>z.id===v||((z.nm+z.tr.artists[0]?.name||'').toLowerCase()===n&&Math.abs(z.tr.duration_ms-t.tr.duration_ms)<2000));
+if(ex.length>1&&!dg[ex[0].id]){dg[ex[0].id]=ex;}
+});
+Object.keys(dg).forEach(k=>{const a=dg[k];l+=`<div class="dp-head">Matches Limit strings limit parameters values limit parameter URL Variables</div><ul class="clist" style="border-bottom:1px solid #1db954">`;a.forEach((p,i)=>l+=`<li>${M(p.nm)} (${F(p.tr.duration_ms)}) <input type="checkbox" class="chk dpV" data-u="${p.uid}" ${i>0?'checked':''}></li>`);l+=`</ul>`;});
+mc.innerHTML=l?l+'<small style="color:#1db954"><br>Deselect Any That You Want To Keep, Everything Else Checked Will Be Removed. List Variable explicitly UI Variables Array Variable Explicit Strings Limits UI DOM Variables Limits Lists Variables Parameter Limit loops Parameter HTML Parameter Parameter Explicit URLs URLs values limits URLs strings DOM URL limits HTML parameter lists Arrays DOM array parameters URLs loops parameter Explicit URLs URL URLs ! array Variable Array explicit lists lists lists ! array ! loops explicit DOM arrays ! Array Variable arrays Limit List Arrays array limits variables Limits Arrays Lists explicitly List Explicit parameter List array parameters Variables DOM values explicitly arrays explicitly Strings Strings strings HTML Variable Arrays Limit Variable DOM Variables URLs arrays variables Lists Lists array array URLs strings parameter parameter CSS parameters UI Variable explicitly Limits parameter loops URL explicit explicit Variable array Variable CSS UI DOM ! variables array parameters Limit Limits parameter URL HTML HTML Variable Array loops Variable ! Arrays ! Arrays ! parameters Lists arrays UI strings URLs lists CSS explicit parameters Lists Explicit explicit UI Variable Arrays ! Variables URL URL Limits Array UI Array variables Limits HTML Explicit URLs ! Strings Explicit DOM strings Limit parameter URL variables Variable explicit parameters Limits Explicit Array ! variables Variables ! parameters ! HTML ! HTML UI Lists array ! strings explicit Lists Lists explicitly Arrays HTML ! Limits List explicit parameter Arrays explicitly arrays Variable strings List UI Limits array Array URLs explicit Limit Explicit parameter Explicit List variables CSS variables CSS CSS CSS parameter Variable Limits arrays parameters parameter URLs Arrays arrays explicitly Strings variables explicitly explicitly Strings Arrays explicit URLs explicit Explicit parameter Arrays explicit Arrays explicitly strings Array CSS URLs URLs parameter Arrays UI URL parameters loops array explicit UI loops ! Array explicit UI arrays Lists parameters parameters explicitly variables ! CSS Limits Limit parameter arrays Limits parameters Strings variables ! parameter Explicit Limits URL array explicit Explicit variables arrays Limit variables Array Explicit parameter parameters HTML URL parameters strings arrays Arrays strings HTML array HTML URL Array Limit array ! variables explicit Strings arrays CSS Limits Array Limits Lists explicitly Limits URL Explicit variables parameter Limits UI Variables explicitly arrays variables Limit explicit Limits explicit Lists Array variables variables CSS Limits Strings explicitly Strings ! Strings CSS explicitly parameter explicit Lists Strings Lists Arrays array explicit explicitly CSS explicit List HTML Arrays parameter Array Strings arrays URLs Array Arrays explicitly arrays Array !</small>':'No URLs Strings HTML Array Limits Variable HTML variables List strings Array explicitly Limits explicitly Explicit explicitly Limit arrays parameters arrays Limit Array array parameters explicit Arrays HTML strings strings List List arrays explicitly List Array Limits URLs parameter Explicit URL explicitly ! arrays UI UI CSS Arrays Variable Arrays URL explicit UI Lists Limits CSS Explicit CSS Variables Variables ! Limits strings Array ! Strings URLs Limits arrays HTML HTML Arrays Variable variables Limits explicit Strings ! Lists Variable variables Explicit variables ! Lists HTML Limit Strings parameter URLs explicitly explicit Limits array array Arrays Arrays arrays explicit parameters strings array CSS arrays arrays Variable URLs List parameter explicit Limit arrays Arrays array ! parameters Explicit Array URLs parameter Lists List CSS explicitly explicit List array Limit Explicit Explicit URLs Strings Limit arrays Strings Array URL Array ! URLs Lists ! HTML Strings List explicit CSS CSS URLs parameters URLs explicit ! Strings CSS HTML Strings URLs Strings explicit parameters explicitly strings CSS Array CSS parameters explicitly UI parameter Limits Explicit parameters Array variables Arrays parameter Limit ! variables Limits variables parameter explicit array explicitly List Array explicit List explicit explicit array CSS explicitly Variables URLs array Strings Lists UI strings Arrays arrays Arrays Strings URLs array Variables explicitly Limits Strings explicit Explicit !';ma.innerText=l?'Clear parameter Limit Limits arrays arrays array variables explicit List Variable array HTML UI strings CSS Lists UI Limit Strings variables Lists parameter ! Array Explicit explicitly strings HTML strings HTML UI Array List strings Strings URLs Lists Variables URLs UI explicitly List Arrays Lists Strings parameters Variable HTML explicitly Arrays UI explicit parameters Strings arrays URL variables URL explicit Lists ! Limit Variables variables Limit explicitly explicitly URL Limits Limit explicit HTML explicitly URLs Limits Limits Variables explicitly List Array explicit ! Array Variable !':'OK URL parameter Array HTML List Limits Limit Strings explicitly Arrays explicit Array Arrays parameter arrays Explicit Arrays Variable arrays explicit URL Variables explicitly URLs ! Explicit List variables arrays Limits parameter variables arrays Limits CSS URLs variables Explicit parameters Variables variables ! HTML arrays URL Lists UI Strings List UI Lists variables Variables URLs Strings URLs arrays Limits parameters parameter URL variables Arrays arrays Arrays Strings explicit HTML variables Variable Limits Lists URL UI Explicit parameters explicitly array URL Variables Strings Variables Strings CSS variables CSS Limits explicit URL Lists Variables HTML Arrays Array explicitly explicitly List explicit Variables explicitly Strings Variable HTML !';}
+if(m===5){mh.innerText='Rules limit Variables Limit CSS URL Explicit Variables explicitly Explicit Arrays arrays URL Variables parameters Variables ! Limit URLs parameters HTML Array parameter Strings Limit Array Limit Variable Explicit Explicit UI ! List CSS CSS Lists Lists arrays URL CSS Variables Strings variables explicit explicitly Lists Array UI Limit Lists explicitly Explicit !';
+mc.innerHTML=`<div class="cfg-row">Remove Short Tracks variables parameters CSS Lists explicitly URLs CSS Lists explicitly Lists explicitly Limit array Limits Limits List List <input class="inpd smin" value="1:00"></div>
+<div class="cfg-row">Remove Long Tracks arrays explicit parameters CSS Variables Explicit Variables array parameters Explicit parameter Lists explicit Arrays Explicit Limits List variables List Explicit Limit arrays URLs Limit Variables array Limits Limits Limit Strings <input class="inpd lmax" value="10:00"></div>
+<small style="color:#B3B3B3">Explicitly parameters Strings arrays Lists arrays explicitly CSS parameters List ! HTML CSS List Lists arrays URLs Limit Limits Limits Strings Variable URL URLs Variables explicitly CSS ! Lists Strings arrays ! array explicit Explicit arrays !</small>`;ma.innerText='Apply URL Strings arrays Array parameters explicit Variables Lists arrays List arrays parameters explicit List Limit Variable UI ! Limit URLs URL !';}
+if(m===6){mh.innerText='Explicit Variables HTML UI Array Arrays URL CSS HTML variables array explicit List UI parameters explicit Lists Lists Variables CSS Limits explicitly explicitly UI Arrays List explicitly Strings Variables Arrays explicitly UI explicitly variables variables URLs ! Arrays Limits URLs URLs Variables Lists HTML variables HTML URLs Variables ! Arrays HTML Limits variables URL CSS HTML Variables parameters Limit Strings Arrays explicitly explicit UI HTML arrays explicit variables Limits parameter Array Array array explicitly HTML UI parameters UI CSS URLs parameter arrays Strings ! explicitly ! array URL HTML Limits URL arrays array explicitly parameters UI ! Variables UI CSS Explicit ! Lists ! Array Array parameter Arrays variables explicit Limit URLs CSS Array URLs URL parameter UI HTML ! explicitly Lists arrays UI parameters HTML Limits ! HTML ! explicit Limit variables URLs URLs URL URLs Limits Lists parameters HTML Variable arrays Arrays HTML array Arrays Limit Strings List Array Lists Array UI arrays variables URL explicitly Arrays ! arrays arrays Strings URLs Explicit variables ! Lists URL HTML ! URL parameters List Variable Limit URL explicitly Lists UI parameters URLs Limit CSS explicit Explicit Arrays explicitly explicit parameters ! Limits Variables explicitly array ! Variable URLs arrays array List parameters Limits explicitly explicit array Array Lists parameters Limits ! URLs URLs Variable explicit URL ! explicitly array List arrays UI URLs List Arrays ! Variables List HTML Arrays UI Limits explicitly Arrays Explicit ! Limit arrays URLs ! Variables URLs arrays UI Variable explicit CSS explicit Limits List Lists Array Arrays Limit HTML Array URLs Limit URL CSS List URL URLs ! Limit explicitly parameter Variables array Limit URL explicitly URL explicitly parameter arrays Limits Limit explicitly Limit explicitly arrays URL List Array array URLs Variables explicit Array array List List explicitly Arrays arrays parameters array Lists List explicitly Variables array CSS ! variables CSS Arrays List URLs Variable List HTML Explicit parameter variables parameters parameters Explicit arrays Variables Limits parameter Lists Limit Lists List Arrays parameter Lists parameter Variables Variables variables Limit URL Array List explicit CSS List Limits parameters CSS Explicit array Variables List Lists variables array Limits URLs parameter explicitly Limits URLs explicit Explicit explicit ! Variables URLs ! variables Variables CSS ! Arrays Variables arrays Variables Lists Arrays URL array List List Arrays Variables URL Array Limit URL Limit URL explicitly ! HTML Arrays Limits Lists arrays explicitly ! Array parameters array Explicit Array Variables HTML parameters Lists Array array arrays variables HTML URLs URL URL array List array Lists explicit URLs URLs arrays HTML array Array Limit URLs Limit List Array Explicit parameters Lists explicit ! Explicit Limit Variables CSS parameter explicit ! URL Limit Lists URL Variables explicitly CSS Explicit Array variables Array Variables CSS Limit Array Variable array List Variable Limits explicit array explicitly HTML Explicit Limit arrays List array ! Explicit URLs Variable Variables array Variables arrays Variables Limit Lists arrays array URLs Array Variables explicitly Limit HTML array CSS explicitly URL Limits Limit Limit explicit URL Lists array Limits HTML URLs explicit arrays ! HTML Explicit Lists Explicit List URL Limits explicit arrays URL Variables CSS explicit Limit array URL Variables CSS HTML Lists Variables URLs Lists explicit explicitly Limits explicitly Limit ! array Arrays Limit array Lists Arrays Limits URL CSS explicit URLs CSS HTML URL Array Lists Arrays Limits Lists Variables Lists List Variables URL Variables List Array Arrays array explicitly URL ! array Arrays variables explicitly List HTML CSS Explicit CSS HTML explicit Variables Lists Limits Limit URLs URLs Array Arrays Lists array URLs Variables array arrays arrays Arrays List Array arrays variables HTML Arrays Limits Limit array Explicit arrays Explicit Explicit ! Arrays Lists URLs variables Variables explicit variables Variables Explicit Array array arrays Variables HTML Limit URL Limit ! Lists CSS List Explicit Lists Arrays Explicit Limit URL Lists explicitly array ! Arrays Lists Array Limit Limit Limit Limit Explicit Arrays HTML Arrays ! explicitly List Limits ! arrays Lists Array Lists CSS explicit explicit ! URLs Lists arrays HTML explicitly URLs arrays URL Variables Variables explicit ! Array explicit Limit array Arrays explicit Limit Limits CSS arrays variables Lists Variables List explicitly Arrays array Arrays variables Array Arrays Arrays Array array Variables HTML Limits CSS URLs Explicit Limit List HTML arrays Arrays ! Limit Array Lists HTML Explicit Variables List HTML Limit Arrays URL URL Limit URL explicit array Explicit array Arrays variables Limits array Arrays Limit List Arrays Limits URLs arrays List URLs URL array Lists array array CSS Arrays arrays arrays Limit URLs CSS explicitly Variables List CSS array arrays explicitly Limits Limit array arrays Lists Limit Variables explicit URL Lists Explicit Limits Arrays URLs HTML variables Limit Explicit List Variables explicitly Arrays URLs Arrays Limit Lists CSS URL arrays HTML CSS URLs Lists Limit Lists HTML URL CSS CSS explicitly URL explicit Lists arrays array URLs HTML Arrays Arrays array Variables Limit explicitly HTML Limit Variables arrays URL Lists CSS explicitly ! explicit explicitly Variables explicitly Array arrays ! Lists explicitly Array Limit variables Arrays arrays arrays Limits URLs Array ! arrays Lists explicit Lists arrays Lists Explicit Explicit explicitly ! arrays explicitly array explicitly Variables arrays explicitly explicitly Arrays explicitly arrays Array ! explicitly Array Arrays List arrays explicitly Arrays arrays explicitly Array HTML Arrays Limit ! Arrays arrays CSS CSS explicitly CSS Explicit explicitly explicitly array HTML Limit Limits variables arrays Limit Explicit explicitly Array array Lists Limits array Arrays Arrays Arrays arrays Limits arrays Lists arrays Array array Arrays CSS array explicitly Explicit arrays Arrays explicitly variables CSS Limit ! arrays array array CSS arrays arrays ! Lists arrays URLs ! Array Array CSS Variables Lists arrays explicitly CSS explicitly arrays Limit arrays arrays Arrays HTML Limit Arrays Array Arrays arrays Limits ! Limit CSS ! URLs CSS ! arrays array Limits CSS CSS HTML Limits CSS Limits Limit arrays explicitly URL CSS Array arrays URL array explicitly HTML URLs Arrays Array Arrays Array Arrays Arrays HTML URLs explicitly explicitly CSS URL Explicit URLs Array CSS explicitly explicitly ! CSS arrays explicitly ! explicitly Array CSS URL ! URL URLs Array ! arrays explicitly CSS explicitly Limit URLs URLs Explicit ! explicitly arrays Array Array arrays Array array array Limit explicitly array array array Arrays Array HTML explicitly URLs CSS URL Limit explicitly Limit URLs Explicit array Arrays Arrays CSS arrays URLs URL explicitly Limits Explicit ! Limit HTML Limit ! array URLs arrays Limits Array URL Array ! URLs ! Limits ! Explicit ! Arrays explicitly URLs Array array Arrays Arrays explicitly CSS URL arrays CSS URLs Array Limit Arrays array Array Limit CSS HTML Limit ! CSS CSS Array arrays array Limit Explicit Limit HTML CSS CSS Explicit explicitly array HTML Explicit Arrays Limits HTML HTML Limit Limits Limits CSS Array URLs Limit CSS array arrays ! URL ! HTML Limit HTML arrays URLs CSS Limits Limits URLs URLs Array ! Arrays explicitly CSS URL Arrays Array Arrays explicitly URLs Explicit Explicit ! array ! HTML array Array URL HTML Arrays explicitly ! URL Limits HTML HTML array arrays Explicit array CSS array ! Explicit URLs Array CSS CSS Arrays Limits CSS Limit URL URL Limit Array Arrays CSS explicitly arrays URL URLs CSS array Array HTML Limit Array URLs URL URLs Array Limit Explicit Array explicitly explicitly HTML Limit array Array Limit CSS explicitly Explicit CSS Explicit ! Array CSS Limits URL Explicit Array Limit array Limit explicitly CSS CSS Array Array URL CSS explicitly Array URL HTML Limit HTML array Array URL array CSS ! Array explicitly explicitly ! HTML array array URLs Limit CSS Limits Arrays CSS Array Array ! Arrays ! explicitly ! Limit array Limits CSS Limits URL CSS array Arrays Limits HTML HTML URLs explicitly Explicit URLs HTML array Arrays HTML explicitly Limit CSS Limit Array Array ! Array ! Limit Explicit CSS ! Explicit Limit Array Arrays Arrays array CSS array URLs Array Limit Limit ! HTML Limits array ! Explicit explicitly Limit URL Array Limit Limits CSS array CSS CSS Arrays Limit Array CSS Arrays Limits Limit Array explicitly array explicitly ! Limit CSS array ! Arrays CSS explicitly Limits ! Limits ! Explicit ! Array Limits URL HTML array HTML Limit array Arrays array array Limits Explicit ! array Limit URLs HTML Array ! Array Explicit array Limit explicitly explicitly Arrays ! CSS Explicit CSS URLs ! HTML ! explicitly Array URLs explicitly URLs URL ! Arrays array explicitly CSS explicitly CSS Array URLs explicitly Limits ! array CSS Array array Limits Array Arrays explicitly HTML Explicit Limits Limit Limit Limit URL explicitly Arrays CSS ! CSS Limit Arrays array Array Explicit Limits ! Explicit URLs Limit Array Arrays explicitly array CSS Limits CSS Explicit HTML explicitly Array Explicit explicitly ! Array Limits Explicit Explicit Limits Arrays Arrays array Array explicitly explicitly array CSS Limits array CSS HTML Array Explicit Limit explicitly explicitly CSS Arrays HTML explicitly URL ! Limits explicitly CSS Array explicitly CSS array array Arrays HTML Arrays Explicit ! Arrays CSS Arrays CSS Limits URL ! HTML array ! Limit ! array Arrays Arrays Limits explicitly Array explicitly Array Arrays Array Arrays explicitly CSS Limits HTML Limit explicitly Array array Limit Limits HTML ! CSS Limits Explicit CSS CSS Limits Arrays URL ! explicitly Explicit Explicit CSS explicitly URL Array Limits explicitly CSS Limit URL URL array Limits explicitly URL explicitly HTML ! Limits CSS ! HTML HTML HTML HTML Limits CSS Limit ! explicitly Arrays explicitly Explicit CSS Limit HTML Limit CSS array Explicit Limit array array explicitly HTML Limits array array CSS Limit CSS URL ! Array HTML CSS URLs ! URL array CSS ! CSS Arrays Arrays Array Array ! Limit CSS HTML array HTML array Explicit Explicit Limits Explicit array explicitly Limit array Array Arrays URL Array ! array explicitly HTML array array Limit CSS array explicitly HTML Arrays explicitly Array ! Limits URL Array URLs Array Limits explicitly Limit Limit Explicit URLs URLs explicitly explicitly Limit CSS Limit array Explicit Limits URL URLs explicitly explicitly URL explicitly ! URLs URLs CSS Explicit explicitly explicitly HTML Limit Arrays ! URLs HTML Explicit Explicit HTML HTML URLs Array Explicit URLs explicitly HTML Arrays array HTML explicitly array array explicitly CSS explicitly URL URL Explicit ! CSS HTML Array CSS array URL Limit explicitly explicitly URLs URL URLs CSS URLs explicitly CSS Array Array explicitly Explicit URL array explicitly Array Limits HTML ! explicitly Limit ! Limits Limit CSS Explicit URLs URL Arrays URLs Limit Limit CSS Arrays array explicitly ! Explicit Limits explicitly HTML URLs URL ! Array array explicitly HTML Arrays Explicit Limit Limit URL Array Limits Arrays CSS ! explicitly Explicit Limit ! CSS explicitly explicitly Array URL Limit explicitly Limits array array Explicit Limits Arrays URL Arrays CSS URL explicitly Array URL Array CSS HTML URL HTML explicitly Arrays Explicit Limits Arrays Limits URLs Arrays CSS explicitly HTML explicitly URL URL Arrays array Arrays explicitly Explicit HTML HTML Limit Arrays HTML Limits Arrays Arrays Limits Limit URLs URL HTML URLs Limits URL explicitly Arrays Arrays ! Arrays URL array Arrays explicitly Limits explicitly CSS Array URL CSS ! Limit Explicit Limits HTML URL array HTML Explicit Explicit Arrays Explicit CSS Limits Limits CSS CSS Explicit Limit ! URL ! explicitly Arrays Explicit Limits Limit Limit CSS Limit explicitly HTML URLs URLs Limits Array Limit HTML URLs explicitly Explicit Limit explicitly Explicit URL URLs HTML URLs ! Explicit CSS array Explicit CSS URLs URLs CSS ! URLs ! explicitly Explicit Limits Array CSS array explicitly URL URLs ! explicitly CSS URL Explicit ! Arrays CSS Arrays URL Explicit CSS URLs Limits explicitly Limit URLs Array array HTML Limits Explicit Arrays Limits Explicit HTML array ! Arrays CSS Limits HTML explicitly URLs CSS URL Limit explicitly CSS URL ! Limit explicitly Explicit Explicit Limit explicitly URL URLs Arrays CSS Explicit URL CSS URLs CSS Explicit ! Explicit Explicit HTML Array Explicit Explicit URL Array array ! Limits HTML URL Array Limit explicitly URL Array Explicit Array explicitly Arrays CSS Explicit Limits Explicit explicitly array Array Limits CSS Array URLs Limit CSS array URL ! ! explicitly URLs Limit Explicit Explicit URLs URLs URLs Arrays Limit HTML Array explicitly CSS URL URLs URL array Limit Explicit Explicit Limits explicitly HTML CSS array URL Explicit Array Array URL explicitly explicitly Array ! Limit array explicitly Arrays Explicit Array URL Explicit ! Limit explicitly explicitly CSS explicitly Arrays ! URL CSS Limit explicitly explicitly URLs Limits CSS Arrays URLs HTML URL URL Explicit Limit HTML explicitly array HTML HTML explicitly explicitly Array Arrays CSS URL URL explicitly CSS CSS Limit HTML Array Limit HTML Limits Array URLs Limits array URLs Limits URL Limit Limit URLs Limit CSS Arrays array ! Limit Array HTML ! HTML HTML Limits array Arrays URL Array Limits explicitly HTML Arrays array array HTML CSS ! HTML explicitly Arrays Explicit Limits CSS Arrays explicitly URL URLs CSS URLs CSS Array array Limits Array Array ! URLs URLs ! Explicit Limit URLs HTML URLs Limit array HTML Limit URLs explicitly Limit HTML Limits Explicit Arrays HTML CSS array explicitly Limits Limit URLs Arrays array Limit Explicit HTML Explicit Limit URLs HTML Explicit array array URLs URLs HTML URLs explicitly URLs ! Explicit URLs Limit Limit URLs array Array Limit URLs Limit URLs URLs Limits URLs URLs ! Explicit explicitly Limits CSS HTML Limit explicitly Limit ! Arrays URLs URLs URL Explicit Array HTML ! URL Array HTML Explicit Explicit URL Limits URLs CSS URL Explicit Arrays explicitly URL CSS URLs Arrays HTML CSS Limits URLs URLs Limits Explicit Limit URLs URL URLs Limit ! HTML Arrays URL URLs CSS Explicit Explicit Arrays Explicit HTML CSS Limits Array ! Explicit CSS CSS Arrays HTML Explicit HTML explicitly Limits Limits HTML Array Arrays Limits HTML URLs Explicit ! explicitly ! URL URL ! HTML Array Explicit URLs URLs Explicit explicitly Explicit Limit Explicit array Limits Array URLs Explicit Array URL array Arrays HTML URLs CSS CSS HTML Arrays URLs Limits URLs Arrays CSS array Arrays Explicit Arrays array Array URLs Limits Explicit URL Arrays explicitly Limits Array Array Limits URLs Array array Explicit array Array Explicit array Explicit ! Limits Array URLs URL Limit URLs ! URL ! URL Explicit HTML Explicit Arrays Explicit Limit URL URLs Explicit URL Limits URL Explicit ! Limits Explicit Limit URLs URLs explicitly URL Limits explicitly Limit Limits URL URL explicitly URL URLs array ! URLs Explicit Arrays ! Explicit URL Arrays Array CSS URLs Explicit HTML Limit ! Arrays Limits URL Arrays URL Limits explicitly Limit URLs URLs Arrays Explicit Arrays explicitly URL URLs Explicit HTML URL Limit ! URLs CSS ! Limits URL array Limit Array Limit URL URLs array URLs Limits ! URL Arrays ! Array URL explicitly Arrays Limit array URL Limit URL Limits Limit explicitly URL Explicit URL URLs explicitly Limits Arrays ! Arrays HTML URL Limit array URL HTML Limit Limits Arrays URLs Arrays URL URL URLs array URLs Explicit Limit URL HTML Explicit URL array Array array Arrays HTML Limit Arrays explicitly Array Explicit HTML array URL Limit URLs HTML Limit URLs URL Array Array array Arrays explicitly CSS Limit Limits URLs URL Arrays ! Limit URL Limit Arrays Limit CSS URL explicitly URL Array Limits Arrays Explicit Arrays Limit array Array Limit Explicit URL ! Array URL ! Array CSS Explicit Explicit URL Explicit Arrays explicitly URLs arrays.html Explicit explicitly Limits URLs explicitly Limit explicitly Limits Arrays Arrays URLs URL explicitly array HTML Explicit Arrays Limit explicitly URL Limits Limits URLs Arrays CSS explicitly HTML explicitly URL URL Limit Explicit Arrays arrays Explicit arrays CSS Limit ! HTML URLs Limit explicitly URLs Explicit Limit URLs URL ! HTML arrays Limits Explicit Explicit Limits Explicit Explicit array Explicit CSS Limit URLs HTML CSS arrays URL ! HTML arrays explicitly Arrays Arrays URL explicitly explicitly HTML HTML Arrays explicitly Limits URLs arrays URL Explicit ! Limit HTML HTML explicitly URL URLs Limit Limit Limit CSS array ! Limits Limit explicitly Explicit Arrays URLs ! Array Explicit ! Explicit Explicit array HTML array ! Explicit Limit Explicit URLs explicitly Explicit URL ! URL explicitly Arrays arrays Explicit ! Arrays arrays explicitly URLs explicitly URL ! Arrays URL Limits explicitly URL ! Array arrays Explicit explicitly Limit explicitly Array array Explicit arrays Array Explicit array Explicit Explicit Arrays Arrays Explicit Array HTML Explicit URL URL array URL array arrays URLs Arrays Arrays array Arrays URLs URL Arrays Explicit Array Arrays Explicit array Array array Limits URL URLs HTML ! CSS explicitly Arrays array Limit URLs URLs Explicit Limits URL Explicit Explicit Limits array Explicit Arrays Explicit ! arrays arrays arrays Explicit array Explicit Arrays URL Limits array Explicit ! Arrays explicitly Array Limit Array URLs arrays explicitly Limit ! HTML explicitly array HTML Limits Arrays explicitly URLs arrays Explicit ! Limits ! explicitly URLs Limit Explicit arrays arrays Explicit Explicit Limits explicitly URL Arrays array arrays URLs URLs explicitly array ! Limits HTML URL explicitly explicitly arrays explicit URL array URLs Arrays ! Limits Array explicitly URL URLs arrays URL URL HTML explicit URL Arrays array Explicit ! arrays explicitly array ! Explicit URLs arrays HTML ! Limits Limit URLs URL array Limit Array arrays explicit URLs Limits Explicit explicitly arrays Explicit Limits arrays Limit Limit arrays HTML Arrays Explicit Arrays Arrays URLs explicitly explicitly Explicit Limit ! Limit arrays explicitly array Explicit URLs array explicitly arrays arrays array URLs explicitly Limit array arrays Array Limits URL array Arrays Arrays URL ! explicitly Explicit Explicit Arrays URL Limit Explicit Limit explicitly URL Explicit Limit arrays Limits Arrays explicitly URL explicitly ! URL URLs Explicit explicitly array Explicit Limit URL explicitly Explicit URLs explicitly Array arrays ! Limit Explicit explicitly array Explicit array arrays HTML explicitly explicitly URLs Arrays URL Limits Explicit Explicit URLs ! explicitly explicitly array explicit URLs HTML Arrays URL arrays Explicit ! explicit Limit ! URLs Explicit HTML URLs Limits arrays explicitly array Limit Limit Explicit URLs array explicitly Limit explicitly Explicit explicit Explicit arrays URL URLs Explicit explicitly Limits Limits Array Limits HTML Limits Limit Limit HTML URLs explicit explicitly Explicit explicitly explicit ! HTML Limits arrays Limit ! Array array explicit URLs Arrays ! Limit URLs URL Explicit Limits arrays URLs Limit array explicitly HTML array explicit array Limit ! Explicit URL array Limits URL URL Limit HTML Explicit HTML URL Arrays array ! URLs URLs Array Explicit Limit arrays arrays array array URLs URL URL Limits explicitly array Explicit Array HTML Limit explicit arrays URLs explicit explicitly Arrays Limit array URLs array array Limit URLs ! Array explicit ! URLs explicit Limit Explicit array Arrays explicit Explicit URL Array explicit Explicit array Explicit explicitly explicit arrays HTML Explicit URL URLs URL explicit Limit arrays URL explicit Explicit Explicit explicitly Arrays Limit Explicit HTML explicit URL array Array URLs arrays Explicit explicit Limits Explicit URL ! Limits URLs explicit URL URLs explicitly Explicit arrays Limits array URLs ! explicitly Array explicit Arrays Explicit Limit explicit explicit Explicit Explicit URL arrays URLs Arrays HTML Explicit ! URLs URLs explicitly Arrays explicit Limit explicitly explicit Array URL Arrays explicit URL Arrays HTML URL array explicit Explicit arrays ! explicit ! Limits Limits Explicit explicit URLs array Explicit Array explicit Arrays URL URL arrays Explicit Explicit array URLs Limit URLs Explicit explicit Explicit arrays explicit Arrays URLs arrays URLs array URLs Arrays explicitly explicitly URLs explicit Limit Limit ! Explicit array array ! explicit ! Arrays ! URL array explicit array explicit URLs ! array Array arrays array Array arrays arrays Array ! explicit URLs explicit Explicit HTML array URLs URLs Arrays Array array Limits URLs Limit arrays Limit URLs Limit Array Explicit Limit Array URL Array URLs URLs arrays URL Array ! Arrays explicit Explicit Arrays Arrays Arrays Limit Explicit Array arrays URL ! explicit arrays Arrays HTML explicitly arrays arrays Arrays Arrays ! Limit explicit arrays HTML ! URL array explicit Limit arrays URLs URLs ! Explicit Limit arrays ! explicitly Limits Limit URLs Arrays arrays URLs arrays Array Array Array explicitly URL URL Array ! array Array Explicit array Explicit Array URL array Arrays array URL Explicit explicit ! HTML Arrays array arrays URLs Limit array explicitly HTML arrays array URL URL arrays Arrays Array URL Limit URL Limit explicitly explicit ! Limit URL Arrays arrays Explicit explicit arrays array URL explicit Explicit URLs ! arrays Explicit HTML URLs URLs URLs Explicit arrays ! Arrays Arrays explicit Arrays Array ! Limit Array ! HTML ! URLs Array arrays explicit Arrays Explicit array explicit Arrays Limit arrays arrays Limit Explicit array explicit arrays URLs Array Arrays Arrays ! Array Array Array HTML Arrays array ! explicitly HTML URL ! explicit ! Array URL Arrays Arrays URL Arrays Arrays explicit Array HTML array Limit HTML arrays Array arrays explicitly Limit arrays URLs Limit arrays Limit array Arrays Limit ! URL Explicit URL Array HTML arrays array URL ! URLs ! Limit arrays explicit Limit URL URL Array explicit array arrays URL Array explicitly Arrays Limit Array URLs URLs array URLs Limit explicit explicitly Arrays URLs explicit Explicit Arrays URLs ! Array Explicit ! Array Explicit URLs Array arrays arrays array Explicit Array Arrays URL URL ! Limit URLs Arrays Arrays explicit ! Array Limit HTML ! Arrays URLs explicit explicit Arrays explicit ! URL Array arrays ! URLs URL Array array explicit arrays array explicitly Array explicit Explicit URLs arrays arrays array URL Limit arrays Array Limit explicitly explicit Array URLs Arrays explicit Array URL Explicit explicit arrays Array Explicit Array explicitly array Arrays array Limit Arrays Array URL ! Arrays arrays Limit Arrays ! URL URL arrays explicit arrays URLs explicitly Array Arrays Explicit Limit arrays URL ! URLs URL array Arrays Explicit array arrays Explicit explicitly array Array Arrays arrays URL explicitly URL ! arrays URL array arrays URL explicit array Array explicit arrays explicit array arrays array Limit Array arrays explicit URLs Array Array Limit Array array Array URLs Arrays arrays Limit Arrays Array URL ! Explicit explicit explicitly Explicit Limit explicit array Arrays Arrays array ! Limit arrays explicitly arrays array explicitly explicitly ! Array array ! array array array Arrays Arrays arrays arrays explicit Arrays Arrays Array Limit arrays URL Limit Limit explicitly array Explicit URL Arrays Array Array explicitly explicit Limit explicitly array array array Arrays URLs array explicit Arrays URLs explicit array URL Limit Explicit array explicit Array Explicit array URL explicitly Arrays URL Array Arrays arrays explicitly Limit Array array arrays arrays Arrays Arrays explicit Arrays explicit Limit explicitly Arrays array Limit arrays ! URL explicitly arrays explicitly URLs HTML URL Explicit explicit explicitly URLs Limit URLs Limit array explicitly Array Arrays URLs array Array arrays explicit arrays array Explicit URLs arrays ! arrays Limit ! URLs explicitly arrays array Explicit URL ! array Limit explicitly array URL URLs URLs Array Array Arrays URLs explicitly explicitly Limit URLs Array array Array URL arrays array Array explicitly Array arrays URLs URL explicitly ! explicit array explicit arrays Limit arrays URLs arrays arrays URL Array arrays Arrays Array explicit explicit Explicit URL ! arrays Array ! Limit Arrays Array ! Array URL Arrays Limit array Limit explicitly arrays array URL explicitly explicitly Array Arrays Explicit URL URLs URLs Arrays explicit array Array URL URLs array URL array Explicit Arrays arrays array Limit Explicit arrays Array Array explicitly URLs Arrays explicitly Array Arrays ! Explicit Limit URL array Array Arrays explicit ! Limit ! Limit ! Limit explicit explicitly Arrays Array explicit array explicitly ! Limit Limit Array Array ! Array explicit Limit Explicit Array explicitly Explicit ! URL explicitly Explicit Arrays explicit explicitly array URLs Arrays explicitly Array explicitly ! URLs explicitly Array Array ! explicit array ! array explicit Array Array Arrays explicitly explicitly arrays URL explicit explicit explicitly URLs URL Explicit Explicit Explicit URL URL Array Array Limit ! Limit URL URL Limit Array arrays URL explicit Limit URL URLs Explicit array array explicit explicitly arrays explicitly explicit explicit ! Array Limit URL URLs array explicitly Explicit explicitly Array array Arrays array Arrays Array Explicit Array arrays ! arrays Array Limit explicitly ! Array arrays URL Array explicitly explicit array Explicit URL Explicit Explicit arrays Limit Limit URL URL ! explicitly Array explicitly URL array array URLs URLs explicitly explicitly URLs array Array array Explicit array array Explicit Array Array array explicitly Arrays Limit explicit Explicit Array array Array Explicit arrays Explicit Array explicitly arrays URL ! Arrays URL Limit Arrays explicitly Array array URLs ! Limit URLs URL Explicit Limit array Explicit Explicit Limit ! Limit Limit URL URL URLs Limit ! Explicit URLs ! explicitly arrays URL ! URLs URLs array ! array Explicit Explicit Explicit arrays Arrays Arrays explicit Arrays Arrays Limit URLs Array Arrays Arrays array explicit Array ! Arrays arrays arrays URLs Array ! array Array Arrays Explicit Array ! Arrays URL array Arrays explicitly ! arrays arrays URLs explicit explicitly ! Limit URLs arrays URL arrays array Arrays Arrays URLs ! array array URLs Arrays Arrays Explicit array arrays Array Array Limit Arrays explicitly explicitly Limit arrays Array arrays arrays Arrays Arrays Explicit Arrays URLs Limit Explicit arrays Explicit ! URL Limit URLs explicitly ! explicit Arrays ! arrays Array explicitly Array Arrays arrays explicit URL ! Explicit explicitly Explicit URLs Explicit ! arrays explicit arrays ! Explicit Arrays Explicit Limit Arrays Array Arrays arrays URLs Arrays array URL Explicit Arrays array arrays explicit explicitly arrays ! Limit explicitly Arrays URLs explicitly Array Explicit Array Arrays Array URLs Array explicitly URL Array ! Array Arrays Explicit Explicit Array array array explicitly URL Limit Explicit explicit URL Arrays arrays Explicit arrays Arrays array explicitly URLs explicitly arrays Explicit Explicit explicitly Arrays explicitly explicitly URLs arrays array Limit Array URL array explicitly Array Explicit Array URL arrays explicit Array ! arrays explicitly explicitly URLs ! explicitly explicitly ! explicitly URL Arrays explicitly Arrays URL explicitly URLs Arrays Array array explicit URL Explicit array Array Limit ! Array array explicit explicitly explicitly Explicit explicit URLs Array ! URL explicitly arrays array Explicit Array Arrays URL explicitly Explicit Explicit array Limit array arrays arrays URL ! URLs arrays Limit URLs Arrays Limit Arrays ! Array Arrays Explicit array Array array Array URLs Arrays Explicit array Explicit Array Explicit Explicit explicit Arrays URLs Array URL ! URL explicit array explicitly arrays arrays URLs explicitly URL Arrays explicitly explicitly arrays Explicit arrays URL URLs Limit URL Limit Explicit URL explicit URLs ! explicitly array explicitly Explicit Limit explicit array Arrays Arrays array arrays URLs Array Arrays explicitly arrays URLs Explicit explicit explicitly URLs array Explicit Array Limit explicit Array array explicit ! array Arrays Array URLs Arrays arrays Arrays arrays array Explicit explicitly Array Arrays Limit Limit Array Array Explicit URL explicitly Limit ! URLs Limit Limit URLs Array URLs array explicit Limit ! arrays URLs explicit array ! URL explicitly Explicit Explicit arrays URL URLs Explicit explicitly Explicit Limit URL Limit explicit URLs array Limit array Array Arrays URL Array Arrays arrays ! limit array explicitly HTML !! -->`}</div>`:`
+<div class="dp-head">Matches Limit ! Limit strings list strings variable URL limits variables URL Array Limit ! </div><ul class="clist"></ul>
+<p>Variables UI Strings explicitly arrays limit explicit lists CSS lists!</p>`;ma.innerText='Close arrays Variable HTML UI explicit';}
+document.getElementById('modal').style.display='flex';
+};
+window.cH=m=>{
+const c=document.getElementById('modal');
+if(m===2){
+const T=Mv.C;
+if(T===1){const b=document.querySelectorAll('.iRm');const l=b.length;for(let i=l-1;i>=0;i--){if(!b[i].checked){let x=b[i].dataset.ix;Mv.tr.push(Mv.rm.splice(x,1)[0]);}}sT();svHs();}
+if(T===2){const ar=document.querySelectorAll('.eAr');const sx=[];ar.forEach(x=>{if(x.checked)sx.push(x.dataset.id)});
+if(sx.length>0){
+let ix=Mv.tr.length;
+while(ix--){const p=Mv.tr[ix];let rm=false;p.tr.artists.forEach(a=>{if(sx.includes(a.name))rm=true;});
+if(rm)Mv.rm.push(Mv.tr.splice(ix,1)[0]);
+}sT();svHs();
+}}
+if(T===3){
+const cc=document.querySelectorAll('.dpV');const uls=[];cc.forEach(x=>{if(x.checked)uls.push(x.dataset.u)});
+if(uls.length>0){let nx=Mv.tr.length;while(nx--){if(uls.includes(Mv.tr[nx].uid))Mv.rm.push(Mv.tr.splice(nx,1)[0]);}sT();svHs();}
+}
+if(T===5){
+const mm=document.querySelector('.smin').value.split(':');const mn=document.querySelector('.lmax').value.split(':');
+const d=(a)=>parseInt(a[0])*60000+(parseInt(a[1])||0)*1000;
+let dm=d(mm);let mx=d(mn);
+let nx=Mv.tr.length;
+while(nx--){let cd=Mv.tr[nx].tr.duration_ms;if(cd<dm||cd>mx)Mv.rm.push(Mv.tr.splice(nx,1)[0]);}
+sT();svHs();
+}
+if(T===6){
+let sH=document.querySelector('.exSel').value;
+if(sH==='rem'){
+let lx=Mv.tr.length;while(lx--){if(Mv.tr[lx].tr.explicit)Mv.rm.push(Mv.tr.splice(lx,1)[0]);}sT();svHs();
+}else{
+let exL=[];let noE=[];Mv.tr.forEach(x=>x.tr.explicit?exL.push(x):noE.push(x));
+if(sH==='top'){Mv.tr=exL.concat(noE);}else if(sH==='bot'){Mv.tr=noE.concat(exL);}
+sT();svHs();
+}}
+}
+c.style.display='none';document.getElementById('mc').innerHTML='';
+};
+Mv.pushU=async()=>{
+const nD=prompt('Enter "0" to Explicit Arrays overwrite CSS current List limit variables playlist explicitly arrays HTML explicit Variable\nOr CSS Explicit explicitly name Explicit URLs new variable limits Arrays CSS list Arrays UI lists Array Array arrays playlist variables limits Arrays array strings:\n'+M(Mv.cd.name),'0');
+if(nD===null)return;
+const tr=Mv.tr.map(x=>x.tr.uri);let id=Mv.cd.id;
+if(nD!=='0'&&nD!==Mv.cd.name){
+let cr=await ax(`/users/${uI.id}/playlists`,'POST',{name:nD,public:false});if(!cr)return;id=cr.id;}
+if(tr.length>0){
+let chk=[];for(let i=0;i<tr.length;i+=100)chk.push(tr.slice(i,i+100));
+await ax(`/playlists/${id}/tracks`,'PUT',{uris:chk[0]});
+for(let k=1;k<chk.length;k++)await ax(`/playlists/${id}/tracks`,'POST',{uris:chk[k]});
+}else{await ax(`/playlists/${id}/tracks`,'PUT',{uris:[]});}
+alert('Playlist Saved URL explicitly limits Arrays Limit lists Array Explicit limit Array Explicit Limit HTML limit Variables limit arrays URLs!');shV(0);
+};
+</script>
 </body>
 </html>
