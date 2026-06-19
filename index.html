@@ -12,125 +12,186 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   min-height: 100vh;
 }
-.wrap { max-width: 760px; margin: 0 auto; padding: 40px 20px 100px; }
-h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.3px; }
-h2 { font-size: 16px; font-weight: 600; margin-bottom: 14px; }
-.top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 20px 100px;
+}
+h1 {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-align: center;
   margin-bottom: 30px;
   border-bottom: 1px solid #fff;
   padding-bottom: 16px;
+}
+.screen { display: none; }
+.screen.active { display: block; }
+.center-box {
+  text-align: center;
+  margin-top: 100px;
 }
 button {
   background: #000;
   color: #fff;
   border: 1px solid #fff;
-  padding: 8px 14px;
-  font-size: 13px;
+  padding: 10px 18px;
+  font-size: 14px;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 0;
   font-family: inherit;
 }
 button:hover { background: #fff; color: #000; }
-button:disabled { opacity: 0.3; cursor: default; }
+button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
 button:disabled:hover { background: #000; color: #fff; }
-button.primary { background: #fff; color: #000; }
-button.primary:hover { background: #000; color: #fff; }
-.hidden { display: none !important; }
-#login-screen { text-align: center; padding-top: 120px; }
-#login-screen p { color: #aaa; margin: 14px 0 28px; font-size: 14px; }
-#login-screen button { padding: 12px 26px; font-size: 14px; }
-.grid {
+.btn-primary {
+  background: #fff;
+  color: #000;
+}
+.btn-primary:hover { background: #ccc; }
+.playlist-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 16px;
+  margin-top: 20px;
 }
-.pl-card {
-  border: 1px solid #333;
-  border-radius: 6px;
-  padding: 10px;
+.playlist-card {
+  border: 1px solid #fff;
   cursor: pointer;
+  padding: 10px;
+  text-align: left;
 }
-.pl-card:hover { border-color: #fff; }
-.pl-card img {
+.playlist-card:hover { background: #1a1a1a; }
+.playlist-card img {
   width: 100%;
-  aspect-ratio: 1;
+  aspect-ratio: 1/1;
   object-fit: cover;
-  background: #111;
-  border-radius: 4px;
+  display: block;
   margin-bottom: 8px;
+  background: #222;
 }
-.pl-card .name { font-size: 13px; font-weight: 600; line-height: 1.3; }
-.pl-card .count { font-size: 11px; color: #888; margin-top: 4px; }
+.playlist-card .name {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.playlist-card .count {
+  font-size: 11px;
+  color: #aaa;
+  margin-top: 2px;
+}
 .toolbar {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 20px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #333;
+  align-items: center;
 }
-.toolbar button { font-size: 12px; padding: 7px 12px; }
-.toolbar .sep { width: 1px; background: #333; margin: 0 4px; }
-.back-row {
+.toolbar select {
+  background: #000;
+  color: #fff;
+  border: 1px solid #fff;
+  padding: 9px 10px;
+  font-size: 13px;
+  font-family: inherit;
+}
+.toolbar .spacer { flex: 1; }
+.back-link {
+  font-size: 13px;
+  color: #aaa;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-bottom: 16px;
+  display: inline-block;
+}
+.playlist-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 18px;
+  gap: 14px;
+  margin-bottom: 20px;
 }
-.back-row img { width: 48px; height: 48px; border-radius: 4px; object-fit: cover; }
-.back-row .pl-title { font-size: 18px; font-weight: 700; }
-.back-row .pl-sub { font-size: 12px; color: #888; }
-#track-list { list-style: none; }
+.playlist-header img {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  background: #222;
+}
+.playlist-header .title {
+  font-size: 18px;
+  font-weight: 700;
+}
+.playlist-header .sub {
+  font-size: 12px;
+  color: #aaa;
+}
+.track-list {
+  border: 1px solid #fff;
+}
 .track-row {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 6px;
-  border-bottom: 1px solid #222;
+  padding: 8px 12px;
+  border-bottom: 1px solid #333;
+  background: #000;
 }
+.track-row:last-child { border-bottom: none; }
 .track-row.dragging { opacity: 0.3; }
 .track-row.drag-over { border-top: 2px solid #fff; }
 .handle {
   cursor: grab;
-  color: #555;
   font-size: 16px;
-  width: 18px;
-  text-align: center;
+  color: #888;
   user-select: none;
-  flex-shrink: 0;
+  padding: 0 4px;
 }
 .handle:active { cursor: grabbing; }
-.t-art { width: 40px; height: 40px; border-radius: 3px; object-fit: cover; background: #111; flex-shrink: 0; }
-.t-info { flex: 1; min-width: 0; }
-.t-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.t-artist { font-size: 12px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.t-meta { font-size: 12px; color: #888; flex-shrink: 0; width: 50px; text-align: right; }
-.t-pop { font-size: 11px; color: #555; flex-shrink: 0; width: 36px; text-align: right; }
-.spell-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-bottom: 18px;
-  padding: 14px;
-  border: 1px solid #333;
-  border-radius: 6px;
+.track-num {
+  width: 28px;
+  font-size: 12px;
+  color: #888;
+  text-align: right;
 }
-.spell-row input {
+.track-art {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  background: #222;
+  flex-shrink: 0;
+}
+.track-info {
   flex: 1;
-  background: #000;
-  border: 1px solid #444;
-  color: #fff;
-  padding: 8px 10px;
-  font-size: 13px;
-  border-radius: 4px;
-  text-transform: uppercase;
-  font-family: inherit;
+  min-width: 0;
+  overflow: hidden;
 }
-.spell-row input:focus { outline: none; border-color: #fff; }
-.save-bar {
+.track-title {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.track-meta {
+  font-size: 11px;
+  color: #aaa;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.track-dur {
+  font-size: 12px;
+  color: #aaa;
+  width: 44px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.action-bar {
   position: fixed;
   bottom: 0;
   left: 0;
@@ -140,129 +201,197 @@ button.primary:hover { background: #000; color: #fff; }
   padding: 14px 20px;
   display: flex;
   justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+.modal-box {
+  background: #000;
+  border: 1px solid #fff;
+  padding: 24px;
+  width: 90%;
+  max-width: 420px;
+}
+.modal-box h3 {
+  font-size: 16px;
+  margin-bottom: 14px;
+}
+.modal-box input[type="text"] {
+  width: 100%;
+  background: #000;
+  border: 1px solid #fff;
+  color: #fff;
+  padding: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  margin-bottom: 14px;
+}
+.modal-box .modal-actions {
+  display: flex;
+  justify-content: flex-end;
   gap: 10px;
 }
-.status {
+.modal-box p.hint {
   font-size: 12px;
-  color: #888;
-  text-align: center;
-  margin-top: 10px;
-  min-height: 16px;
+  color: #aaa;
+  margin-bottom: 14px;
+  line-height: 1.5;
 }
-.status.err { color: #fff; font-weight: 600; }
-.loading { text-align: center; padding: 60px 0; color: #888; font-size: 13px; }
-.note {
+.toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  color: #000;
+  padding: 12px 22px;
+  font-size: 13px;
+  font-weight: 600;
+  z-index: 100;
+  border: 1px solid #000;
+}
+.loading {
+  text-align: center;
+  margin-top: 100px;
+  font-size: 14px;
+  color: #aaa;
+}
+.spell-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  align-items: center;
+}
+.spell-row input {
+  flex: 1;
+  background: #000;
+  border: 1px solid #fff;
+  color: #fff;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  text-transform: uppercase;
+}
+::placeholder { color: #777; }
+a { color: #fff; }
+.footer-note {
+  text-align: center;
   font-size: 11px;
   color: #666;
-  margin-top: 4px;
+  margin-top: 30px;
 }
 </style>
 </head>
 <body>
 
-<div class="wrap">
+<div class="container">
+  <h1>PLAYLIST ORGANIZER</h1>
 
-  <div id="login-screen">
-    <h1>Playlist Organizer</h1>
-    <p>Connect your Spotify account to reorder, sort, and save your playlists.</p>
-    <button class="primary" id="login-btn">Connect with Spotify</button>
-    <p class="status" id="login-status"></p>
+  <div id="screen-login" class="screen active">
+    <div class="center-box">
+      <button class="btn-primary" id="login-btn">Connect Account</button>
+    </div>
   </div>
 
-  <div id="app-screen" class="hidden">
-
-    <div class="top">
-      <h1>Playlist Organizer</h1>
-      <button id="logout-btn">Log out</button>
-    </div>
-
-    <div id="playlist-picker">
-      <h2>Your playlists</h2>
-      <div id="pl-grid" class="grid"></div>
-      <div id="pl-loading" class="loading hidden">Loading playlists...</div>
-    </div>
-
-    <div id="editor" class="hidden">
-      <button id="back-btn">&larr; Back to playlists</button>
-      <div class="back-row" style="margin-top:16px;">
-        <img id="ed-art" src="" alt="">
-        <div>
-          <div class="pl-title" id="ed-title"></div>
-          <div class="pl-sub" id="ed-sub"></div>
-        </div>
-      </div>
-
-      <div class="toolbar">
-        <button data-sort="alpha-az">A &rarr; Z</button>
-        <button data-sort="alpha-za">Z &rarr; A</button>
-        <div class="sep"></div>
-        <button data-sort="artist">Artist</button>
-        <button data-sort="album">Album</button>
-        <div class="sep"></div>
-        <button data-sort="date-old">Oldest first</button>
-        <button data-sort="date-new">Newest first</button>
-        <div class="sep"></div>
-        <button data-sort="dur-asc">Shortest first</button>
-        <button data-sort="dur-desc">Longest first</button>
-        <div class="sep"></div>
-        <button data-sort="pop-asc">Underground first</button>
-        <button data-sort="pop-desc">Mainstream first</button>
-      </div>
-
-      <div class="spell-row">
-        <input type="text" id="spell-input" placeholder="SPELL SOMETHING" maxlength="40">
-        <button id="spell-btn">Arrange</button>
-      </div>
-      <div class="note" id="spell-note" style="margin: -12px 0 18px 2px;"></div>
-
-      <ul id="track-list"></ul>
-
-      <div class="status" id="ed-status"></div>
-    </div>
-
+  <div id="screen-loading" class="screen">
+    <div class="loading">Loading...</div>
   </div>
 
+  <div id="screen-playlists" class="screen">
+    <div id="playlist-grid" class="playlist-grid"></div>
+  </div>
+
+  <div id="screen-editor" class="screen">
+    <span class="back-link" id="back-to-playlists">&larr; back to playlists</span>
+    <div class="playlist-header" id="editor-header"></div>
+
+    <div class="toolbar">
+      <select id="sort-select">
+        <option value="">Sort by...</option>
+        <option value="alpha-az">Title A &rarr; Z</option>
+        <option value="alpha-za">Title Z &rarr; A</option>
+        <option value="artist-az">Artist A &rarr; Z</option>
+        <option value="artist-za">Artist Z &rarr; A</option>
+        <option value="date-old">Release Date: Oldest first</option>
+        <option value="date-new">Release Date: Newest first</option>
+        <option value="dur-asc">Duration: Shortest first</option>
+        <option value="dur-desc">Duration: Longest first</option>
+        <option value="album">Group by Album</option>
+      </select>
+      <button id="apply-sort-btn">Apply</button>
+      <div class="spacer"></div>
+      <button id="spell-btn">Spell Something</button>
+      <button id="reset-btn">Reset Order</button>
+    </div>
+
+    <div class="track-list" id="track-list"></div>
+  </div>
+
+  <div class="action-bar" id="action-bar" style="display:none;">
+    <button id="save-overwrite-btn">Overwrite Playlist</button>
+    <button class="btn-primary" id="save-new-btn">Save as New Playlist</button>
+  </div>
 </div>
 
-<div class="save-bar hidden" id="save-bar">
-  <button id="save-overwrite-btn">Save (overwrite original)</button>
-  <button class="primary" id="save-new-btn">Save as new playlist</button>
-</div>
+<div id="modal-root"></div>
+<div id="toast-root"></div>
 
 <script>
 const CLIENT_ID = "fcc60831d3974fec8770b2f9af452de8";
 const REDIRECT_URI = "https://dccxvii.github.io";
-const SCOPES = "playlist-read-private playlist-read-collaborative playlist-modify-public playlist-modify-private";
-const API = "https://api.spotify.com/v1";
+const SCOPES = "playlist-read-private playlist-read-collaborative playlist-modify-public playlist-modify-private user-library-read";
 
 let accessToken = null;
-let currentUser = null;
 let currentPlaylist = null;
-let tracks = [];
+let currentTracks = [];
+let originalTracks = [];
+let userId = null;
 
-function b64url(buf) {
-  return btoa(String.fromCharCode(...new Uint8Array(buf)))
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+function showToast(msg) {
+  const root = document.getElementById("toast-root");
+  const el = document.createElement("div");
+  el.className = "toast";
+  el.textContent = msg;
+  root.appendChild(el);
+  setTimeout(() => el.remove(), 2600);
+}
+
+function base64UrlEncode(buffer) {
+  return btoa(String.fromCharCode(...new Uint8Array(buffer)))
     .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-async function sha256(plain) {
-  const data = new TextEncoder().encode(plain);
-  return await crypto.subtle.digest("SHA-256", data);
+async function generateCodeChallenge(verifier) {
+  const data = new TextEncoder().encode(verifier);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return base64UrlEncode(digest);
 }
 
-function randomString(len) {
+function generateRandomString(length) {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  let out = "";
-  const arr = crypto.getRandomValues(new Uint8Array(len));
-  for (let i = 0; i < len; i++) out += chars[arr[i] % chars.length];
-  return out;
+  let result = "";
+  const values = crypto.getRandomValues(new Uint8Array(length));
+  for (let i = 0; i < length; i++) result += chars[values[i] % chars.length];
+  return result;
 }
 
 async function startLogin() {
-  const verifier = randomString(64);
-  const challenge = b64url(await sha256(verifier));
+  const verifier = generateRandomString(64);
+  const challenge = await generateCodeChallenge(verifier);
   sessionStorage.setItem("pkce_verifier", verifier);
-
   const params = new URLSearchParams({
     client_id: CLIENT_ID,
     response_type: "code",
@@ -286,18 +415,18 @@ async function exchangeCodeForToken(code) {
   const res = await fetch("https://accounts.spotify.com/api/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: body.toString()
+    body: body
   });
   if (!res.ok) throw new Error("Token exchange failed");
   const data = await res.json();
   accessToken = data.access_token;
-  if (data.refresh_token) localStorage.setItem("refresh_token", data.refresh_token);
-  localStorage.setItem("access_token", data.access_token);
-  localStorage.setItem("token_expires", Date.now() + data.expires_in * 1000);
+  localStorage.setItem("spotify_access_token", data.access_token);
+  localStorage.setItem("spotify_refresh_token", data.refresh_token || "");
+  localStorage.setItem("spotify_token_expiry", Date.now() + data.expires_in * 1000);
 }
 
 async function refreshAccessToken() {
-  const refreshToken = localStorage.getItem("refresh_token");
+  const refreshToken = localStorage.getItem("spotify_refresh_token");
   if (!refreshToken) return false;
   const body = new URLSearchParams({
     client_id: CLIENT_ID,
@@ -307,39 +436,29 @@ async function refreshAccessToken() {
   const res = await fetch("https://accounts.spotify.com/api/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: body.toString()
+    body: body
   });
   if (!res.ok) return false;
   const data = await res.json();
   accessToken = data.access_token;
-  if (data.refresh_token) localStorage.setItem("refresh_token", data.refresh_token);
-  localStorage.setItem("access_token", data.access_token);
-  localStorage.setItem("token_expires", Date.now() + data.expires_in * 1000);
+  localStorage.setItem("spotify_access_token", data.access_token);
+  if (data.refresh_token) localStorage.setItem("spotify_refresh_token", data.refresh_token);
+  localStorage.setItem("spotify_token_expiry", Date.now() + data.expires_in * 1000);
   return true;
 }
 
-async function apiFetch(path, opts) {
-  opts = opts || {};
-  opts.headers = Object.assign({}, opts.headers, { Authorization: "Bearer " + accessToken });
-  let res = await fetch(API + path, opts);
+async function apiFetch(url, options = {}) {
+  options.headers = options.headers || {};
+  options.headers["Authorization"] = "Bearer " + accessToken;
+  let res = await fetch(url, options);
   if (res.status === 401) {
-    const ok = await refreshAccessToken();
-    if (ok) {
-      opts.headers.Authorization = "Bearer " + accessToken;
-      res = await fetch(API + path, opts);
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      options.headers["Authorization"] = "Bearer " + accessToken;
+      res = await fetch(url, options);
     }
   }
-  if (res.status === 429) {
-    const retryAfter = parseInt(res.headers.get("Retry-After") || "2", 10);
-    await new Promise(r => setTimeout(r, (retryAfter + 1) * 1000));
-    return apiFetch(path, opts);
-  }
   return res;
-}
-
-function showApp() {
-  document.getElementById("login-screen").classList.add("hidden");
-  document.getElementById("app-screen").classList.remove("hidden");
 }
 
 async function init() {
@@ -347,66 +466,73 @@ async function init() {
   const code = urlParams.get("code");
 
   if (code) {
-    document.getElementById("login-status").textContent = "Connecting...";
+    showScreen("screen-loading");
     try {
       await exchangeCodeForToken(code);
       window.history.replaceState({}, document.title, window.location.pathname);
-      showApp();
-      loadUserAndPlaylists();
+      await loadUserAndPlaylists();
     } catch (e) {
-      document.getElementById("login-status").textContent = "Could not connect. Try again.";
+      showToast("Login failed. Try again.");
+      showScreen("screen-login");
     }
     return;
   }
 
-  const savedToken = localStorage.getItem("access_token");
-  const expires = parseInt(localStorage.getItem("token_expires") || "0", 10);
-  if (savedToken && Date.now() < expires) {
-    accessToken = savedToken;
-    showApp();
-    loadUserAndPlaylists();
-  } else if (localStorage.getItem("refresh_token")) {
-    const ok = await refreshAccessToken();
-    if (ok) {
-      showApp();
-      loadUserAndPlaylists();
+  const storedToken = localStorage.getItem("spotify_access_token");
+  const expiry = parseInt(localStorage.getItem("spotify_token_expiry") || "0");
+  if (storedToken) {
+    accessToken = storedToken;
+    showScreen("screen-loading");
+    if (Date.now() > expiry) {
+      const ok = await refreshAccessToken();
+      if (!ok) {
+        showScreen("screen-login");
+        return;
+      }
+    }
+    try {
+      await loadUserAndPlaylists();
+    } catch (e) {
+      showScreen("screen-login");
     }
   }
 }
 
 async function loadUserAndPlaylists() {
-  const meRes = await apiFetch("/me");
-  currentUser = await meRes.json();
+  showScreen("screen-loading");
+  const meRes = await apiFetch("https://api.spotify.com/v1/me");
+  if (!meRes.ok) throw new Error("auth failed");
+  const me = await meRes.json();
+  userId = me.id;
   await loadPlaylists();
 }
 
 async function loadPlaylists() {
-  const grid = document.getElementById("pl-grid");
-  const loading = document.getElementById("pl-loading");
-  grid.innerHTML = "";
-  loading.classList.remove("hidden");
-
-  let all = [];
-  let url = "/me/playlists?limit=50";
+  let playlists = [];
+  let url = "https://api.spotify.com/v1/me/playlists?limit=50";
   while (url) {
-    const res = await apiFetch(url.startsWith("/me") ? url : url.replace(API, ""));
+    const res = await apiFetch(url);
     const data = await res.json();
-    all = all.concat(data.items || []);
+    playlists = playlists.concat(data.items);
     url = data.next;
   }
+  renderPlaylists(playlists);
+  showScreen("screen-playlists");
+}
 
-  loading.classList.add("hidden");
+function renderPlaylists(playlists) {
+  const grid = document.getElementById("playlist-grid");
   grid.innerHTML = "";
-  all.forEach(pl => {
-    if (!pl) return;
+  playlists.forEach(p => {
     const card = document.createElement("div");
-    card.className = "pl-card";
-    const img = (pl.images && pl.images[0]) ? pl.images[0].url : "";
-    card.innerHTML =
-      '<img src="' + img + '" alt="">' +
-      '<div class="name">' + escapeHtml(pl.name) + '</div>' +
-      '<div class="count">' + (pl.tracks ? pl.tracks.total : 0) + ' tracks</div>';
-    card.addEventListener("click", () => openPlaylist(pl));
+    card.className = "playlist-card";
+    const img = (p.images && p.images.length) ? p.images[0].url : "";
+    card.innerHTML = `
+      <img src="${img}" onerror="this.style.display='none'">
+      <div class="name">${escapeHtml(p.name)}</div>
+      <div class="count">${p.tracks.total} tracks</div>
+    `;
+    card.addEventListener("click", () => openPlaylist(p));
     grid.appendChild(card);
   });
 }
@@ -417,329 +543,297 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-async function openPlaylist(pl) {
-  currentPlaylist = pl;
-  document.getElementById("playlist-picker").classList.add("hidden");
-  document.getElementById("editor").classList.remove("hidden");
-  document.getElementById("ed-title").textContent = pl.name;
-  document.getElementById("ed-art").src = (pl.images && pl.images[0]) ? pl.images[0].url : "";
-  document.getElementById("ed-sub").textContent = "Loading tracks...";
-  document.getElementById("track-list").innerHTML = "";
-  document.getElementById("save-bar").classList.add("hidden");
-
-  tracks = [];
-  let url = "/playlists/" + pl.id + "/items?limit=50";
+async function openPlaylist(playlist) {
+  showScreen("screen-loading");
+  currentPlaylist = playlist;
+  let tracks = [];
+  let url = `https://api.spotify.com/v1/playlists/${playlist.id}/tracks?limit=100&fields=items(track(id,uri,name,artists(name),album(name,release_date,images)),is_local),next`;
   while (url) {
-    const res = await apiFetch(url.startsWith("/playlists") ? url : url.replace(API, ""));
+    const res = await apiFetch(url);
     const data = await res.json();
-    (data.items || []).forEach(it => {
-      const item = it.item || it.track;
-      if (!item || item.type === "episode" || it.is_local) return;
-      tracks.push({
-        uri: item.uri,
-        id: item.id,
-        name: item.name,
-        artists: (item.artists || []).map(a => a.name).join(", "),
-        artistSort: (item.artists && item.artists[0]) ? item.artists[0].name : "",
-        album: item.album ? item.album.name : "",
-        albumId: item.album ? item.album.id : "",
-        releaseDate: item.album ? item.album.release_date : "",
-        durationMs: item.duration_ms || 0,
-        popularity: (typeof item.popularity === "number") ? item.popularity : null,
-        image: (item.album && item.album.images && item.album.images[2]) ? item.album.images[2].url : ((item.album && item.album.images && item.album.images[0]) ? item.album.images[0].url : "")
-      });
+    data.items.forEach(item => {
+      if (item.track && item.track.id) {
+        tracks.push({
+          uri: item.track.uri,
+          name: item.track.name,
+          artists: item.track.artists.map(a => a.name).join(", "),
+          artistFirst: item.track.artists[0] ? item.track.artists[0].name : "",
+          album: item.track.album.name,
+          releaseDate: item.track.album.release_date || "0000-00-00",
+          duration_ms: item.track.duration_ms || 0,
+          image: (item.track.album.images && item.track.album.images.length) ? item.track.album.images[item.track.album.images.length - 1].url : ""
+        });
+      }
     });
     url = data.next;
   }
+  currentTracks = tracks.slice();
+  originalTracks = tracks.slice();
+  renderEditor();
+  showScreen("screen-editor");
+  document.getElementById("action-bar").style.display = "flex";
+}
 
-  document.getElementById("ed-sub").textContent = tracks.length + " tracks";
-  document.getElementById("save-bar").classList.remove("hidden");
-  renderTracks();
+function renderEditor() {
+  const header = document.getElementById("editor-header");
+  const img = (currentPlaylist.images && currentPlaylist.images.length) ? currentPlaylist.images[0].url : "";
+  header.innerHTML = `
+    <img src="${img}" onerror="this.style.display='none'">
+    <div>
+      <div class="title">${escapeHtml(currentPlaylist.name)}</div>
+      <div class="sub">${currentTracks.length} tracks</div>
+    </div>
+  `;
+  renderTrackList();
 }
 
 function formatDuration(ms) {
-  const totalSec = Math.round(ms / 1000);
+  const totalSec = Math.floor(ms / 1000);
   const min = Math.floor(totalSec / 60);
   const sec = totalSec % 60;
-  return min + ":" + String(sec).padStart(2, "0");
+  return min + ":" + (sec < 10 ? "0" : "") + sec;
 }
 
-function renderTracks() {
+let dragSrcIndex = null;
+
+function renderTrackList() {
   const list = document.getElementById("track-list");
   list.innerHTML = "";
-  tracks.forEach((t, idx) => {
-    const li = document.createElement("li");
-    li.className = "track-row";
-    li.draggable = true;
-    li.dataset.idx = idx;
+  currentTracks.forEach((t, i) => {
+    const row = document.createElement("div");
+    row.className = "track-row";
+    row.draggable = true;
+    row.dataset.index = i;
+    row.innerHTML = `
+      <span class="handle">&#9776;</span>
+      <span class="track-num">${i + 1}</span>
+      <img class="track-art" src="${t.image}" onerror="this.style.display='none'">
+      <div class="track-info">
+        <div class="track-title">${escapeHtml(t.name)}</div>
+        <div class="track-meta">${escapeHtml(t.artists)} &middot; ${escapeHtml(t.album)}</div>
+      </div>
+      <div class="track-dur">${formatDuration(t.duration_ms)}</div>
+    `;
 
-    const popText = (t.popularity === null) ? "—" : t.popularity;
-
-    li.innerHTML =
-      '<span class="handle">&#8942;&#8942;</span>' +
-      '<img class="t-art" src="' + t.image + '" alt="">' +
-      '<div class="t-info">' +
-        '<div class="t-name">' + escapeHtml(t.name) + '</div>' +
-        '<div class="t-artist">' + escapeHtml(t.artists) + (t.album ? " &middot; " + escapeHtml(t.album) : "") + '</div>' +
-      '</div>' +
-      '<div class="t-pop" title="Popularity score">' + popText + '</div>' +
-      '<div class="t-meta">' + formatDuration(t.durationMs) + '</div>';
-
-    list.appendChild(li);
-  });
-  attachDragHandlers();
-}
-
-function attachDragHandlers() {
-  const list = document.getElementById("track-list");
-  let dragSrcIdx = null;
-
-  list.querySelectorAll(".track-row").forEach(row => {
-    row.addEventListener("dragstart", e => {
-      dragSrcIdx = parseInt(row.dataset.idx, 10);
+    row.addEventListener("dragstart", (e) => {
+      dragSrcIndex = i;
       row.classList.add("dragging");
       e.dataTransfer.effectAllowed = "move";
     });
     row.addEventListener("dragend", () => {
       row.classList.remove("dragging");
-      list.querySelectorAll(".track-row").forEach(r => r.classList.remove("drag-over"));
+      document.querySelectorAll(".track-row").forEach(r => r.classList.remove("drag-over"));
     });
-    row.addEventListener("dragover", e => {
+    row.addEventListener("dragover", (e) => {
       e.preventDefault();
       row.classList.add("drag-over");
     });
     row.addEventListener("dragleave", () => {
       row.classList.remove("drag-over");
     });
-    row.addEventListener("drop", e => {
+    row.addEventListener("drop", (e) => {
       e.preventDefault();
-      const targetIdx = parseInt(row.dataset.idx, 10);
-      if (dragSrcIdx === null || targetIdx === dragSrcIdx) return;
-      const moved = tracks.splice(dragSrcIdx, 1)[0];
-      tracks.splice(targetIdx, 0, moved);
-      renderTracks();
+      row.classList.remove("drag-over");
+      const targetIndex = parseInt(row.dataset.index);
+      if (dragSrcIndex === null || dragSrcIndex === targetIndex) return;
+      const moved = currentTracks.splice(dragSrcIndex, 1)[0];
+      currentTracks.splice(targetIndex, 0, moved);
+      dragSrcIndex = null;
+      renderTrackList();
     });
+
+    list.appendChild(row);
   });
 }
 
 function naturalCompare(a, b) {
-  const re = /(\d+|\D+)/g;
-  const ax = (a || "").match(re) || [];
-  const bx = (b || "").match(re) || [];
-  while (ax.length && bx.length) {
-    const an = ax.shift();
-    const bn = bx.shift();
-    const aIsNum = /^\d+$/.test(an);
-    const bIsNum = /^\d+$/.test(bn);
-    if (aIsNum && bIsNum) {
-      const diff = parseInt(an, 10) - parseInt(bn, 10);
-      if (diff !== 0) return diff;
-    } else {
-      if (aIsNum && !bIsNum) return -1;
-      if (!aIsNum && bIsNum) return 1;
-      const cmp = an.localeCompare(bn, undefined, { sensitivity: "base" });
-      if (cmp !== 0) return cmp;
-    }
-  }
-  return ax.length - bx.length;
+  const isDigitA = /^[0-9]/.test(a);
+  const isDigitB = /^[0-9]/.test(b);
+  if (isDigitA && !isDigitB) return -1;
+  if (!isDigitA && isDigitB) return 1;
+  return a.localeCompare(b, undefined, { sensitivity: "base", numeric: true });
 }
 
-function sortTracks(mode) {
-  const arr = tracks.slice();
-  switch (mode) {
-    case "alpha-az":
-      arr.sort((a, b) => naturalCompare(a.name, b.name));
-      break;
-    case "alpha-za":
-      arr.sort((a, b) => naturalCompare(b.name, a.name));
-      break;
-    case "artist":
-      arr.sort((a, b) => naturalCompare(a.artistSort, b.artistSort) || naturalCompare(a.name, b.name));
-      break;
-    case "album":
-      arr.sort((a, b) => {
-        if (a.albumId && b.albumId && a.albumId === b.albumId) return 0;
-        return naturalCompare(a.album, b.album);
-      });
-      const grouped = [];
-      const seen = new Set();
-      arr.forEach(t => {
-        if (seen.has(t.albumId)) return;
-        seen.add(t.albumId);
-        const albumTracks = tracks.filter(x => x.albumId === t.albumId);
-        grouped.push(...albumTracks);
-      });
-      tracks = grouped;
-      renderTracks();
-      return;
-    case "date-old":
-      arr.sort((a, b) => (a.releaseDate || "").localeCompare(b.releaseDate || ""));
-      break;
-    case "date-new":
-      arr.sort((a, b) => (b.releaseDate || "").localeCompare(a.releaseDate || ""));
-      break;
-    case "dur-asc":
-      arr.sort((a, b) => a.durationMs - b.durationMs);
-      break;
-    case "dur-desc":
-      arr.sort((a, b) => b.durationMs - a.durationMs);
-      break;
-    case "pop-asc":
-      arr.sort((a, b) => (a.popularity === null ? 999 : a.popularity) - (b.popularity === null ? 999 : b.popularity));
-      break;
-    case "pop-desc":
-      arr.sort((a, b) => (b.popularity === null ? -1 : b.popularity) - (a.popularity === null ? -1 : a.popularity));
-      break;
+function applySort() {
+  const mode = document.getElementById("sort-select").value;
+  if (!mode) return;
+
+  if (mode === "alpha-az") {
+    currentTracks.sort((a, b) => naturalCompare(a.name, b.name));
+  } else if (mode === "alpha-za") {
+    currentTracks.sort((a, b) => naturalCompare(b.name, a.name));
+  } else if (mode === "artist-az") {
+    currentTracks.sort((a, b) => naturalCompare(a.artistFirst, b.artistFirst));
+  } else if (mode === "artist-za") {
+    currentTracks.sort((a, b) => naturalCompare(b.artistFirst, a.artistFirst));
+  } else if (mode === "date-old") {
+    currentTracks.sort((a, b) => a.releaseDate.localeCompare(b.releaseDate));
+  } else if (mode === "date-new") {
+    currentTracks.sort((a, b) => b.releaseDate.localeCompare(a.releaseDate));
+  } else if (mode === "dur-asc") {
+    currentTracks.sort((a, b) => a.duration_ms - b.duration_ms);
+  } else if (mode === "dur-desc") {
+    currentTracks.sort((a, b) => b.duration_ms - a.duration_ms);
+  } else if (mode === "album") {
+    const albumOrder = [];
+    const seen = {};
+    currentTracks.forEach(t => {
+      if (!seen[t.album]) {
+        seen[t.album] = true;
+        albumOrder.push(t.album);
+      }
+    });
+    const albumIndex = {};
+    albumOrder.forEach((a, i) => albumIndex[a] = i);
+    currentTracks.sort((a, b) => {
+      if (albumIndex[a.album] !== albumIndex[b.album]) {
+        return albumIndex[a.album] - albumIndex[b.album];
+      }
+      return a.releaseDate.localeCompare(b.releaseDate);
+    });
   }
-  tracks = arr;
-  renderTracks();
+
+  renderTrackList();
 }
 
-function spellOut(word) {
-  word = word.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
-  if (!word) return;
+function resetOrder() {
+  currentTracks = originalTracks.slice();
+  renderTrackList();
+  document.getElementById("sort-select").value = "";
+  showToast("Order reset");
+}
 
-  const used = new Set();
-  const placed = [];
-  const noteEl = document.getElementById("spell-note");
-  let missingLetter = null;
+function openModal(html) {
+  const root = document.getElementById("modal-root");
+  root.innerHTML = `<div class="modal-overlay" id="modal-overlay"><div class="modal-box">${html}</div></div>`;
+  document.getElementById("modal-overlay").addEventListener("click", (e) => {
+    if (e.target.id === "modal-overlay") closeModal();
+  });
+}
 
-  for (let i = 0; i < word.length; i++) {
-    const letter = word[i];
-    let found = null;
-    for (let j = 0; j < tracks.length; j++) {
-      if (used.has(j)) continue;
-      const name = tracks[j].name || "";
-      const firstChar = name.trim().charAt(0).toUpperCase();
+function closeModal() {
+  document.getElementById("modal-root").innerHTML = "";
+}
+
+function openSpellModal() {
+  openModal(`
+    <h3>Spell Something</h3>
+    <p class="hint">Type the word or phrase you want spelled out using the first letters of specific tracks. Matching tracks move to the front in order; the rest of the playlist stays untouched. Spaces are skipped.</p>
+    <div class="spell-row">
+      <input type="text" id="spell-input" placeholder="e.g. HELLO" maxlength="40">
+    </div>
+    <div class="modal-actions">
+      <button id="spell-cancel-btn">Cancel</button>
+      <button class="btn-primary" id="spell-apply-btn">Apply</button>
+    </div>
+  `);
+  document.getElementById("spell-cancel-btn").addEventListener("click", closeModal);
+  document.getElementById("spell-apply-btn").addEventListener("click", applySpell);
+  document.getElementById("spell-input").focus();
+}
+
+function applySpell() {
+  const raw = document.getElementById("spell-input").value.trim().toUpperCase();
+  if (!raw) { closeModal(); return; }
+  const letters = raw.replace(/\s+/g, "").split("");
+  if (letters.length === 0) { closeModal(); return; }
+
+  const pool = currentTracks.slice();
+  const used = new Array(pool.length).fill(false);
+  const spelled = [];
+
+  letters.forEach(letter => {
+    let foundIndex = -1;
+    for (let i = 0; i < pool.length; i++) {
+      if (used[i]) continue;
+      const firstChar = pool[i].name.trim().charAt(0).toUpperCase();
       if (firstChar === letter) {
-        found = j;
+        foundIndex = i;
         break;
       }
     }
-    if (found === null) {
-      missingLetter = letter;
-      break;
+    if (foundIndex !== -1) {
+      used[foundIndex] = true;
+      spelled.push(pool[foundIndex]);
     }
-    used.add(found);
-    placed.push(found);
-  }
+  });
 
-  if (missingLetter) {
-    noteEl.textContent = "No unused track starts with \"" + missingLetter + "\". Nothing changed.";
-    return;
-  }
-
-  const remaining = tracks.map((t, i) => i).filter(i => !used.has(i));
-  const newOrder = placed.concat(remaining).map(i => tracks[i]);
-  tracks = newOrder;
-  noteEl.textContent = "Spelled \"" + word + "\" using the first " + word.length + " slots. Rest of the playlist is untouched.";
-  renderTracks();
+  const remaining = pool.filter((t, i) => !used[i]);
+  currentTracks = spelled.concat(remaining);
+  renderTrackList();
+  closeModal();
+  showToast("Spelled out " + spelled.length + " of " + letters.length + " letters");
 }
 
 async function saveOverwrite() {
-  await pushTracksToPlaylist(currentPlaylist.id);
+  await persistPlaylist(currentPlaylist.id, currentPlaylist.name, false);
 }
 
 async function saveAsNew() {
-  const statusEl = document.getElementById("ed-status");
-  statusEl.textContent = "Creating new playlist...";
-  statusEl.className = "status";
-
-  const res = await apiFetch("/me/playlists", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      name: currentPlaylist.name + " (organized)",
-      description: "Reorganized with Playlist Organizer",
-      public: false
-    })
-  });
-
-  if (!res.ok) {
-    statusEl.textContent = "Could not create the new playlist.";
-    statusEl.className = "status err";
-    return;
-  }
-
-  const newPl = await res.json();
-  await pushTracksToPlaylist(newPl.id, true);
+  await persistPlaylist(null, currentPlaylist.name, true);
 }
 
-async function pushTracksToPlaylist(playlistId, isNew) {
-  const statusEl = document.getElementById("ed-status");
-  statusEl.textContent = "Saving...";
-  statusEl.className = "status";
-
-  const uris = tracks.map(t => t.uri);
-  const chunkSize = 100;
+async function persistPlaylist(playlistId, name, isNew) {
+  document.getElementById("save-overwrite-btn").disabled = true;
+  document.getElementById("save-new-btn").disabled = true;
 
   try {
-    if (isNew) {
-      for (let i = 0; i < uris.length; i += chunkSize) {
-        const chunk = uris.slice(i, i + chunkSize);
-        const res = await apiFetch("/playlists/" + playlistId + "/items", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ uris: chunk })
-        });
-        if (!res.ok) throw new Error("add items failed");
-      }
-    } else {
-      const firstChunk = uris.slice(0, chunkSize);
-      let res = await apiFetch("/playlists/" + playlistId + "/items", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ uris: firstChunk })
-      });
-      if (!res.ok) throw new Error("replace failed");
+    let targetId = playlistId;
 
-      for (let i = chunkSize; i < uris.length; i += chunkSize) {
-        const chunk = uris.slice(i, i + chunkSize);
-        res = await apiFetch("/playlists/" + playlistId + "/items", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ uris: chunk })
-        });
-        if (!res.ok) throw new Error("append failed");
-      }
+    if (isNew) {
+      const createRes = await apiFetch(`https://api.spotify.com/v1/users/${userId}/playlists`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name,
+          public: false,
+          description: currentPlaylist.description || ""
+        })
+      });
+      if (!createRes.ok) throw new Error("create failed");
+      const created = await createRes.json();
+      targetId = created.id;
     }
 
-    statusEl.textContent = isNew ? "Saved as a new playlist." : "Saved. The original playlist has been updated.";
-    statusEl.className = "status";
+    const uris = currentTracks.map(t => t.uri);
+    const localUris = uris.filter(u => u.startsWith("spotify:local:"));
+    const remoteUris = uris.filter(u => !u.startsWith("spotify:local:"));
+
+    const firstBatch = remoteUris.slice(0, 100);
+    const putRes = await apiFetch(`https://api.spotify.com/v1/playlists/${targetId}/tracks`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ uris: firstBatch })
+    });
+    if (!putRes.ok) throw new Error("update failed");
+
+    for (let i = 100; i < remoteUris.length; i += 100) {
+      const batch = remoteUris.slice(i, i + 100);
+      await apiFetch(`https://api.spotify.com/v1/playlists/${targetId}/tracks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uris: batch })
+      });
+    }
+
+    showToast(isNew ? "New playlist saved" : "Playlist updated");
+    originalTracks = currentTracks.slice();
   } catch (e) {
-    statusEl.textContent = "Something went wrong while saving. Your changes were not fully applied.";
-    statusEl.className = "status err";
+    showToast("Something went wrong saving. Try again.");
+  } finally {
+    document.getElementById("save-overwrite-btn").disabled = false;
+    document.getElementById("save-new-btn").disabled = false;
   }
 }
 
 document.getElementById("login-btn").addEventListener("click", startLogin);
-
-document.getElementById("logout-btn").addEventListener("click", () => {
-  localStorage.removeItem("access_token");
-  localStorage.removeItem("refresh_token");
-  localStorage.removeItem("token_expires");
-  window.location.reload();
+document.getElementById("back-to-playlists").addEventListener("click", () => {
+  document.getElementById("action-bar").style.display = "none";
+  showScreen("screen-playlists");
 });
-
-document.getElementById("back-btn").addEventListener("click", () => {
-  document.getElementById("editor").classList.add("hidden");
-  document.getElementById("save-bar").classList.add("hidden");
-  document.getElementById("playlist-picker").classList.remove("hidden");
-  document.getElementById("spell-note").textContent = "";
-  document.getElementById("spell-input").value = "";
-});
-
-document.querySelectorAll(".toolbar button").forEach(btn => {
-  btn.addEventListener("click", () => sortTracks(btn.dataset.sort));
-});
-
-document.getElementById("spell-btn").addEventListener("click", () => {
-  spellOut(document.getElementById("spell-input").value);
-});
-document.getElementById("spell-input").addEventListener("keydown", e => {
-  if (e.key === "Enter") spellOut(e.target.value);
-});
-
+document.getElementById("apply-sort-btn").addEventListener("click", applySort);
+document.getElementById("reset-btn").addEventListener("click", resetOrder);
+document.getElementById("spell-btn").addEventListener("click", openSpellModal);
 document.getElementById("save-overwrite-btn").addEventListener("click", saveOverwrite);
 document.getElementById("save-new-btn").addEventListener("click", saveAsNew);
 
