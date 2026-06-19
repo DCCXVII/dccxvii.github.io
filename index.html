@@ -1,313 +1,529 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<title>Organizer</title>
-<style>
-body { font-family: sans-serif; background-color: #ffffff; color: #000000; margin: 0; padding: 20px; }
-h1, h2, h3 { font-weight: normal; margin-top: 0; }
-button, input, select { border: 1px solid #000000; background-color: #ffffff; color: #000000; padding: 10px 15px; cursor: pointer; font-family: inherit; font-size: 14px; margin: 5px; outline: none; }
-button:hover, input[type="submit"]:hover { background-color: #000000; color: #ffffff; }
-input[type="text"] { cursor: text; }
-.hidden { display: none !important; }
-#playlists-container { display: flex; flex-direction: column; gap: 10px; max-width: 600px; }
-.playlist-card { border: 1px solid #000000; padding: 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background-color 0.2s; }
-.playlist-card:hover { background-color: #000000; color: #ffffff; }
-#tracks-container { margin-top: 20px; border: 1px solid #000000; max-width: 800px; }
-.track-row { display: flex; align-items: center; border-bottom: 1px solid #000000; padding: 10px; background-color: #ffffff; cursor: grab; }
-.track-row:last-child { border-bottom: none; }
-.track-row.dragging { opacity: 0.5; }
-.handle { margin-right: 15px; font-size: 20px; user-select: none; }
-.track-info { flex-grow: 1; display: flex; flex-direction: column; }
-.track-name { font-weight: bold; }
-.track-meta { font-size: 12px; margin-top: 4px; }
-.controls { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 20px; max-width: 800px; }
-.section-border { border: 1px solid #000000; padding: 15px; margin-bottom: 20px; max-width: 768px; }
-.flex-row { display: flex; align-items: center; gap: 10px; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playlist Manager</title>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --text-color: #ffffff;
+            --border-color: #ffffff;
+            --hover-color: #222222;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: monospace;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #app {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        h1, h2 {
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        button {
+            background: transparent;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 10px 15px;
+            font-family: monospace;
+            cursor: pointer;
+            margin: 5px;
+            text-transform: uppercase;
+        }
+
+        button:hover {
+            background-color: var(--hover-color);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        #login-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 70vh;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .card {
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .card:hover {
+            background-color: var(--hover-color);
+        }
+
+        .controls {
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .control-group label {
+            text-transform: uppercase;
+            margin-right: 10px;
+            font-size: 0.9em;
+        }
+
+        input[type="text"] {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 8px;
+            font-family: monospace;
+            flex-grow: 1;
+        }
+
+        #track-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .track-item {
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            margin-bottom: 5px;
+            background: var(--bg-color);
+        }
+
+        .track-item.dragging {
+            opacity: 0.5;
+            background: var(--hover-color);
+        }
+
+        .handle {
+            cursor: grab;
+            padding: 0 15px 0 5px;
+            font-size: 1.2em;
+            user-select: none;
+        }
+
+        .track-details {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 80px 50px;
+            width: 100%;
+            gap: 10px;
+            align-items: center;
+            font-size: 0.9em;
+        }
+
+        .track-title {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 600px) {
+            .track-details {
+                grid-template-columns: 1fr;
+                gap: 5px;
+            }
+            .track-item {
+                align-items: flex-start;
+            }
+            .handle {
+                padding-top: 10px;
+            }
+        }
+    </style>
 </head>
 <body>
-<div id="login-view">
-<h1>Login</h1>
-<button id="login-btn">Connect</button>
-</div>
-<div id="playlists-view" class="hidden">
-<h1>Select</h1>
-<div id="playlists-container"></div>
-</div>
-<div id="editor-view" class="hidden">
-<button id="back-btn">Back</button>
-<h2 id="current-playlist-name"></h2>
-<div class="section-border">
-<h3>Sort</h3>
-<div class="controls">
-<button id="sort-az">A - Z</button>
-<button id="sort-za">Z - A</button>
-<button id="sort-artist">Artist</button>
-<button id="sort-date">Release Date</button>
-<button id="sort-dur-asc">Duration (Short - Long)</button>
-<button id="sort-dur-desc">Duration (Long - Short)</button>
-<button id="sort-album">Album Grouping</button>
-<button id="sort-pop">Popularity (Underground - Mainstream)</button>
-</div>
-</div>
-<div class="section-border">
-<h3>Spell</h3>
-<div class="flex-row">
-<input type="text" id="spell-input" placeholder="Enter word...">
-<button id="spell-btn">Apply</button>
-</div>
-</div>
-<div class="section-border">
-<h3>Save</h3>
-<div class="flex-row">
-<button id="save-overwrite">Overwrite Current</button>
-<button id="save-new">Save as New</button>
-</div>
-</div>
-<div id="tracks-container"></div>
-</div>
-<script>
-const clientId = 'fcc60831d3974fec8770b2f9af452de8';
-const redirectUri = window.location.href.split('#')[0].split('?')[0];
-const scopes = 'playlist-read-private playlist-read-collaborative playlist-modify-public playlist-modify-private';
-let accessToken = '';
-let currentUser = null;
-let currentPlaylist = null;
-let currentTracks = [];
-let draggedItemIndex = null;
-const loginView = document.getElementById('login-view');
-const playlistsView = document.getElementById('playlists-view');
-const editorView = document.getElementById('editor-view');
-const loginBtn = document.getElementById('login-btn');
-const playlistsContainer = document.getElementById('playlists-container');
-const tracksContainer = document.getElementById('tracks-container');
-const currentPlaylistName = document.getElementById('current-playlist-name');
-const backBtn = document.getElementById('back-btn');
-const sortAzBtn = document.getElementById('sort-az');
-const sortZaBtn = document.getElementById('sort-za');
-const sortArtistBtn = document.getElementById('sort-artist');
-const sortDateBtn = document.getElementById('sort-date');
-const sortDurAscBtn = document.getElementById('sort-dur-asc');
-const sortDurDescBtn = document.getElementById('sort-dur-desc');
-const sortAlbumBtn = document.getElementById('sort-album');
-const sortPopBtn = document.getElementById('sort-pop');
-const spellInput = document.getElementById('spell-input');
-const spellBtn = document.getElementById('spell-btn');
-const saveOverwriteBtn = document.getElementById('save-overwrite');
-const saveNewBtn = document.getElementById('save-new');
-function init() {
-const hashParams = new URLSearchParams(window.location.hash.substring(1));
-if (hashParams.has('access_token')) {
-accessToken = hashParams.get('access_token');
-window.history.replaceState({}, document.title, window.location.pathname);
-loadApp();
-} else {
-loginView.classList.remove('hidden');
-}
-}
-loginBtn.addEventListener('click', () => {
-const authUrl = `https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
-window.location.href = authUrl;
-});
-async function loadApp() {
-loginView.classList.add('hidden');
-playlistsView.classList.remove('hidden');
-const userRes = await fetch('https://api.spotify.com/v1/me', { headers: { 'Authorization': `Bearer ${accessToken}` } });
-currentUser = await userRes.json();
-let url = 'https://api.spotify.com/v1/me/playlists?limit=50';
-let allPlaylists = [];
-while (url) {
-const res = await fetch(url, { headers: { 'Authorization': `Bearer ${accessToken}` } });
-const data = await res.json();
-allPlaylists = allPlaylists.concat(data.items);
-url = data.next;
-}
-playlistsContainer.innerHTML = '';
-allPlaylists.forEach(pl => {
-if (!pl) return;
-const div = document.createElement('div');
-div.className = 'playlist-card';
-div.innerHTML = `<span>${pl.name}</span><span>${pl.tracks.total}</span>`;
-div.addEventListener('click', () => openPlaylist(pl));
-playlistsContainer.appendChild(div);
-});
-}
-async function openPlaylist(pl) {
-currentPlaylist = pl;
-playlistsView.classList.add('hidden');
-editorView.classList.remove('hidden');
-currentPlaylistName.textContent = pl.name;
-tracksContainer.innerHTML = 'Loading...';
-let url = `https://api.spotify.com/v1/playlists/${pl.id}/tracks?limit=100`;
-currentTracks = [];
-while (url) {
-const res = await fetch(url, { headers: { 'Authorization': `Bearer ${accessToken}` } });
-const data = await res.json();
-currentTracks = currentTracks.concat(data.items.filter(item => item.track));
-url = data.next;
-}
-renderTracks();
-}
-backBtn.addEventListener('click', () => {
-editorView.classList.add('hidden');
-playlistsView.classList.remove('hidden');
-currentPlaylist = null;
-currentTracks = [];
-});
-function renderTracks() {
-tracksContainer.innerHTML = '';
-currentTracks.forEach((item, index) => {
-const track = item.track;
-const row = document.createElement('div');
-row.className = 'track-row';
-row.setAttribute('draggable', 'true');
-row.dataset.index = index;
-const handle = document.createElement('div');
-handle.className = 'handle';
-handle.textContent = '≡';
-const info = document.createElement('div');
-info.className = 'track-info';
-const name = document.createElement('div');
-name.className = 'track-name';
-name.textContent = track.name;
-const meta = document.createElement('div');
-meta.className = 'track-meta';
-const artists = track.artists.map(a => a.name).join(', ');
-const duration = Math.floor(track.duration_ms / 60000) + ':' + ((track.duration_ms % 60000) / 1000).toFixed(0).padStart(2, '0');
-meta.textContent = `${artists} | ${track.album.name} | ${track.album.release_date} | ${duration} | Pop: ${track.popularity}`;
-info.appendChild(name);
-info.appendChild(meta);
-row.appendChild(handle);
-row.appendChild(info);
-row.addEventListener('dragstart', (e) => {
-draggedItemIndex = index;
-e.dataTransfer.effectAllowed = 'move';
-setTimeout(() => row.classList.add('dragging'), 0);
-});
-row.addEventListener('dragend', () => {
-row.classList.remove('dragging');
-draggedItemIndex = null;
-});
-row.addEventListener('dragover', (e) => {
-e.preventDefault();
-e.dataTransfer.dropEffect = 'move';
-});
-row.addEventListener('drop', (e) => {
-e.preventDefault();
-const targetIndex = index;
-if (draggedItemIndex === null || draggedItemIndex === targetIndex) return;
-const draggedItem = currentTracks.splice(draggedItemIndex, 1)[0];
-currentTracks.splice(targetIndex, 0, draggedItem);
-renderTracks();
-});
-tracksContainer.appendChild(row);
-});
-}
-sortAzBtn.addEventListener('click', () => {
-currentTracks.sort((a, b) => a.track.name.localeCompare(b.track.name, undefined, { numeric: true, sensitivity: 'base' }));
-renderTracks();
-});
-sortZaBtn.addEventListener('click', () => {
-currentTracks.sort((a, b) => b.track.name.localeCompare(a.track.name, undefined, { numeric: true, sensitivity: 'base' }));
-renderTracks();
-});
-sortArtistBtn.addEventListener('click', () => {
-currentTracks.sort((a, b) => {
-const artistA = a.track.artists[0]?.name || '';
-const artistB = b.track.artists[0]?.name || '';
-return artistA.localeCompare(artistB, undefined, { numeric: true, sensitivity: 'base' });
-});
-renderTracks();
-});
-sortDateBtn.addEventListener('click', () => {
-currentTracks.sort((a, b) => {
-const dateA = a.track.album.release_date || '';
-const dateB = b.track.album.release_date || '';
-return dateA.localeCompare(dateB);
-});
-renderTracks();
-});
-sortDurAscBtn.addEventListener('click', () => {
-currentTracks.sort((a, b) => a.track.duration_ms - b.track.duration_ms);
-renderTracks();
-});
-sortDurDescBtn.addEventListener('click', () => {
-currentTracks.sort((a, b) => b.track.duration_ms - a.track.duration_ms);
-renderTracks();
-});
-sortAlbumBtn.addEventListener('click', () => {
-currentTracks.sort((a, b) => {
-const albumA = a.track.album.name || '';
-const albumB = b.track.album.name || '';
-const cmp = albumA.localeCompare(albumB, undefined, { numeric: true, sensitivity: 'base' });
-if (cmp !== 0) return cmp;
-return a.track.track_number - b.track.track_number;
-});
-renderTracks();
-});
-sortPopBtn.addEventListener('click', () => {
-currentTracks.sort((a, b) => a.track.popularity - b.track.popularity);
-renderTracks();
-});
-spellBtn.addEventListener('click', () => {
-const word = spellInput.value.replace(/[^a-zA-Z0-9]/g, '').toLowerCase().split('');
-if (word.length === 0) return;
-const spelledTracks = [];
-const remainingTracks = [...currentTracks];
-word.forEach(char => {
-const idx = remainingTracks.findIndex(item => {
-const firstChar = item.track.name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase().charAt(0);
-return firstChar === char;
-});
-if (idx !== -1) {
-spelledTracks.push(remainingTracks.splice(idx, 1)[0]);
-}
-});
-currentTracks = spelledTracks.concat(remainingTracks);
-renderTracks();
-spellInput.value = '';
-});
-async function updatePlaylistTracks(playlistId) {
-const uris = currentTracks.map(item => item.track.uri);
-await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
-method: 'PUT',
-headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-body: JSON.stringify({ uris: uris.slice(0, 100) })
-});
-for (let i = 100; i < uris.length; i += 100) {
-await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
-method: 'POST',
-headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-body: JSON.stringify({ uris: uris.slice(i, i + 100) })
-});
-}
-alert('Saved');
-}
-saveOverwriteBtn.addEventListener('click', () => {
-if (!currentPlaylist) return;
-saveOverwriteBtn.textContent = 'Saving...';
-updatePlaylistTracks(currentPlaylist.id).then(() => {
-saveOverwriteBtn.textContent = 'Overwrite Current';
-});
-});
-saveNewBtn.addEventListener('click', () => {
-if (!currentPlaylist || !currentUser) return;
-saveNewBtn.textContent = 'Saving...';
-fetch(`https://api.spotify.com/v1/users/${currentUser.id}/playlists`, {
-method: 'POST',
-headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-body: JSON.stringify({ name: currentPlaylist.name + ' (Organized)', public: false })
-})
-.then(res => res.json())
-.then(newPl => {
-return updatePlaylistTracks(newPl.id);
-})
-.then(() => {
-saveNewBtn.textContent = 'Save as New';
-});
-});
-init();
-</script>
+
+    <div id="app">
+        <div id="login-screen">
+            <h1>Playlist Manager</h1>
+            <button id="login-btn">Connect Account</button>
+        </div>
+
+        <div id="playlists-screen" class="hidden">
+            <h2>Your Playlists</h2>
+            <div id="playlists-grid" class="grid"></div>
+        </div>
+
+        <div id="editor-screen" class="hidden">
+            <button id="back-btn">&larr; Back to Playlists</button>
+            <h2 id="current-playlist-title">Playlist</h2>
+
+            <div class="controls">
+                <div class="control-group">
+                    <label>Sort:</label>
+                    <button id="sort-az-btn">A-Z</button>
+                    <button id="sort-za-btn">Z-A</button>
+                    <button id="sort-artist-btn">Artist</button>
+                    <button id="sort-date-btn">Release Date</button>
+                    <button id="sort-short-btn">Shortest</button>
+                    <button id="sort-long-btn">Longest</button>
+                    <button id="sort-album-btn">Album Grouping</button>
+                    <button id="sort-pop-low-btn">Underground</button>
+                    <button id="sort-pop-high-btn">Mainstream</button>
+                </div>
+
+                <div class="control-group">
+                    <label>Spell Out:</label>
+                    <input type="text" id="spell-input" placeholder="Type text to spell out with track initials...">
+                    <button id="spell-btn">Apply</button>
+                </div>
+
+                <div class="control-group" style="margin-bottom: 0; margin-top: 20px; justify-content: flex-end;">
+                    <button id="save-overwrite-btn" style="border-color: #ff3333;">Overwrite Playlist</button>
+                    <button id="save-new-btn">Create New Playlist</button>
+                </div>
+            </div>
+
+            <ul id="track-list"></ul>
+        </div>
+    </div>
+
+    <script>
+        const CLIENT_ID = 'fcc60831d3974fec8770b2f9af452de8';
+        const REDIRECT_URI = window.location.origin + window.location.pathname;
+        const SCOPES = 'playlist-read-private playlist-modify-public playlist-modify-private';
+
+        let accessToken = null;
+        let currentPlaylistId = null;
+        let currentPlaylistName = '';
+        let tracksData = [];
+
+        const loginScreen = document.getElementById('login-screen');
+        const playlistsScreen = document.getElementById('playlists-screen');
+        const editorScreen = document.getElementById('editor-screen');
+        const playlistsGrid = document.getElementById('playlists-grid');
+        const trackList = document.getElementById('track-list');
+        const currentPlaylistTitle = document.getElementById('current-playlist-title');
+
+        document.getElementById('login-btn').addEventListener('click', () => {
+            const authUrl = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(SCOPES)}`;
+            window.location = authUrl;
+        });
+
+        function checkAuth() {
+            const hash = window.location.hash.substring(1);
+            const params = new URLSearchParams(hash);
+            const token = params.get('access_token');
+            
+            if (token) {
+                accessToken = token;
+                window.location.hash = '';
+                loginScreen.classList.add('hidden');
+                playlistsScreen.classList.remove('hidden');
+                loadPlaylists();
+            }
+        }
+
+        async function fetchWebApi(endpoint, method = 'GET', body = null) {
+            const res = await fetch(`https://api.spotify.com/v1/${endpoint}`, {
+                headers: { Authorization: `Bearer ${accessToken}` },
+                method,
+                body: body ? JSON.stringify(body) : null
+            });
+            if (res.status === 204) return null;
+            return await res.json();
+        }
+
+        async function loadPlaylists() {
+            playlistsGrid.innerHTML = 'Loading...';
+            let playlists = [];
+            let url = 'me/playlists?limit=50';
+            
+            while (url) {
+                const data = await fetchWebApi(url);
+                if (!data) break;
+                playlists = playlists.concat(data.items);
+                url = data.next ? data.next.replace('https://api.spotify.com/v1/', '') : null;
+            }
+
+            playlistsGrid.innerHTML = '';
+            playlists.forEach(p => {
+                if (!p) return;
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.textContent = p.name || 'Untitled Playlist';
+                div.addEventListener('click', () => loadPlaylistTracks(p.id, p.name));
+                playlistsGrid.appendChild(div);
+            });
+        }
+
+        async function loadPlaylistTracks(playlistId, playlistName) {
+            currentPlaylistId = playlistId;
+            currentPlaylistName = playlistName;
+            currentPlaylistTitle.textContent = playlistName;
+            
+            playlistsScreen.classList.add('hidden');
+            editorScreen.classList.remove('hidden');
+            trackList.innerHTML = 'Loading tracks...';
+
+            let tracks = [];
+            let url = `playlists/${playlistId}/tracks?limit=100`;
+            
+            while (url) {
+                const data = await fetchWebApi(url);
+                if (!data) break;
+                tracks = tracks.concat(data.items);
+                url = data.next ? data.next.replace('https://api.spotify.com/v1/', '') : null;
+            }
+
+            tracksData = tracks.filter(item => item && item.track).map((item, index) => {
+                const t = item.track;
+                return {
+                    id: t.id,
+                    uri: t.uri,
+                    title: t.name,
+                    artist: t.artists.map(a => a.name).join(', '),
+                    album: t.album.name,
+                    releaseDate: t.album.release_date || '',
+                    duration: t.duration_ms,
+                    popularity: t.popularity || 0,
+                    originalIndex: index
+                };
+            });
+
+            renderTracks();
+        }
+
+        function renderTracks() {
+            trackList.innerHTML = '';
+            tracksData.forEach(track => {
+                const li = document.createElement('li');
+                li.className = 'track-item';
+                li.draggable = true;
+                li.dataset.id = track.id;
+
+                const handle = document.createElement('div');
+                handle.className = 'handle';
+                handle.innerHTML = '&#9776;';
+
+                const details = document.createElement('div');
+                details.className = 'track-details';
+
+                const title = document.createElement('div');
+                title.className = 'track-title';
+                title.textContent = track.title;
+
+                const artist = document.createElement('div');
+                artist.className = 'track-title';
+                artist.textContent = track.artist;
+
+                const album = document.createElement('div');
+                album.className = 'track-title';
+                album.textContent = track.album;
+
+                const duration = document.createElement('div');
+                duration.textContent = formatDuration(track.duration);
+
+                const pop = document.createElement('div');
+                pop.textContent = `P: ${track.popularity}`;
+
+                details.appendChild(title);
+                details.appendChild(artist);
+                details.appendChild(album);
+                details.appendChild(duration);
+                details.appendChild(pop);
+
+                li.appendChild(handle);
+                li.appendChild(details);
+
+                setupDragAndDrop(li);
+                trackList.appendChild(li);
+            });
+        }
+
+        function formatDuration(ms) {
+            const min = Math.floor(ms / 60000);
+            const sec = ((ms % 60000) / 1000).toFixed(0);
+            return `${min}:${sec < 10 ? '0' : ''}${sec}`;
+        }
+
+        function setupDragAndDrop(el) {
+            el.addEventListener('dragstart', () => el.classList.add('dragging'));
+            el.addEventListener('dragend', () => {
+                el.classList.remove('dragging');
+                reorderDataFromDOM();
+            });
+        }
+
+        trackList.addEventListener('dragover', e => {
+            e.preventDefault();
+            const afterElement = getDragAfterElement(trackList, e.clientY);
+            const dragging = document.querySelector('.dragging');
+            if (afterElement == null) {
+                trackList.appendChild(dragging);
+            } else {
+                trackList.insertBefore(dragging, afterElement);
+            }
+        });
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.track-item:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        function reorderDataFromDOM() {
+            const currentIds = [...trackList.querySelectorAll('.track-item')].map(el => el.dataset.id);
+            tracksData.sort((a, b) => currentIds.indexOf(a.id) - currentIds.indexOf(b.id));
+        }
+
+        function alphanumericCompare(a, b) {
+            return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+        }
+
+        document.getElementById('sort-az-btn').addEventListener('click', () => {
+            tracksData.sort((a, b) => alphanumericCompare(a.title, b.title));
+            renderTracks();
+        });
+
+        document.getElementById('sort-za-btn').addEventListener('click', () => {
+            tracksData.sort((a, b) => alphanumericCompare(b.title, a.title));
+            renderTracks();
+        });
+
+        document.getElementById('sort-artist-btn').addEventListener('click', () => {
+            tracksData.sort((a, b) => alphanumericCompare(a.artist, b.artist) || alphanumericCompare(a.title, b.title));
+            renderTracks();
+        });
+
+        document.getElementById('sort-date-btn').addEventListener('click', () => {
+            tracksData.sort((a, b) => alphanumericCompare(b.releaseDate, a.releaseDate) || alphanumericCompare(a.title, b.title));
+            renderTracks();
+        });
+
+        document.getElementById('sort-short-btn').addEventListener('click', () => {
+            tracksData.sort((a, b) => a.duration - b.duration);
+            renderTracks();
+        });
+
+        document.getElementById('sort-long-btn').addEventListener('click', () => {
+            tracksData.sort((a, b) => b.duration - a.duration);
+            renderTracks();
+        });
+
+        document.getElementById('sort-album-btn').addEventListener('click', () => {
+            tracksData.sort((a, b) => alphanumericCompare(a.album, b.album) || a.originalIndex - b.originalIndex);
+            renderTracks();
+        });
+
+        document.getElementById('sort-pop-low-btn').addEventListener('click', () => {
+            tracksData.sort((a, b) => a.popularity - b.popularity);
+            renderTracks();
+        });
+
+        document.getElementById('sort-pop-high-btn').addEventListener('click', () => {
+            tracksData.sort((a, b) => b.popularity - a.popularity);
+            renderTracks();
+        });
+
+        document.getElementById('spell-btn').addEventListener('click', () => {
+            const text = document.getElementById('spell-input').value.toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (!text) return;
+
+            let availableTracks = [...tracksData];
+            let spelledTracks = [];
+
+            for (let char of text) {
+                const foundIndex = availableTracks.findIndex(t => t.title.trim().toLowerCase().startsWith(char));
+                if (foundIndex !== -1) {
+                    spelledTracks.push(availableTracks[foundIndex]);
+                    availableTracks.splice(foundIndex, 1);
+                }
+            }
+
+            tracksData = [...spelledTracks, ...availableTracks];
+            renderTracks();
+        });
+
+        async function savePlaylist(overwrite) {
+            const uris = tracksData.map(t => t.uri);
+            
+            if (overwrite) {
+                if (!confirm('Are you sure you want to overwrite this playlist?')) return;
+                
+                let chunks = [];
+                for (let i = 0; i < uris.length; i += 100) {
+                    chunks.push(uris.slice(i, i + 100));
+                }
+
+                await fetchWebApi(`playlists/${currentPlaylistId}/tracks`, 'PUT', { uris: chunks[0] || [] });
+                
+                for (let i = 1; i < chunks.length; i++) {
+                    await fetchWebApi(`playlists/${currentPlaylistId}/tracks`, 'POST', { uris: chunks[i] });
+                }
+                alert('Playlist overwritten successfully.');
+            } else {
+                const newName = prompt('Enter name for the new playlist:', `${currentPlaylistName} (Organized)`);
+                if (!newName) return;
+
+                const user = await fetchWebApi('me');
+                const newPlaylist = await fetchWebApi(`users/${user.id}/playlists`, 'POST', {
+                    name: newName,
+                    public: false
+                });
+
+                let chunks = [];
+                for (let i = 0; i < uris.length; i += 100) {
+                    chunks.push(uris.slice(i, i + 100));
+                }
+
+                for (let chunk of chunks) {
+                    await fetchWebApi(`playlists/${newPlaylist.id}/tracks`, 'POST', { uris: chunk });
+                }
+                alert('New playlist created successfully.');
+            }
+        }
+
+        document.getElementById('save-overwrite-btn').addEventListener('click', () => savePlaylist(true));
+        document.getElementById('save-new-btn').addEventListener('click', () => savePlaylist(false));
+
+        document.getElementById('back-btn').addEventListener('click', () => {
+            editorScreen.classList.add('hidden');
+            playlistsScreen.classList.remove('hidden');
+            loadPlaylists();
+        });
+
+        checkAuth();
+    </script>
 </body>
 </html>
