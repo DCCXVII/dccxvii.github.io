@@ -14,6 +14,7 @@
       --subtext: #a7a7a7;
       --accent: #1db954;
       --accent-hover: #1ed760;
+      --danger: #ff4d4d;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
@@ -49,6 +50,11 @@
     }
     .btn:hover { background: var(--accent-hover); transform: scale(1.04); }
     .btn:active { transform: scale(0.98); }
+    .btn-sm { padding: 10px 24px; font-size: 0.9rem; }
+    .btn-secondary {
+      background: transparent; color: #fff; border: 1px solid #535353;
+    }
+    .btn-secondary:hover { border-color: #fff; background: rgba(255,255,255,0.06); transform: none; }
 
     #main-screen {
       display: none;
@@ -127,7 +133,7 @@
     .detail-title { font-size: clamp(2rem, 6vw, 5.5rem); font-weight: 900; line-height: 1; letter-spacing: -0.04em; color: #fff; }
     .detail-sub { font-size: 0.875rem; color: rgba(255,255,255,0.7); display: flex; align-items: center; gap: 6px; margin-top: 4px; }
     .detail-sub img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
-    .detail-controls { padding: 16px 32px 24px; display: flex; align-items: center; }
+    .detail-controls { padding: 16px 32px 24px; display: flex; align-items: center; gap: 12px; }
     .detail-play-btn {
       width: 56px; height: 56px; border-radius: 50%; background: var(--accent); border: none; color: #000;
       display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.25rem;
@@ -150,7 +156,18 @@
     .track-artist-txt { font-size: 0.8125rem; color: var(--subtext); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .track-album, .track-date { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .track-dur { text-align: right; font-variant-numeric: tabular-nums; }
-    .tracks-loading, .tracks-empty, .tracks-error { padding: 24px 0; color: var(--subtext); line-height: 1.6; }
+    .tracks-loading, .tracks-empty { padding: 24px 0; color: var(--subtext); }
+    .tracks-error {
+      padding: 24px;
+      background: rgba(255, 50, 50, 0.08);
+      border: 1px solid rgba(255, 50, 50, 0.25);
+      border-radius: 8px;
+      color: #ff9e9e;
+      line-height: 1.6;
+      margin-top: 8px;
+    }
+    .tracks-error a { color: #fff; text-decoration: underline; }
+    .tracks-error .actions { display: flex; gap: 12px; margin-top: 16px; align-items: center; flex-wrap: wrap; }
 
     ::-webkit-scrollbar { width: 12px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -268,14 +285,8 @@
         if (playlistDetail.style.display === 'flex' && currentDetailPl) {
           loadAndRenderPlaylistTracks(currentDetailPl, true);
           startDetailPolling(currentDetailPl);
-        } else {
-          loadPlaylists(currentToken, currentUserId, true);
-          startGridPolling();
-        }
-      } else {
-        stopGridPolling();
-        stopDetailPolling();
-      }
+        } else { loadPlaylists(currentToken, currentUserId, true); startGridPolling(); }
+      } else { stopGridPolling(); stopDetailPolling(); }
     });
 
     function genRandom(length) { const c = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~'; let t = ''; for (let i = 0; i < length; i++) t += c.charAt(Math.floor(Math.random() * c.length)); return t; }
@@ -377,13 +388,11 @@
       stopGridPolling();
       playlistDetail.style.display = 'flex';
       content.scrollTop = 0; playlistDetail.scrollTop = 0;
-
       const imgUrl = (pl.images && pl.images.length && pl.images[0].url) ? pl.images[0].url : 'https://via.placeholder.com/300x300/181818/b3b3b3?text=Playlist';
       detailImg.src = imgUrl;
       detailHeroBg.style.backgroundImage = `url('${imgUrl}')`;
       detailTitle.textContent = pl.name || 'Untitled';
       detailType.textContent = (pl.public === false) ? 'Private Playlist' : 'Public Playlist';
-
       const ownerImg = currentUserImage ? `<img src="${currentUserImage}" alt="">` : '';
       detailSub.innerHTML = ownerImg + `<span>${currentUserName}</span>`;
       detailList.innerHTML = '<div class="tracks-loading">Loading tracks…</div>';
@@ -446,15 +455,26 @@
 
       let body = rows;
       if (body === '' && fetchErr === 403) {
-        body = `<div class="tracks-error">Access denied (403). Your current login token is missing the <b>playlist-read-private</b> permission.<br>Click <b>Log out</b> in the top-right, then reconnect to grant access.</div>`;
+        body = `
+          <div class="tracks-error">
+            <b>Spotify denied access (403).</b><br>
+            This usually happens when your account still has an old approval for this app without playlist permissions.<br>
+            <div class="actions">
+              <a href="https://www.spotify.com/account/apps/" target="_blank">Manage Spotify Apps (remove this app)</a>
+              <button class="btn btn-sm btn-secondary" id="reconnect-btn">Log out & Reconnect</button>
+            </div>
+          </div>`;
       } else if (body === '' && fetchErr) {
         body = `<div class="tracks-error">Trouble loading tracks (error ${fetchErr}). Showing 0 loaded.</div>`;
       } else if (body === '') {
         body = `<div class="tracks-empty">This playlist is empty.</div>`;
       }
 
-      // Only replace DOM if not in silent mode? No, we need to update live.
       detailList.innerHTML = header + body;
+
+      // attach listener to the reconnect button if present
+      const rc = document.getElementById('reconnect-btn');
+      if (rc) rc.addEventListener('click', () => handleLogout());
 
       const count = validItems.length;
       const durText = formatTotalDuration(totalMs);
