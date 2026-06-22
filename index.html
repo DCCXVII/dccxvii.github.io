@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>Spotify — Your Library</title>
   <style>
     :root {
@@ -150,12 +153,8 @@
     .track-artist-txt { font-size: 0.8125rem; color: var(--subtext); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .track-album, .track-date { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .track-dur { text-align: right; font-variant-numeric: tabular-nums; }
-    .tracks-loading, .tracks-empty, .tracks-soft {
-      padding: 24px 0; color: var(--subtext);
-    }
-    .tracks-soft a {
-      color: #fff; text-decoration: underline; cursor: pointer;
-    }
+    .tracks-loading { padding: 24px 0; color: var(--subtext); }
+    .tracks-empty { padding: 24px 0; color: var(--subtext); }
 
     ::-webkit-scrollbar { width: 12px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -234,6 +233,11 @@
     const TOKEN_URL = 'https://accounts.spotify.com/api/token';
     const API = 'https://api.spotify.com/v1';
 
+    // Wipe any old token that might lack the right scopes so we start truly fresh
+    // Remove these two lines only after you are sure every user has a modern token
+    // localStorage.removeItem('spotify_access_token');
+    // localStorage.removeItem('spotify_refresh_token');
+
     const loginScreen = document.getElementById('login-screen');
     const mainScreen = document.getElementById('main-screen');
     const playlistGrid = document.getElementById('playlist-grid');
@@ -265,15 +269,13 @@
     function startGridPolling() { stopGridPolling(); if (!currentToken || playlistDetail.style.display === 'flex') return; gridPollInterval = setInterval(() => loadPlaylists(currentToken, currentUserId, true), 3000); }
     function stopGridPolling() { if (gridPollInterval) { clearInterval(gridPollInterval); gridPollInterval = null; } }
 
-    function startDetailPolling(pl) { stopDetailPolling(); if (!currentToken || !pl) return; currentDetailPl = pl; detailPollInterval = setInterval(() => loadAndRenderPlaylistTracks(pl, true), 3000); }
+    function startDetailPolling(pl) { stopDetailPolling(); if (!currentToken || !pl) return; currentDetailPl = pl; detailPollInterval = setInterval(() => loadTracksLive(pl), 3000); }
     function stopDetailPolling() { if (detailPollInterval) { clearInterval(detailPollInterval); detailPollInterval = null; } currentDetailPl = null; }
 
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible' && currentToken) {
-        if (playlistDetail.style.display === 'flex' && currentDetailPl) {
-          loadAndRenderPlaylistTracks(currentDetailPl, true);
-          startDetailPolling(currentDetailPl);
-        } else { loadPlaylists(currentToken, currentUserId, true); startGridPolling(); }
+        if (playlistDetail.style.display === 'flex' && currentDetailPl) { loadTracksLive(currentDetailPl); startDetailPolling(currentDetailPl); }
+        else { loadPlaylists(currentToken, currentUserId, true); startGridPolling(); }
       } else { stopGridPolling(); stopDetailPolling(); }
     });
 
@@ -286,13 +288,14 @@
       const verifier = genRandom(128);
       localStorage.setItem('spotify_code_verifier', verifier);
       const ch = await challenge(verifier);
-      // Request every permission we could possibly need so private playlists "just work"
+      const state = genRandom(32);
       const p = new URLSearchParams({
         client_id: CLIENT_ID,
         response_type: 'code',
         redirect_uri: REDIRECT_URI,
         code_challenge_method: 'S256',
         code_challenge: ch,
+        state: state,
         show_dialog: 'true',
         scope: 'user-read-private user-read-email playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public'
       });
@@ -393,30 +396,45 @@
       const ownerImg = currentUserImage ? `<img src="${currentUserImage}" alt="">` : '';
       detailSub.innerHTML = ownerImg + `<span>${currentUserName}</span>`;
       detailList.innerHTML = '<div class="tracks-loading">Loading tracks…</div>';
-
-      await loadAndRenderPlaylistTracks(pl);
+      await loadTracksLive(pl);
       startDetailPolling(pl);
     }
 
-    async function loadAndRenderPlaylistTracks(pl, silent = false) {
+    async function loadTracksLive(pl) {
       let tracks = [];
       let url = `${API}/playlists/${pl.id}/tracks?limit=100`;
-      let fetchErr = null;
+      let ok = false;
       try {
         while (url && tracks.length < 10000) {
           const res = await fetch(url, { headers: { Authorization: 'Bearer ' + currentToken } });
           if (res.status === 401) { handleLogout(); return; }
-          if (res.status === 403) { fetchErr = 403; break; }
-          if (!res.ok) { fetchErr = res.status; break; }
+          if (!res.ok) { url = null; break; }
           const data = await res.json();
           tracks.push(...(Array.isArray(data.items) ? data.items : []));
           url = (typeof data.next === 'string') ? data.next : null;
+          ok = true;
         }
-      } catch (e) { console.error(e); fetchErr = 'network'; }
-      renderTracks(tracks, pl, fetchErr, silent);
+      } catch (e) { console.error(e); }
+
+      // Fallback: if the direct tracks endpoint fails, try the playlist object itself
+      // which embeds the first page of tracks under the "tracks" property.
+      if (!ok && tracks.length === 0) {
+        try {
+          const res = await fetch(`${API}/playlists/${pl.id}`, { headers: { Authorization: 'Bearer ' + currentToken } });
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.tracks && Array.isArray(data.tracks.items)) {
+              tracks = data.tracks.items;
+              ok = true;
+            }
+          }
+        } catch (e) { console.error(e); }
+      }
+
+      renderTracks(tracks, pl);
     }
 
-    function renderTracks(items, plContext, fetchErr, silent) {
+    function renderTracks(items, plContext) {
       let totalMs = 0;
       const validItems = items.filter(it => it && it.track);
       const rows = validItems.map((item, idx) => {
@@ -451,20 +469,8 @@
         </div>`;
 
       let body = rows;
-      if (body === '' && fetchErr === 403) {
-        // Soft, clean notice instead of a scary error
-        body = `<div class="tracks-soft">This playlist's tracks couldn't be loaded. <a id="soft-reconnect">Log out and reconnect</a> to refresh permissions.</div>`;
-      } else if (body === '' && fetchErr) {
-        body = `<div class="tracks-soft">Unable to load tracks right now.</div>`;
-      } else if (body === '') {
-        body = `<div class="tracks-empty">This playlist is empty.</div>`;
-      }
-
+      if (body === '') body = `<div class="tracks-empty">This playlist is empty.</div>`;
       detailList.innerHTML = header + body;
-
-      // Wire up soft-reconnect link if present
-      const srl = document.getElementById('soft-reconnect');
-      if (srl) srl.addEventListener('click', () => handleLogout());
 
       const count = validItems.length;
       const durText = formatTotalDuration(totalMs);
