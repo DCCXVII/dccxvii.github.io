@@ -32,11 +32,7 @@
       text-align: center;
       padding: 24px;
     }
-    .logo {
-      width: 160px;
-      height: 160px;
-      margin-bottom: 24px;
-    }
+    .logo { width: 160px; height: 160px; margin-bottom: 24px; }
     .logo svg { width: 100%; height: 100%; }
     .title { font-size: 2rem; font-weight: 700; margin-bottom: 8px; }
     .subtitle { color: var(--subtext); margin-bottom: 32px; font-size: 1rem; }
@@ -99,249 +95,104 @@
       background: linear-gradient(180deg, #1e1e1e 0%, var(--surface) 320px);
       padding: 32px;
     }
-    .page-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 24px;
-    }
+    .page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
     .section-title { font-size: 1.5rem; font-weight: 700; }
     .live-dot {
-      width: 8px;
-      height: 8px;
-      background: var(--accent);
-      border-radius: 50%;
-      position: relative;
+      width: 8px; height: 8px; background: var(--accent); border-radius: 50%; position: relative;
     }
     .live-dot::after {
-      content: '';
-      position: absolute;
-      top: -4px; left: -4px; right: -4px; bottom: -4px;
-      border-radius: 50%;
-      border: 2px solid var(--accent);
-      animation: pulse 2s infinite;
-      opacity: 0;
+      content: ''; position: absolute; top: -4px; left: -4px; right: -4px; bottom: -4px;
+      border-radius: 50%; border: 2px solid var(--accent); animation: pulse 2s infinite; opacity: 0;
     }
-    @keyframes pulse {
-      0% { transform: scale(0.8); opacity: 0.8; }
-      100% { transform: scale(2); opacity: 0; }
-    }
+    @keyframes pulse { 0% { transform: scale(0.8); opacity: 0.8; } 100% { transform: scale(2); opacity: 0; } }
 
     .playlist-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 24px;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 24px;
     }
     .playlist-card {
-      background: var(--elevated);
-      padding: 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.25s;
+      background: var(--elevated); padding: 16px; border-radius: 8px; cursor: pointer; transition: background 0.25s;
     }
     .playlist-card:hover { background: var(--elevated-hover); }
     .playlist-img {
-      width: 100%;
-      aspect-ratio: 1;
-      object-fit: cover;
-      border-radius: 6px;
-      margin-bottom: 16px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-      background: #282828;
-      display: block;
+      width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; margin-bottom: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5); background: #282828; display: block;
     }
-    .playlist-name {
-      font-weight: 700;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      margin-bottom: 6px;
-    }
-    .playlist-meta {
-      color: var(--subtext);
-      font-size: 0.85rem;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+    .playlist-name { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px; }
+    .playlist-meta { color: var(--subtext); font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .empty-state { color: var(--subtext); padding: 40px 0; }
 
+    /* ---------- PLAYLIST DETAIL ---------- */
     .playlist-detail {
-      position: absolute;
-      inset: 0;
-      z-index: 20;
-      display: none;
-      flex-direction: column;
-      overflow-y: auto;
-      background: #121212;
+      position: absolute; inset: 0; z-index: 20; display: none; flex-direction: column; overflow-y: auto; background: #121212;
     }
-    .detail-header {
-      position: relative;
-      padding: 32px;
-      padding-top: 80px;
-      overflow: hidden;
-    }
+    .detail-header { position: relative; padding: 32px; padding-top: 100px; overflow: hidden; }
     .detail-hero-bg {
-      position: absolute;
-      inset: 0;
-      background-size: cover;
-      background-position: center;
+      position: absolute; inset: 0; background-size: cover; background-position: center;
       filter: blur(80px) brightness(0.15);
       -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
       mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
     }
     .back-btn {
-      position: absolute;
-      top: 24px;
-      left: 32px;
-      z-index: 2;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      border: none;
-      background: rgba(0,0,0,0.4);
-      color: #fff;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.1rem;
+      position: absolute; top: 24px; left: 32px; z-index: 2;
+      width: 48px; height: 48px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.2);
+      background: rgba(0,0,0,0.55);
+      color: #fff; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 0.1s, background 0.2s, border-color 0.2s;
     }
-    .back-btn:hover { background: rgba(0,0,0,0.6); }
+    .back-btn:hover {
+      background: rgba(255,255,255,0.12);
+      border-color: rgba(255,255,255,0.5);
+      transform: scale(1.08);
+    }
+    .back-btn:active { transform: scale(0.96); }
+    .back-btn svg { width: 26px; height: 26px; stroke: #fff; stroke-width: 2.6; fill: none; stroke-linecap: round; stroke-linejoin: round; }
 
-    .detail-hero {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      align-items: flex-end;
-      gap: 24px;
-    }
+    .detail-hero { position: relative; z-index: 1; display: flex; align-items: flex-end; gap: 24px; }
     .detail-img {
-      width: 232px;
-      height: 232px;
-      object-fit: cover;
-      border-radius: 4px;
-      box-shadow: 0 4px 60px rgba(0,0,0,0.5);
-      flex-shrink: 0;
-      background: #282828;
+      width: 232px; height: 232px; object-fit: cover; border-radius: 4px;
+      box-shadow: 0 4px 60px rgba(0,0,0,0.5); flex-shrink: 0; background: #282828;
     }
     .detail-meta { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-    .detail-type {
-      text-transform: uppercase;
-      font-size: 0.75rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      color: #fff;
-    }
-    .detail-title {
-      font-size: clamp(2rem, 6vw, 5.5rem);
-      font-weight: 900;
-      line-height: 1;
-      letter-spacing: -0.04em;
-      color: #fff;
-    }
+    .detail-type { text-transform: uppercase; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; color: #fff; }
+    .detail-title { font-size: clamp(2rem, 6vw, 5.5rem); font-weight: 900; line-height: 1; letter-spacing: -0.04em; color: #fff; }
     .detail-sub {
-      font-size: 0.875rem;
-      color: rgba(255,255,255,0.7);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-top: 4px;
+      font-size: 0.875rem; color: rgba(255,255,255,0.7);
+      display: flex; align-items: center; gap: 6px; margin-top: 4px;
     }
-    .detail-sub img {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-    .detail-controls {
-      padding: 16px 32px 24px;
-      display: flex;
-      align-items: center;
-    }
+    .detail-sub img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
+    .detail-controls { padding: 16px 32px 24px; display: flex; align-items: center; }
     .detail-play-btn {
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      background: var(--accent);
-      border: none;
-      color: #000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 1.25rem;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.3);
-      transition: transform 0.1s, background 0.2s;
+      width: 56px; height: 56px; border-radius: 50%; background: var(--accent); border: none; color: #000;
+      display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.25rem;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.3); transition: transform 0.1s, background 0.2s;
     }
     .detail-play-btn:hover { background: var(--accent-hover); transform: scale(1.06); }
 
     .detail-list { padding: 0 32px 40px; }
 
     .track-header {
-      display: grid;
-      grid-template-columns: 50px 1fr 1fr 140px 70px;
-      gap: 16px;
-      align-items: center;
-      color: var(--subtext);
-      font-size: 0.85rem;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-      padding: 8px 0;
-      margin-bottom: 12px;
-      position: sticky;
-      top: 0;
-      background: #121212;
-      z-index: 3;
+      display: grid; grid-template-columns: 50px 1fr 1fr 140px 70px; gap: 16px;
+      align-items: center; color: var(--subtext); font-size: 0.85rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1); padding: 8px 0; margin-bottom: 12px;
+      position: sticky; top: 0; background: #121212; z-index: 3;
     }
     .track-row {
-      display: grid;
-      grid-template-columns: 50px 1fr 1fr 140px 70px;
-      gap: 16px;
-      align-items: center;
-      padding: 10px 0;
-      border-radius: 4px;
-      color: var(--subtext);
-      font-size: 0.9rem;
+      display: grid; grid-template-columns: 50px 1fr 1fr 140px 70px; gap: 16px;
+      align-items: center; padding: 10px 0; border-radius: 4px;
+      color: var(--subtext); font-size: 0.9rem;
     }
     .track-row:hover { background: rgba(255,255,255,0.07); }
-    .track-num {
-      text-align: center;
-      font-variant-numeric: tabular-nums;
-      color: var(--subtext);
-    }
-    .track-info {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      min-width: 0;
-    }
-    .track-info img {
-      width: 40px;
-      height: 40px;
-      border-radius: 4px;
-      object-fit: cover;
-      flex-shrink: 0;
-      background: #282828;
-    }
+    .track-num { text-align: center; font-variant-numeric: tabular-nums; color: var(--subtext); }
+    .track-info { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .track-info img { width: 40px; height: 40px; border-radius: 4px; object-fit: cover; flex-shrink: 0; background: #282828; }
     .track-name-col { min-width: 0; display: flex; flex-direction: column; justify-content: center; }
-    .track-name-txt {
-      color: #fff;
-      font-weight: 500;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .track-artist-txt {
-      font-size: 0.8125rem;
-      color: var(--subtext);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+    .track-name-txt { color: #fff; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .track-artist-txt { font-size: 0.8125rem; color: var(--subtext); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .track-album, .track-date { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .track-dur { text-align: right; font-variant-numeric: tabular-nums; }
-
-    .tracks-loading { padding: 24px 0; color: var(--subtext); }
+    .tracks-loading, .tracks-error { padding: 24px 0; color: var(--subtext); }
 
     ::-webkit-scrollbar { width: 12px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -386,7 +237,11 @@
 
       <div class="playlist-detail" id="playlist-detail">
         <div class="detail-header">
-          <button class="back-btn" id="back-btn">←</button>
+          <button class="back-btn" id="back-btn" aria-label="Back">
+            <svg viewBox="0 0 24 24">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+          </button>
           <div class="detail-hero-bg" id="detail-hero-bg"></div>
           <div class="detail-hero">
             <img class="detail-img" id="detail-img" src="" alt="">
@@ -439,64 +294,27 @@
     let currentUserImage = null;
     let gridPollInterval = null;
 
-    function showLogin() {
-      loginScreen.style.display = 'flex';
-      mainScreen.style.display = 'none';
-      liveDot.style.display = 'none';
-    }
-    function showMain() {
-      loginScreen.style.display = 'none';
-      mainScreen.style.display = 'flex';
-      liveDot.style.display = 'block';
-    }
+    function showLogin() { loginScreen.style.display = 'flex'; mainScreen.style.display = 'none'; liveDot.style.display = 'none'; }
+    function showMain() { loginScreen.style.display = 'none'; mainScreen.style.display = 'flex'; liveDot.style.display = 'block'; }
 
-    function startGridPolling() {
-      stopGridPolling();
-      if (!currentToken || playlistDetail.style.display === 'flex') return;
-      gridPollInterval = setInterval(() => loadPlaylists(currentToken, currentUserId, true), 3000);
-    }
-    function stopGridPolling() {
-      if (gridPollInterval) { clearInterval(gridPollInterval); gridPollInterval = null; }
-    }
+    function startGridPolling() { stopGridPolling(); if (!currentToken || playlistDetail.style.display === 'flex') return; gridPollInterval = setInterval(() => loadPlaylists(currentToken, currentUserId, true), 3000); }
+    function stopGridPolling() { if (gridPollInterval) { clearInterval(gridPollInterval); gridPollInterval = null; } }
 
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible' && currentToken && playlistDetail.style.display !== 'flex') {
-        loadPlaylists(currentToken, currentUserId, true);
-        startGridPolling();
-      } else {
-        stopGridPolling();
-      }
+      if (document.visibilityState === 'visible' && currentToken && playlistDetail.style.display !== 'flex') { loadPlaylists(currentToken, currentUserId, true); startGridPolling(); }
+      else { stopGridPolling(); }
     });
 
-    function genRandom(length) {
-      const c = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
-      let t = '';
-      for (let i = 0; i < length; i++) t += c.charAt(Math.floor(Math.random() * c.length));
-      return t;
-    }
-    async function sha256(plain) {
-      return window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(plain));
-    }
-    function b64url(a) {
-      let s = ''; const b = new Uint8Array(a);
-      for (let i = 0; i < b.byteLength; i++) s += String.fromCharCode(b[i]);
-      return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    }
+    function genRandom(length) { const c = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~'; let t = ''; for (let i = 0; i < length; i++) t += c.charAt(Math.floor(Math.random() * c.length)); return t; }
+    async function sha256(plain) { return window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(plain)); }
+    function b64url(a) { let s = ''; const b = new Uint8Array(a); for (let i = 0; i < b.byteLength; i++) s += String.fromCharCode(b[i]); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
     async function challenge(v) { return b64url(await sha256(v)); }
 
     document.getElementById('connect-btn').addEventListener('click', async () => {
       const verifier = genRandom(128);
       localStorage.setItem('spotify_code_verifier', verifier);
       const ch = await challenge(verifier);
-      const p = new URLSearchParams({
-        client_id: CLIENT_ID,
-        response_type: 'code',
-        redirect_uri: REDIRECT_URI,
-        code_challenge_method: 'S256',
-        code_challenge: ch,
-        show_dialog: 'true',
-        scope: 'user-read-private playlist-read-private playlist-read-collaborative'
-      });
+      const p = new URLSearchParams({ client_id: CLIENT_ID, response_type: 'code', redirect_uri: REDIRECT_URI, code_challenge_method: 'S256', code_challenge: ch, show_dialog: 'true', scope: 'user-read-private playlist-read-private playlist-read-collaborative' });
       window.location.href = `${AUTH_URL}?${p.toString()}`;
     });
 
@@ -504,26 +322,14 @@
       const up = new URLSearchParams(window.location.search);
       const code = up.get('code');
       const error = up.get('error');
-
       if (error) { showLogin(); return; }
-
       const stored = localStorage.getItem('spotify_access_token');
 
       if (code && !stored) {
         const verifier = localStorage.getItem('spotify_code_verifier');
         if (!verifier) { showLogin(); return; }
         try {
-          const res = await fetch(TOKEN_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({
-              client_id: CLIENT_ID,
-              grant_type: 'authorization_code',
-              code: code,
-              redirect_uri: REDIRECT_URI,
-              code_verifier: verifier
-            })
-          });
+          const res = await fetch(TOKEN_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ client_id: CLIENT_ID, grant_type: 'authorization_code', code: code, redirect_uri: REDIRECT_URI, code_verifier: verifier }) });
           if (!res.ok) throw new Error('token exchange failed');
           const data = await res.json();
           const token = data.access_token;
@@ -534,25 +340,13 @@
           currentToken = token;
           showMain();
           await initDashboard(token);
-        } catch (e) {
-          console.error(e);
-          localStorage.removeItem('spotify_code_verifier');
-          showLogin();
-        }
+        } catch (e) { console.error(e); localStorage.removeItem('spotify_code_verifier'); showLogin(); }
       } else if (stored) {
-        currentToken = stored;
-        showMain();
-        await initDashboard(stored);
-      } else {
-        showLogin();
-      }
+        currentToken = stored; showMain(); await initDashboard(stored);
+      } else { showLogin(); }
     });
 
-    async function initDashboard(token) {
-      const userId = await loadUser(token);
-      await loadPlaylists(token, userId, false);
-      startGridPolling();
-    }
+    async function initDashboard(token) { const userId = await loadUser(token); await loadPlaylists(token, userId, false); startGridPolling(); }
 
     async function loadUser(token) {
       try {
@@ -564,12 +358,7 @@
         currentUserImage = (data.images && data.images.length) ? data.images[0].url : null;
         userNameEl.textContent = currentUserName;
         return currentUserId;
-      } catch (e) {
-        console.error(e);
-        userNameEl.textContent = 'Listener';
-        currentUserId = null;
-        return null;
-      }
+      } catch (e) { console.error(e); userNameEl.textContent = 'Listener'; currentUserId = null; return null; }
     }
 
     async function loadPlaylists(token, userId, silent = false) {
@@ -580,47 +369,31 @@
         while (url && items.length < 200) {
           const res = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
           if (res.status === 401) { handleLogout(); return; }
-          if (!res.ok) {
-            console.warn('Playlist fetch status', res.status);
-            break;
-          }
+          if (!res.ok) { console.warn('Playlist fetch status', res.status); break; }
           const data = await res.json();
           const pageItems = Array.isArray(data.items) ? data.items : [];
           items.push(...pageItems);
           url = (typeof data.next === 'string') ? data.next : null;
         }
-
         let owned = items;
-        if (typeof userId === 'string') {
-          owned = items.filter(pl => pl && pl.owner && pl.owner.id === userId);
-        }
-
+        if (typeof userId === 'string') owned = items.filter(pl => pl && pl.owner && pl.owner.id === userId);
         renderGrid(owned);
       } catch (e) {
         console.error('playlist load error', e);
-        if (!silent) {
-          playlistGrid.innerHTML = '<div class="empty-state">Unable to load playlists. If this persists, log out and back in.</div>';
-        }
+        if (!silent) playlistGrid.innerHTML = '<div class="empty-state">Unable to load playlists. If this persists, log out and back in.</div>';
       }
     }
 
     function renderGrid(items) {
       playlistGrid.innerHTML = '';
-      if (!Array.isArray(items) || items.length === 0) {
-        emptyState.style.display = 'block';
-        return;
-      }
+      if (!Array.isArray(items) || items.length === 0) { emptyState.style.display = 'block'; return; }
       emptyState.style.display = 'none';
-
       items.forEach(pl => {
+        if (!pl || !pl.id) return;
         const card = document.createElement('div');
         card.className = 'playlist-card';
-        const imgUrl = (pl.images && pl.images.length && pl.images[0].url)
-          ? pl.images[0].url
-          : 'https://via.placeholder.com/300x300/181818/b3b3b3?text=Playlist';
-        const trackCount = (pl.tracks && typeof pl.tracks.total === 'number')
-          ? `${pl.tracks.total} tracks`
-          : 'Playlist';
+        const imgUrl = (pl.images && pl.images.length && pl.images[0].url) ? pl.images[0].url : 'https://via.placeholder.com/300x300/181818/b3b3b3?text=Playlist';
+        const trackCount = (pl.tracks && typeof pl.tracks.total === 'number') ? `${pl.tracks.total} tracks` : 'Playlist';
         card.innerHTML = `
           <img class="playlist-img" src="${imgUrl}" alt="${pl.name || 'Playlist'}" loading="lazy">
           <div class="playlist-name">${pl.name || 'Untitled'}</div>
@@ -632,14 +405,12 @@
     }
 
     async function openPlaylist(pl) {
+      if (!pl || !pl.id) return;
       stopGridPolling();
       playlistDetail.style.display = 'flex';
-      content.scrollTop = 0;
-      playlistDetail.scrollTop = 0;
+      content.scrollTop = 0; playlistDetail.scrollTop = 0;
 
-      const imgUrl = (pl.images && pl.images.length && pl.images[0].url)
-        ? pl.images[0].url
-        : 'https://via.placeholder.com/300x300/181818/b3b3b3?text=Playlist';
+      const imgUrl = (pl.images && pl.images.length && pl.images[0].url) ? pl.images[0].url : 'https://via.placeholder.com/300x300/181818/b3b3b3?text=Playlist';
       detailImg.src = imgUrl;
       detailHeroBg.style.backgroundImage = `url('${imgUrl}')`;
       detailTitle.textContent = pl.name || 'Untitled';
@@ -647,21 +418,27 @@
 
       const ownerImg = currentUserImage ? `<img src="${currentUserImage}" alt="">` : '';
       detailSub.innerHTML = `${ownerImg}<span>${currentUserName}</span>`;
-
       detailList.innerHTML = '<div class="tracks-loading">Loading tracks…</div>';
 
       let tracks = [];
       let url = `${API}/playlists/${pl.id}/tracks?limit=100`;
+      let fetchFailed = false;
       try {
         while (url && tracks.length < 10000) {
           const res = await fetch(url, { headers: { Authorization: 'Bearer ' + currentToken } });
-          if (!res.ok) break;
+          if (!res.ok) { fetchFailed = true; break; }
           const data = await res.json();
           tracks.push(...(Array.isArray(data.items) ? data.items : []));
           url = (typeof data.next === 'string') ? data.next : null;
         }
-      } catch (e) { console.error(e); }
+      } catch (e) { console.error(e); fetchFailed = true; }
 
+      if (fetchFailed && tracks.length === 0) {
+        detailList.innerHTML = `<div class="tracks-error">Could not load tracks for this playlist.</div>`;
+        const ownerImg2 = currentUserImage ? `<img src="${currentUserImage}" alt="">` : '';
+        detailSub.innerHTML = `${ownerImg2}<span>${currentUserName}</span> &nbsp;•&nbsp; —`;
+        return;
+      }
       renderTracks(tracks, pl);
     }
 
@@ -672,9 +449,7 @@
         if (!t) return '';
         totalMs += (t.duration_ms || 0);
         const num = idx + 1;
-        const art = (t.album && t.album.images && t.album.images.length)
-          ? (t.album.images[2] || t.album.images[1] || t.album.images[0]).url
-          : 'https://via.placeholder.com/40/181818/b3b3b3?text=♪';
+        const art = (t.album && t.album.images && t.album.images.length) ? (t.album.images[2] || t.album.images[1] || t.album.images[0]).url : 'https://via.placeholder.com/40/181818/b3b3b3?text=♪';
         const name = t.name || 'Unknown';
         const artist = t.artists ? t.artists.map(a => a.name).join(', ') : 'Unknown Artist';
         const album = (t.album && t.album.name) ? t.album.name : '';
@@ -693,24 +468,14 @@
             <div class="track-album">${album}</div>
             <div class="track-date">${added}</div>
             <div class="track-dur">${dur}</div>
-          </div>
-        `;
+          </div>`;
       }).join('');
 
       const header = `
         <div class="track-header">
-          <span>#</span>
-          <span>Title</span>
-          <span>Album</span>
-          <span>Date added</span>
-          <span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <polyline points="12 6 12 12 16 14"></polyline>
-            </svg>
-          </span>
-        </div>
-      `;
+          <span>#</span><span>Title</span><span>Album</span><span>Date added</span>
+          <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></span>
+        </div>`;
 
       detailList.innerHTML = header + rows;
 
@@ -720,50 +485,24 @@
       detailSub.innerHTML = `${existingSub} &nbsp;•&nbsp; ${count} song${count !== 1 ? 's' : ''}, ${durText}`;
     }
 
-    backBtn.addEventListener('click', () => {
-      playlistDetail.style.display = 'none';
-      startGridPolling();
-    });
+    backBtn.addEventListener('click', () => { playlistDetail.style.display = 'none'; startGridPolling(); });
 
-    function formatTime(ms) {
-      const s = Math.floor(ms / 1000);
-      const m = Math.floor(s / 60);
-      const sec = s % 60;
-      return `${m}:${sec.toString().padStart(2, '0')}`;
-    }
+    function formatTime(ms) { const s = Math.floor(ms / 1000); const m = Math.floor(s / 60); const sec = s % 60; return `${m}:${sec.toString().padStart(2, '0')}`; }
     function formatTotalDuration(ms) {
-      const totalSec = Math.floor(ms / 1000);
-      const h = Math.floor(totalSec / 3600);
-      const m = Math.floor((totalSec % 3600) / 60);
-      const s = totalSec % 60;
-      if (h > 0) return `${h} hr ${m} min`;
-      if (m > 0) return `${m} min ${s} sec`;
-      return `${s} sec`;
+      const totalSec = Math.floor(ms / 1000); const h = Math.floor(totalSec / 3600); const m = Math.floor((totalSec % 3600) / 60); const s = totalSec % 60;
+      if (h > 0) return `${h} hr ${m} min`; if (m > 0) return `${m} min ${s} sec`; return `${s} sec`;
     }
     function relativeDate(isoString) {
-      const date = new Date(isoString);
-      const now = new Date();
-      const diff = Math.floor((now - date) / 1000);
-      if (diff < 60) return `${diff} seconds ago`;
-      if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
-      if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
-      if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`;
+      const date = new Date(isoString); const now = new Date(); const diff = Math.floor((now - date) / 1000);
+      if (diff < 60) return `${diff} seconds ago`; if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`; if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`; if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`;
       return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
     }
 
     document.getElementById('logout-btn').addEventListener('click', handleLogout);
-
     function handleLogout() {
-      stopGridPolling();
-      currentToken = null;
-      currentUserId = null;
-      localStorage.removeItem('spotify_access_token');
-      localStorage.removeItem('spotify_refresh_token');
-      localStorage.removeItem('spotify_code_verifier');
-      playlistGrid.innerHTML = '';
-      userNameEl.textContent = '';
-      playlistDetail.style.display = 'none';
-      showLogin();
+      stopGridPolling(); currentToken = null; currentUserId = null;
+      localStorage.removeItem('spotify_access_token'); localStorage.removeItem('spotify_refresh_token'); localStorage.removeItem('spotify_code_verifier');
+      playlistGrid.innerHTML = ''; userNameEl.textContent = ''; playlistDetail.style.display = 'none'; showLogin();
     }
   </script>
 </body>
