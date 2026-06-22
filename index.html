@@ -23,8 +23,6 @@
       font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
       overflow: hidden;
     }
-
-    /* ---------- LOGIN SCREEN ---------- */
     #login-screen {
       display: flex;
       flex-direction: column;
@@ -56,7 +54,6 @@
     .btn:hover { background: var(--accent-hover); transform: scale(1.04); }
     .btn:active { transform: scale(0.98); }
 
-    /* ---------- MAIN SCREEN ---------- */
     #main-screen {
       display: none;
       height: 100vh;
@@ -102,7 +99,6 @@
       background: linear-gradient(180deg, #1e1e1e 0%, var(--surface) 320px);
       padding: 32px;
     }
-
     .page-header {
       display: flex;
       align-items: center;
@@ -168,10 +164,8 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-
     .empty-state { color: var(--subtext); padding: 40px 0; }
 
-    /* ---------- PLAYLIST DETAIL ---------- */
     .playlist-detail {
       position: absolute;
       inset: 0;
@@ -181,7 +175,6 @@
       overflow-y: auto;
       background: #121212;
     }
-
     .detail-header {
       position: relative;
       padding: 32px;
@@ -261,7 +254,6 @@
       border-radius: 50%;
       object-fit: cover;
     }
-
     .detail-controls {
       padding: 16px 32px 24px;
       display: flex;
@@ -359,7 +351,6 @@
 </head>
 <body>
 
-  <!-- LOGIN SCREEN -->
   <div id="login-screen">
     <div class="logo">
       <svg viewBox="0 0 168 168" xmlns="http://www.w3.org/2000/svg">
@@ -371,7 +362,6 @@
     <button class="btn" id="connect-btn">Connect Account</button>
   </div>
 
-  <!-- MAIN SCREEN -->
   <div id="main-screen">
     <div class="topbar">
       <div class="topbar-left">
@@ -394,7 +384,6 @@
       <div id="playlist-grid" class="playlist-grid"></div>
       <div class="empty-state" id="empty-state" style="display:none;">No playlists found.</div>
 
-      <!-- Playlist Detail Overlay -->
       <div class="playlist-detail" id="playlist-detail">
         <div class="detail-header">
           <button class="back-btn" id="back-btn">←</button>
@@ -422,12 +411,11 @@
 
   <script>
     const CLIENT_ID = 'fcc60831d3974fec8770b2f9af452de8';
-    const REDIRECT_URI = 'https://dccxvii.github.io/';
+    const REDIRECT_URI = 'https://dccxvii.github.io';
     const AUTH_URL = 'https://accounts.spotify.com/authorize';
     const TOKEN_URL = 'https://accounts.spotify.com/api/token';
     const API = 'https://api.spotify.com/v1';
 
-    // DOM refs
     const loginScreen = document.getElementById('login-screen');
     const mainScreen = document.getElementById('main-screen');
     const playlistGrid = document.getElementById('playlist-grid');
@@ -480,7 +468,6 @@
       }
     });
 
-    // PKCE helpers
     function genRandom(length) {
       const c = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
       let t = '';
@@ -491,8 +478,7 @@
       return window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(plain));
     }
     function b64url(a) {
-      let s = '';
-      const b = new Uint8Array(a);
+      let s = ''; const b = new Uint8Array(a);
       for (let i = 0; i < b.byteLength; i++) s += String.fromCharCode(b[i]);
       return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
     }
@@ -544,8 +530,7 @@
           localStorage.setItem('spotify_access_token', token);
           if (data.refresh_token) localStorage.setItem('spotify_refresh_token', data.refresh_token);
           localStorage.removeItem('spotify_code_verifier');
-          const cleanUrl = window.location.origin + window.location.pathname;
-          window.history.replaceState({}, document.title, cleanUrl);
+          window.history.replaceState({}, document.title, REDIRECT_URI);
           currentToken = token;
           showMain();
           await initDashboard(token);
@@ -596,7 +581,7 @@
           const res = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
           if (res.status === 401) { handleLogout(); return; }
           if (!res.ok) {
-            console.warn('Playlist fetch failed with status', res.status);
+            console.warn('Playlist fetch status', res.status);
             break;
           }
           const data = await res.json();
@@ -646,7 +631,6 @@
       });
     }
 
-    // ---------- DETAIL VIEW ----------
     async function openPlaylist(pl) {
       stopGridPolling();
       playlistDetail.style.display = 'flex';
@@ -676,9 +660,7 @@
           tracks.push(...(Array.isArray(data.items) ? data.items : []));
           url = (typeof data.next === 'string') ? data.next : null;
         }
-      } catch (e) {
-        console.error(e);
-      }
+      } catch (e) { console.error(e); }
 
       renderTracks(tracks, pl);
     }
@@ -743,14 +725,12 @@
       startGridPolling();
     });
 
-    // Utilities
     function formatTime(ms) {
       const s = Math.floor(ms / 1000);
       const m = Math.floor(s / 60);
       const sec = s % 60;
       return `${m}:${sec.toString().padStart(2, '0')}`;
     }
-
     function formatTotalDuration(ms) {
       const totalSec = Math.floor(ms / 1000);
       const h = Math.floor(totalSec / 3600);
@@ -760,7 +740,6 @@
       if (m > 0) return `${m} min ${s} sec`;
       return `${s} sec`;
     }
-
     function relativeDate(isoString) {
       const date = new Date(isoString);
       const now = new Date();
@@ -772,7 +751,6 @@
       return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
     }
 
-    // Logout
     document.getElementById('logout-btn').addEventListener('click', handleLogout);
 
     function handleLogout() {
