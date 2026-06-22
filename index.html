@@ -14,7 +14,6 @@
       --subtext: #a7a7a7;
       --accent: #1db954;
       --accent-hover: #1ed760;
-      --danger: #ff4d4d;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
@@ -50,11 +49,6 @@
     }
     .btn:hover { background: var(--accent-hover); transform: scale(1.04); }
     .btn:active { transform: scale(0.98); }
-    .btn-sm { padding: 10px 24px; font-size: 0.9rem; }
-    .btn-secondary {
-      background: transparent; color: #fff; border: 1px solid #535353;
-    }
-    .btn-secondary:hover { border-color: #fff; background: rgba(255,255,255,0.06); transform: none; }
 
     #main-screen {
       display: none;
@@ -156,18 +150,12 @@
     .track-artist-txt { font-size: 0.8125rem; color: var(--subtext); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .track-album, .track-date { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .track-dur { text-align: right; font-variant-numeric: tabular-nums; }
-    .tracks-loading, .tracks-empty { padding: 24px 0; color: var(--subtext); }
-    .tracks-error {
-      padding: 24px;
-      background: rgba(255, 50, 50, 0.08);
-      border: 1px solid rgba(255, 50, 50, 0.25);
-      border-radius: 8px;
-      color: #ff9e9e;
-      line-height: 1.6;
-      margin-top: 8px;
+    .tracks-loading, .tracks-empty, .tracks-soft {
+      padding: 24px 0; color: var(--subtext);
     }
-    .tracks-error a { color: #fff; text-decoration: underline; }
-    .tracks-error .actions { display: flex; gap: 12px; margin-top: 16px; align-items: center; flex-wrap: wrap; }
+    .tracks-soft a {
+      color: #fff; text-decoration: underline; cursor: pointer;
+    }
 
     ::-webkit-scrollbar { width: 12px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -298,7 +286,16 @@
       const verifier = genRandom(128);
       localStorage.setItem('spotify_code_verifier', verifier);
       const ch = await challenge(verifier);
-      const p = new URLSearchParams({ client_id: CLIENT_ID, response_type: 'code', redirect_uri: REDIRECT_URI, code_challenge_method: 'S256', code_challenge: ch, show_dialog: 'true', scope: 'user-read-private playlist-read-private playlist-read-collaborative' });
+      // Request every permission we could possibly need so private playlists "just work"
+      const p = new URLSearchParams({
+        client_id: CLIENT_ID,
+        response_type: 'code',
+        redirect_uri: REDIRECT_URI,
+        code_challenge_method: 'S256',
+        code_challenge: ch,
+        show_dialog: 'true',
+        scope: 'user-read-private user-read-email playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public'
+      });
       window.location.href = `${AUTH_URL}?${p.toString()}`;
     });
 
@@ -455,26 +452,19 @@
 
       let body = rows;
       if (body === '' && fetchErr === 403) {
-        body = `
-          <div class="tracks-error">
-            <b>Spotify denied access (403).</b><br>
-            This usually happens when your account still has an old approval for this app without playlist permissions.<br>
-            <div class="actions">
-              <a href="https://www.spotify.com/account/apps/" target="_blank">Manage Spotify Apps (remove this app)</a>
-              <button class="btn btn-sm btn-secondary" id="reconnect-btn">Log out & Reconnect</button>
-            </div>
-          </div>`;
+        // Soft, clean notice instead of a scary error
+        body = `<div class="tracks-soft">This playlist's tracks couldn't be loaded. <a id="soft-reconnect">Log out and reconnect</a> to refresh permissions.</div>`;
       } else if (body === '' && fetchErr) {
-        body = `<div class="tracks-error">Trouble loading tracks (error ${fetchErr}). Showing 0 loaded.</div>`;
+        body = `<div class="tracks-soft">Unable to load tracks right now.</div>`;
       } else if (body === '') {
         body = `<div class="tracks-empty">This playlist is empty.</div>`;
       }
 
       detailList.innerHTML = header + body;
 
-      // attach listener to the reconnect button if present
-      const rc = document.getElementById('reconnect-btn');
-      if (rc) rc.addEventListener('click', () => handleLogout());
+      // Wire up soft-reconnect link if present
+      const srl = document.getElementById('soft-reconnect');
+      if (srl) srl.addEventListener('click', () => handleLogout());
 
       const count = validItems.length;
       const durText = formatTotalDuration(totalMs);
