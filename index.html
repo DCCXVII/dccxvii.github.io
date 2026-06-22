@@ -215,7 +215,6 @@
     const TOKEN_URL = 'https://accounts.spotify.com/api/token';
     const API = 'https://api.spotify.com/v1';
 
-    // Brand new storage keys so every user starts completely fresh
     const KEY_TK   = 'sp_v2_token';
     const KEY_RF   = 'sp_v2_refresh';
     const KEY_VER  = 'sp_v2_verifier';
@@ -347,7 +346,7 @@
     function renderGrid(items) {
       playlistGrid.innerHTML = '';
       if (!Array.isArray(items) || items.length === 0) { emptyState.style.display = 'block'; return; }
-      emptyState.style.display = 'none';
+      emptyStacles = 'none';
       items.forEach(pl => {
         const img = (pl.images && pl.images.length && pl.images[0].url) ? pl.images[0].url : 'https://via.placeholder.com/300x300/181818/b3b3b3?text=Playlist';
         const count = (pl.tracks && typeof pl.tracks.total === 'number') ? `${pl.tracks.total} tracks` : 'Playlist';
@@ -379,37 +378,39 @@
       detailSub.innerHTML = `${oImg}<span>${currentUserName}</span>`;
 
       detailList.innerHTML = '<div class="tracks-loading">Loading tracks…</div>';
-
       await refreshDetail(pl);
       startDetailPoll(pl);
     }
 
     async function refreshDetail(pl) {
-      const tracks = await fetchTracks(pl.id);
-      if (tracks !== null) renderTracks(tracks, pl);
-    }
-
-    async function fetchTracks(playlistId) {
-      if (!currentToken) return null;
+      if (!currentToken || !pl) return;
       let items = [];
-      let url = `${API}/playlists/${playlistId}/tracks?limit=100`;
       try {
-        while (url && items.length < 10000) {
-          const res = await fetch(url, { headers: { Authorization: 'Bearer ' + currentToken } });
-          if (res.status === 401) { handleLogout(); return null; }
-          if (!res.ok) { console.warn('track fetch status:', res.status); return null; }
+        // Use the main playlist endpoint: always works if the playlist is accessible
+        const res = await fetch(`${API}/playlists/${pl.id}?market=from_token`, { headers: { Authorization: 'Bearer ' + currentToken } });
+        if (res.status === 401) { handleLogout(); return; }
+        if (res.ok) {
           const data = await res.json();
-          items.push(...(data.items || []));
-          url = data.next || null;
+          if (data.tracks && data.tracks.items) items = data.tracks.items;
+          // Paginate the rest if there are more than 100 tracks
+          let url = data.tracks && data.tracks.next ? data.tracks.next : null;
+          while (url && items.length < 10000) {
+            const r2 = await fetch(url, { headers: { Authorization: 'Bearer ' + currentToken } });
+            if (!r2.ok) break;
+            const d2 = await r2.json();
+            items.push(...(d2.items || []));
+            url = d2.next || null;
+          }
         }
-        return items;
-      } catch (e) { console.error(e); return null; }
+      } catch (e) { console.error(e); }
+      // ALWAYS paint what we got — never get stuck on “Loading…”
+      renderTracks(items, pl);
     }
 
     function renderTracks(items, pl) {
-      const validItems = (items || []).filter(it => it && it.track);
+      items = items || [];
       let totalMs = 0;
-      const rows = (items || []).map((item, idx) => {
+      const rows = items.map((item, idx) => {
         const t = item.track;
         if (!t) {
           return `
@@ -456,22 +457,10 @@
           <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></span>
         </div>`;
 
-      let body;
-      if ((items || []).length === 0) {
-        // If the playlist object says there ARE tracks but we got none back, show "Loading..." briefly instead of empty
-        // to avoid flickering on slow networks. If the user truly has 0 tracks, this is accurate after the first load.
-        if (pl && pl.tracks && pl.tracks.total > 0) {
-          body = '<div class="tracks-loading">Loading tracks…</div>';
-        } else {
-          body = '<div class="tracks-empty">This playlist is empty.</div>';
-        }
-      } else {
-        body = rows;
-      }
-
+      const body = rows === '' ? '<div class="tracks-empty">This playlist is empty.</div>' : rows;
       detailList.innerHTML = header + body;
 
-      const count = validItems.length;
+      const count = items.filter(it => it && it.track).length;
       const durText = formatTotalDuration(totalMs);
       const oImg = currentUserImage ? `<img src="${currentUserImage}" alt="">` : '';
       detailSub.innerHTML = `${oImg}<span>${currentUserName}</span> &nbsp;•&nbsp; ${count} song${count !== 1 ? 's' : ''}, ${durText}`;
