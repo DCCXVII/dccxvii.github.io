@@ -66,25 +66,13 @@
       border-bottom: 1px solid #282828;
       flex-shrink: 0;
     }
-    .topbar-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 1.25rem;
-      font-weight: 700;
-    }
+    .topbar-left { display: flex; align-items: center; gap: 10px; font-size: 1.25rem; font-weight: 700; }
     .topbar-left svg { width: 32px; height: 32px; fill: var(--accent); }
     .topbar-right { display: flex; align-items: center; gap: 16px; }
     .user-name { color: var(--subtext); font-size: 0.9rem; }
     .logout-btn {
-      background: transparent;
-      color: var(--text);
-      border: 1px solid #535353;
-      padding: 8px 20px;
-      border-radius: 999px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 0.85rem;
+      background: transparent; color: var(--text); border: 1px solid #535353;
+      padding: 8px 20px; border-radius: 999px; cursor: pointer; font-weight: 600; font-size: 0.85rem;
     }
     .logout-btn:hover { border-color: var(--text); }
 
@@ -97,31 +85,21 @@
     }
     .page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
     .section-title { font-size: 1.5rem; font-weight: 700; }
-    .live-dot {
-      width: 8px; height: 8px; background: var(--accent); border-radius: 50%; position: relative;
-    }
+    .live-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; position: relative; }
     .live-dot::after {
       content: ''; position: absolute; top: -4px; left: -4px; right: -4px; bottom: -4px;
       border-radius: 50%; border: 2px solid var(--accent); animation: pulse 2s infinite; opacity: 0;
     }
     @keyframes pulse { 0% { transform: scale(0.8); opacity: 0.8; } 100% { transform: scale(2); opacity: 0; } }
 
-    .playlist-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 24px;
-    }
-    .playlist-card {
-      background: var(--elevated); padding: 16px; border-radius: 8px; cursor: pointer; transition: background 0.25s;
-    }
+    .playlist-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 24px; }
+    .playlist-card { background: var(--elevated); padding: 16px; border-radius: 8px; cursor: pointer; transition: background 0.25s; }
     .playlist-card:hover { background: var(--elevated-hover); }
-    .playlist-img {
-      width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; margin-bottom: 16px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.5); background: #282828; display: block;
-    }
+    .playlist-img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; margin-bottom: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); background: #282828; display: block; }
     .playlist-name { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px; }
     .playlist-meta { color: var(--subtext); font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .empty-state { color: var(--subtext); padding: 40px 0; }
 
-    /* ---------- PLAYLIST DETAIL ---------- */
     .playlist-detail {
       position: absolute; inset: 0; z-index: 20; display: none; flex-direction: column; overflow-y: auto; background: #121212;
     }
@@ -136,31 +114,20 @@
       position: absolute; top: 24px; left: 32px; z-index: 2;
       width: 48px; height: 48px; border-radius: 50%;
       border: 2px solid rgba(255,255,255,0.2);
-      background: rgba(0,0,0,0.55);
-      color: #fff; cursor: pointer;
+      background: rgba(0,0,0,0.55); color: #fff; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       transition: transform 0.1s, background 0.2s, border-color 0.2s;
     }
-    .back-btn:hover {
-      background: rgba(255,255,255,0.12);
-      border-color: rgba(255,255,255,0.5);
-      transform: scale(1.08);
-    }
+    .back-btn:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.5); transform: scale(1.08); }
     .back-btn:active { transform: scale(0.96); }
     .back-btn svg { width: 26px; height: 26px; stroke: #fff; stroke-width: 2.6; fill: none; stroke-linecap: round; stroke-linejoin: round; }
 
     .detail-hero { position: relative; z-index: 1; display: flex; align-items: flex-end; gap: 24px; }
-    .detail-img {
-      width: 232px; height: 232px; object-fit: cover; border-radius: 4px;
-      box-shadow: 0 4px 60px rgba(0,0,0,0.5); flex-shrink: 0; background: #282828;
-    }
+    .detail-img { width: 232px; height: 232px; object-fit: cover; border-radius: 4px; box-shadow: 0 4px 60px rgba(0,0,0,0.5); flex-shrink: 0; background: #282828; }
     .detail-meta { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
     .detail-type { text-transform: uppercase; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; color: #fff; }
     .detail-title { font-size: clamp(2rem, 6vw, 5.5rem); font-weight: 900; line-height: 1; letter-spacing: -0.04em; color: #fff; }
-    .detail-sub {
-      font-size: 0.875rem; color: rgba(255,255,255,0.7);
-      display: flex; align-items: center; gap: 6px; margin-top: 4px;
-    }
+    .detail-sub { font-size: 0.875rem; color: rgba(255,255,255,0.7); display: flex; align-items: center; gap: 6px; margin-top: 4px; }
     .detail-sub img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
     .detail-controls { padding: 16px 32px 24px; display: flex; align-items: center; }
     .detail-play-btn {
@@ -171,18 +138,11 @@
     .detail-play-btn:hover { background: var(--accent-hover); transform: scale(1.06); }
 
     .detail-list { padding: 0 32px 40px; }
-
     .track-header {
-      display: grid; grid-template-columns: 50px 1fr 1fr 140px 70px; gap: 16px;
-      align-items: center; color: var(--subtext); font-size: 0.85rem;
-      border-bottom: 1px solid rgba(255,255,255,0.1); padding: 8px 0; margin-bottom: 12px;
-      position: sticky; top: 0; background: #121212; z-index: 3;
+      display: grid; grid-template-columns: 50px 1fr 1fr 140px 70px; gap: 16px; align-items: center; color: var(--subtext); font-size: 0.85rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1); padding: 8px 0; margin-bottom: 12px; position: sticky; top: 0; background: #121212; z-index: 3;
     }
-    .track-row {
-      display: grid; grid-template-columns: 50px 1fr 1fr 140px 70px; gap: 16px;
-      align-items: center; padding: 10px 0; border-radius: 4px;
-      color: var(--subtext); font-size: 0.9rem;
-    }
+    .track-row { display: grid; grid-template-columns: 50px 1fr 1fr 140px 70px; gap: 16px; align-items: center; padding: 10px 0; border-radius: 4px; color: var(--subtext); font-size: 0.9rem; }
     .track-row:hover { background: rgba(255,255,255,0.07); }
     .track-num { text-align: center; font-variant-numeric: tabular-nums; color: var(--subtext); }
     .track-info { display: flex; align-items: center; gap: 12px; min-width: 0; }
@@ -192,7 +152,7 @@
     .track-artist-txt { font-size: 0.8125rem; color: var(--subtext); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .track-album, .track-date { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .track-dur { text-align: right; font-variant-numeric: tabular-nums; }
-    .tracks-loading, .tracks-error { padding: 24px 0; color: var(--subtext); }
+    .tracks-loading, .tracks-empty, .tracks-error { padding: 24px 0; color: var(--subtext); }
 
     ::-webkit-scrollbar { width: 12px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -341,13 +301,11 @@
           showMain();
           await initDashboard(token);
         } catch (e) { console.error(e); localStorage.removeItem('spotify_code_verifier'); showLogin(); }
-      } else if (stored) {
-        currentToken = stored; showMain(); await initDashboard(stored);
-      } else { showLogin(); }
+      } else if (stored) { currentToken = stored; showMain(); await initDashboard(stored); }
+      else { showLogin(); }
     });
 
     async function initDashboard(token) { const userId = await loadUser(token); await loadPlaylists(token, userId, false); startGridPolling(); }
-
     async function loadUser(token) {
       try {
         const res = await fetch(`${API}/me`, { headers: { Authorization: 'Bearer ' + token } });
@@ -369,7 +327,7 @@
         while (url && items.length < 200) {
           const res = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
           if (res.status === 401) { handleLogout(); return; }
-          if (!res.ok) { console.warn('Playlist fetch status', res.status); break; }
+          if (!res.ok) { console.warn('Playlist page fetch status', res.status); break; }
           const data = await res.json();
           const pageItems = Array.isArray(data.items) ? data.items : [];
           items.push(...pageItems);
@@ -378,10 +336,7 @@
         let owned = items;
         if (typeof userId === 'string') owned = items.filter(pl => pl && pl.owner && pl.owner.id === userId);
         renderGrid(owned);
-      } catch (e) {
-        console.error('playlist load error', e);
-        if (!silent) playlistGrid.innerHTML = '<div class="empty-state">Unable to load playlists. If this persists, log out and back in.</div>';
-      }
+      } catch (e) { console.error('playlist load error', e); if (!silent) playlistGrid.innerHTML = '<div class="empty-state">Unable to load playlists.</div>'; }
     }
 
     function renderGrid(items) {
@@ -416,39 +371,37 @@
       detailTitle.textContent = pl.name || 'Untitled';
       detailType.textContent = (pl.public === false) ? 'Private Playlist' : 'Public Playlist';
 
+      // Build subtitle base (owner)
       const ownerImg = currentUserImage ? `<img src="${currentUserImage}" alt="">` : '';
-      detailSub.innerHTML = `${ownerImg}<span>${currentUserName}</span>`;
+      const ownerText = `<span>${currentUserName}</span>`;
+      detailSub.innerHTML = ownerImg + ownerText;
+
       detailList.innerHTML = '<div class="tracks-loading">Loading tracks…</div>';
 
       let tracks = [];
       let url = `${API}/playlists/${pl.id}/tracks?limit=100`;
-      let fetchFailed = false;
+      let fetchErr = null;
       try {
         while (url && tracks.length < 10000) {
           const res = await fetch(url, { headers: { Authorization: 'Bearer ' + currentToken } });
-          if (!res.ok) { fetchFailed = true; break; }
+          if (res.status === 401) { handleLogout(); return; }
+          if (!res.ok) { fetchErr = res.status; console.warn('Track fetch failed', res.status); break; }
           const data = await res.json();
           tracks.push(...(Array.isArray(data.items) ? data.items : []));
           url = (typeof data.next === 'string') ? data.next : null;
         }
-      } catch (e) { console.error(e); fetchFailed = true; }
+      } catch (e) { console.error(e); fetchErr = 'network'; }
 
-      if (fetchFailed && tracks.length === 0) {
-        detailList.innerHTML = `<div class="tracks-error">Could not load tracks for this playlist.</div>`;
-        const ownerImg2 = currentUserImage ? `<img src="${currentUserImage}" alt="">` : '';
-        detailSub.innerHTML = `${ownerImg2}<span>${currentUserName}</span> &nbsp;•&nbsp; —`;
-        return;
-      }
-      renderTracks(tracks, pl);
+      // Always render the table even if a later page failed; show what we have.
+      renderTracks(tracks, pl, fetchErr);
     }
 
-    function renderTracks(items, plContext) {
+    function renderTracks(items, plContext, fetchErr) {
       let totalMs = 0;
-      const rows = items.map((item, idx) => {
+      const validItems = items.filter(it => it && it.track);
+      const rows = validItems.map((item, idx) => {
         const t = item.track;
-        if (!t) return '';
         totalMs += (t.duration_ms || 0);
-        const num = idx + 1;
         const art = (t.album && t.album.images && t.album.images.length) ? (t.album.images[2] || t.album.images[1] || t.album.images[0]).url : 'https://via.placeholder.com/40/181818/b3b3b3?text=♪';
         const name = t.name || 'Unknown';
         const artist = t.artists ? t.artists.map(a => a.name).join(', ') : 'Unknown Artist';
@@ -457,7 +410,7 @@
         const dur = formatTime(t.duration_ms || 0);
         return `
           <div class="track-row">
-            <div class="track-num">${num}</div>
+            <div class="track-num">${idx + 1}</div>
             <div class="track-info">
               <img src="${art}" alt="">
               <div class="track-name-col">
@@ -477,12 +430,19 @@
           <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></span>
         </div>`;
 
-      detailList.innerHTML = header + rows;
+      let body = rows;
+      if (body === '' && fetchErr) {
+        body = `<div class="tracks-error">Trouble loading some tracks (error ${fetchErr}). Showing ${validItems.length} loaded.</div>`;
+      } else if (body === '') {
+        body = `<div class="tracks-empty">This playlist is empty.</div>`;
+      }
 
-      const count = items.filter(i => i.track).length;
+      detailList.innerHTML = header + body;
+
+      const count = validItems.length;
       const durText = formatTotalDuration(totalMs);
-      const existingSub = detailSub.innerHTML;
-      detailSub.innerHTML = `${existingSub} &nbsp;•&nbsp; ${count} song${count !== 1 ? 's' : ''}, ${durText}`;
+      const ownerImg = currentUserImage ? `<img src="${currentUserImage}" alt="">` : '';
+      detailSub.innerHTML = `${ownerImg}<span>${currentUserName}</span> &nbsp;•&nbsp; ${count} song${count !== 1 ? 's' : ''}, ${durText}`;
     }
 
     backBtn.addEventListener('click', () => { playlistDetail.style.display = 'none'; startGridPolling(); });
