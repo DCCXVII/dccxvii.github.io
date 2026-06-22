@@ -215,6 +215,11 @@
     const TOKEN_URL = 'https://accounts.spotify.com/api/token';
     const API = 'https://api.spotify.com/v1';
 
+    // Brand new storage keys so every user starts completely fresh
+    const KEY_TK   = 'sp_v2_token';
+    const KEY_RF   = 'sp_v2_refresh';
+    const KEY_VER  = 'sp_v2_verifier';
+
     const loginScreen = document.getElementById('login-screen');
     const mainScreen = document.getElementById('main-screen');
     const playlistGrid = document.getElementById('playlist-grid');
@@ -263,12 +268,12 @@
 
     document.getElementById('connect-btn').addEventListener('click', async () => {
       const verifier = genRandom(128);
-      localStorage.setItem('verifier', verifier);
+      localStorage.setItem(KEY_VER, verifier);
       const ch = await challenge(verifier);
       const p = new URLSearchParams({
         client_id: CLIENT_ID, response_type: 'code', redirect_uri: REDIRECT_URI,
         code_challenge_method: 'S256', code_challenge: ch, show_dialog: 'true',
-        scope: 'user-read-private user-read-email playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public'
+        scope: 'user-read-private user-read-email playlist-read-private playlist-read-collaborative'
       });
       window.location.href = `${AUTH_URL}?${p.toString()}`;
     });
@@ -278,10 +283,10 @@
       const code = up.get('code');
       const err = up.get('error');
       if (err) { showLogin(); return; }
-      let token = localStorage.getItem('token');
+      let token = localStorage.getItem(KEY_TK);
 
       if (code && !token) {
-        const verifier = localStorage.getItem('verifier');
+        const verifier = localStorage.getItem(KEY_VER);
         if (!verifier) { showLogin(); return; }
         try {
           const res = await fetch(TOKEN_URL, {
@@ -292,11 +297,11 @@
           if (!res.ok) throw new Error('token exchange failed');
           const data = await res.json();
           token = data.access_token;
-          localStorage.setItem('token', token);
-          if (data.refresh_token) localStorage.setItem('refresh', data.refresh_token);
-          localStorage.removeItem('verifier');
+          localStorage.setItem(KEY_TK, token);
+          if (data.refresh_token) localStorage.setItem(KEY_RF, data.refresh_token);
+          localStorage.removeItem(KEY_VER);
           window.history.replaceState({}, document.title, REDIRECT_URI);
-        } catch (e) { console.error(e); localStorage.removeItem('verifier'); showLogin(); return; }
+        } catch (e) { console.error(e); localStorage.removeItem(KEY_VER); showLogin(); return; }
       }
 
       if (token) {
@@ -375,37 +380,24 @@
 
       detailList.innerHTML = '<div class="tracks-loading">Loading tracks…</div>';
 
-      let tracks = await fetchTracks(pl.id);
-      // Fallback: if the separate tracks endpoint fails, fetch the playlist object itself which embeds tracks
-      if (!tracks) {
-        try {
-          const r = await fetch(`${API}/playlists/${pl.id}?market=from_token`, { headers: { Authorization: 'Bearer ' + currentToken } });
-          if (r.ok) {
-            const d = await r.json();
-            tracks = (d.tracks && d.tracks.items) ? d.tracks.items : [];
-          }
-        } catch (e) { console.error(e); }
-      }
-
-      renderTracks(tracks || []);
+      await refreshDetail(pl);
       startDetailPoll(pl);
     }
 
     async function refreshDetail(pl) {
       const tracks = await fetchTracks(pl.id);
-      if (!tracks) return; // keep existing rows if fetch fails
-      renderTracks(tracks);
+      if (tracks !== null) renderTracks(tracks, pl);
     }
 
     async function fetchTracks(playlistId) {
       if (!currentToken) return null;
       let items = [];
-      let url = `${API}/playlists/${playlistId}/tracks?limit=100&market=from_token`;
+      let url = `${API}/playlists/${playlistId}/tracks?limit=100`;
       try {
         while (url && items.length < 10000) {
           const res = await fetch(url, { headers: { Authorization: 'Bearer ' + currentToken } });
           if (res.status === 401) { handleLogout(); return null; }
-          if (!res.ok) { console.warn('tracks fetch status', res.status); return null; }
+          if (!res.ok) { console.warn('track fetch status:', res.status); return null; }
           const data = await res.json();
           items.push(...(data.items || []));
           url = data.next || null;
@@ -414,10 +406,10 @@
       } catch (e) { console.error(e); return null; }
     }
 
-    function renderTracks(items) {
-      items = items || [];
+    function renderTracks(items, pl) {
+      const validItems = (items || []).filter(it => it && it.track);
       let totalMs = 0;
-      const rows = items.map((item, idx) => {
+      const rows = (items || []).map((item, idx) => {
         const t = item.track;
         if (!t) {
           return `
@@ -464,10 +456,22 @@
           <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></span>
         </div>`;
 
-      const body = rows === '' ? '<div class="tracks-empty">This playlist is empty.</div>' : rows;
+      let body;
+      if ((items || []).length === 0) {
+        // If the playlist object says there ARE tracks but we got none back, show "Loading..." briefly instead of empty
+        // to avoid flickering on slow networks. If the user truly has 0 tracks, this is accurate after the first load.
+        if (pl && pl.tracks && pl.tracks.total > 0) {
+          body = '<div class="tracks-loading">Loading tracks…</div>';
+        } else {
+          body = '<div class="tracks-empty">This playlist is empty.</div>';
+        }
+      } else {
+        body = rows;
+      }
+
       detailList.innerHTML = header + body;
 
-      const count = items.filter(it => it && it.track).length;
+      const count = validItems.length;
       const durText = formatTotalDuration(totalMs);
       const oImg = currentUserImage ? `<img src="${currentUserImage}" alt="">` : '';
       detailSub.innerHTML = `${oImg}<span>${currentUserName}</span> &nbsp;•&nbsp; ${count} song${count !== 1 ? 's' : ''}, ${durText}`;
@@ -490,7 +494,7 @@
     function handleLogout() {
       stopGridPoll(); stopDetailPoll();
       currentToken = null; currentUserId = null; currentDetailPl = null;
-      localStorage.removeItem('token'); localStorage.removeItem('refresh'); localStorage.removeItem('verifier');
+      localStorage.removeItem(KEY_TK); localStorage.removeItem(KEY_RF); localStorage.removeItem(KEY_VER);
       playlistGrid.innerHTML = ''; userNameEl.textContent = ''; playlistDetail.style.display = 'none'; showLogin();
     }
   </script>
