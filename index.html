@@ -111,10 +111,8 @@
       mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
     }
     .back-btn {
-      position: absolute; top: 24px; left: 32px; z-index: 2;
-      width: 48px; height: 48px; border-radius: 50%;
-      border: 2px solid rgba(255,255,255,0.2);
-      background: rgba(0,0,0,0.55); color: #fff; cursor: pointer;
+      position: absolute; top: 24px; left: 32px; z-index: 2; width: 48px; height: 48px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.55); color: #fff; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       transition: transform 0.1s, background 0.2s, border-color 0.2s;
     }
@@ -152,7 +150,7 @@
     .track-artist-txt { font-size: 0.8125rem; color: var(--subtext); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .track-album, .track-date { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .track-dur { text-align: right; font-variant-numeric: tabular-nums; }
-    .tracks-loading, .tracks-empty, .tracks-error { padding: 24px 0; color: var(--subtext); }
+    .tracks-loading, .tracks-empty, .tracks-error { padding: 24px 0; color: var(--subtext); line-height: 1.6; }
 
     ::-webkit-scrollbar { width: 12px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -253,6 +251,8 @@
     let currentUserName = '';
     let currentUserImage = null;
     let gridPollInterval = null;
+    let detailPollInterval = null;
+    let currentDetailPl = null;
 
     function showLogin() { loginScreen.style.display = 'flex'; mainScreen.style.display = 'none'; liveDot.style.display = 'none'; }
     function showMain() { loginScreen.style.display = 'none'; mainScreen.style.display = 'flex'; liveDot.style.display = 'block'; }
@@ -260,9 +260,22 @@
     function startGridPolling() { stopGridPolling(); if (!currentToken || playlistDetail.style.display === 'flex') return; gridPollInterval = setInterval(() => loadPlaylists(currentToken, currentUserId, true), 3000); }
     function stopGridPolling() { if (gridPollInterval) { clearInterval(gridPollInterval); gridPollInterval = null; } }
 
+    function startDetailPolling(pl) { stopDetailPolling(); if (!currentToken || !pl) return; currentDetailPl = pl; detailPollInterval = setInterval(() => loadAndRenderPlaylistTracks(pl, true), 3000); }
+    function stopDetailPolling() { if (detailPollInterval) { clearInterval(detailPollInterval); detailPollInterval = null; } currentDetailPl = null; }
+
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible' && currentToken && playlistDetail.style.display !== 'flex') { loadPlaylists(currentToken, currentUserId, true); startGridPolling(); }
-      else { stopGridPolling(); }
+      if (document.visibilityState === 'visible' && currentToken) {
+        if (playlistDetail.style.display === 'flex' && currentDetailPl) {
+          loadAndRenderPlaylistTracks(currentDetailPl, true);
+          startDetailPolling(currentDetailPl);
+        } else {
+          loadPlaylists(currentToken, currentUserId, true);
+          startGridPolling();
+        }
+      } else {
+        stopGridPolling();
+        stopDetailPolling();
+      }
     });
 
     function genRandom(length) { const c = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~'; let t = ''; for (let i = 0; i < length; i++) t += c.charAt(Math.floor(Math.random() * c.length)); return t; }
@@ -371,13 +384,15 @@
       detailTitle.textContent = pl.name || 'Untitled';
       detailType.textContent = (pl.public === false) ? 'Private Playlist' : 'Public Playlist';
 
-      // Build subtitle base (owner)
       const ownerImg = currentUserImage ? `<img src="${currentUserImage}" alt="">` : '';
-      const ownerText = `<span>${currentUserName}</span>`;
-      detailSub.innerHTML = ownerImg + ownerText;
-
+      detailSub.innerHTML = ownerImg + `<span>${currentUserName}</span>`;
       detailList.innerHTML = '<div class="tracks-loading">Loading tracks…</div>';
 
+      await loadAndRenderPlaylistTracks(pl);
+      startDetailPolling(pl);
+    }
+
+    async function loadAndRenderPlaylistTracks(pl, silent = false) {
       let tracks = [];
       let url = `${API}/playlists/${pl.id}/tracks?limit=100`;
       let fetchErr = null;
@@ -385,18 +400,17 @@
         while (url && tracks.length < 10000) {
           const res = await fetch(url, { headers: { Authorization: 'Bearer ' + currentToken } });
           if (res.status === 401) { handleLogout(); return; }
-          if (!res.ok) { fetchErr = res.status; console.warn('Track fetch failed', res.status); break; }
+          if (res.status === 403) { fetchErr = 403; break; }
+          if (!res.ok) { fetchErr = res.status; break; }
           const data = await res.json();
           tracks.push(...(Array.isArray(data.items) ? data.items : []));
           url = (typeof data.next === 'string') ? data.next : null;
         }
       } catch (e) { console.error(e); fetchErr = 'network'; }
-
-      // Always render the table even if a later page failed; show what we have.
-      renderTracks(tracks, pl, fetchErr);
+      renderTracks(tracks, pl, fetchErr, silent);
     }
 
-    function renderTracks(items, plContext, fetchErr) {
+    function renderTracks(items, plContext, fetchErr, silent) {
       let totalMs = 0;
       const validItems = items.filter(it => it && it.track);
       const rows = validItems.map((item, idx) => {
@@ -431,12 +445,15 @@
         </div>`;
 
       let body = rows;
-      if (body === '' && fetchErr) {
-        body = `<div class="tracks-error">Trouble loading some tracks (error ${fetchErr}). Showing ${validItems.length} loaded.</div>`;
+      if (body === '' && fetchErr === 403) {
+        body = `<div class="tracks-error">Access denied (403). Your current login token is missing the <b>playlist-read-private</b> permission.<br>Click <b>Log out</b> in the top-right, then reconnect to grant access.</div>`;
+      } else if (body === '' && fetchErr) {
+        body = `<div class="tracks-error">Trouble loading tracks (error ${fetchErr}). Showing 0 loaded.</div>`;
       } else if (body === '') {
         body = `<div class="tracks-empty">This playlist is empty.</div>`;
       }
 
+      // Only replace DOM if not in silent mode? No, we need to update live.
       detailList.innerHTML = header + body;
 
       const count = validItems.length;
@@ -445,7 +462,7 @@
       detailSub.innerHTML = `${ownerImg}<span>${currentUserName}</span> &nbsp;•&nbsp; ${count} song${count !== 1 ? 's' : ''}, ${durText}`;
     }
 
-    backBtn.addEventListener('click', () => { playlistDetail.style.display = 'none'; startGridPolling(); });
+    backBtn.addEventListener('click', () => { stopDetailPolling(); playlistDetail.style.display = 'none'; startGridPolling(); });
 
     function formatTime(ms) { const s = Math.floor(ms / 1000); const m = Math.floor(s / 60); const sec = s % 60; return `${m}:${sec.toString().padStart(2, '0')}`; }
     function formatTotalDuration(ms) {
@@ -460,7 +477,8 @@
 
     document.getElementById('logout-btn').addEventListener('click', handleLogout);
     function handleLogout() {
-      stopGridPolling(); currentToken = null; currentUserId = null;
+      stopGridPolling(); stopDetailPolling();
+      currentToken = null; currentUserId = null; currentDetailPl = null;
       localStorage.removeItem('spotify_access_token'); localStorage.removeItem('spotify_refresh_token'); localStorage.removeItem('spotify_code_verifier');
       playlistGrid.innerHTML = ''; userNameEl.textContent = ''; playlistDetail.style.display = 'none'; showLogin();
     }
