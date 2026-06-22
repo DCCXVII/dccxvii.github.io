@@ -351,7 +351,6 @@
 
     .tracks-loading { padding: 24px 0; color: var(--subtext); }
 
-    /* Scrollbar */
     ::-webkit-scrollbar { width: 12px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.25); border-radius: 6px; }
@@ -423,12 +422,12 @@
 
   <script>
     const CLIENT_ID = 'fcc60831d3974fec8770b2f9af452de8';
-    const REDIRECT_URI = 'https://dccxvii.github.io';
+    const REDIRECT_URI = 'https://dccxvii.github.io/';
     const AUTH_URL = 'https://accounts.spotify.com/authorize';
     const TOKEN_URL = 'https://accounts.spotify.com/api/token';
     const API = 'https://api.spotify.com/v1';
 
-    // DOM
+    // DOM refs
     const loginScreen = document.getElementById('login-screen');
     const mainScreen = document.getElementById('main-screen');
     const playlistGrid = document.getElementById('playlist-grid');
@@ -466,7 +465,7 @@
     function startGridPolling() {
       stopGridPolling();
       if (!currentToken || playlistDetail.style.display === 'flex') return;
-      gridPollInterval = setInterval(() => loadPlaylists(currentToken, true), 3000);
+      gridPollInterval = setInterval(() => loadPlaylists(currentToken, currentUserId, true), 3000);
     }
     function stopGridPolling() {
       if (gridPollInterval) { clearInterval(gridPollInterval); gridPollInterval = null; }
@@ -474,7 +473,7 @@
 
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible' && currentToken && playlistDetail.style.display !== 'flex') {
-        loadPlaylists(currentToken, true);
+        loadPlaylists(currentToken, currentUserId, true);
         startGridPolling();
       } else {
         stopGridPolling();
@@ -545,7 +544,8 @@
           localStorage.setItem('spotify_access_token', token);
           if (data.refresh_token) localStorage.setItem('spotify_refresh_token', data.refresh_token);
           localStorage.removeItem('spotify_code_verifier');
-          window.history.replaceState({}, document.title, REDIRECT_URI);
+          const cleanUrl = window.location.origin + window.location.pathname;
+          window.history.replaceState({}, document.title, cleanUrl);
           currentToken = token;
           showMain();
           await initDashboard(token);
@@ -564,42 +564,52 @@
     });
 
     async function initDashboard(token) {
-      await loadUser(token);
-      await loadPlaylists(token);
+      const userId = await loadUser(token);
+      await loadPlaylists(token, userId, false);
       startGridPolling();
     }
 
     async function loadUser(token) {
       try {
         const res = await fetch(`${API}/me`, { headers: { Authorization: 'Bearer ' + token } });
-        if (!res.ok) throw new Error();
+        if (!res.ok) throw new Error('User fetch failed: ' + res.status);
         const data = await res.json();
-        currentUserId = data.id;
-        currentUserName = data.display_name || data.id;
+        currentUserId = data.id || null;
+        currentUserName = data.display_name || data.id || 'Listener';
         currentUserImage = (data.images && data.images.length) ? data.images[0].url : null;
         userNameEl.textContent = currentUserName;
-      } catch {
+        return currentUserId;
+      } catch (e) {
+        console.error(e);
         userNameEl.textContent = 'Listener';
+        currentUserId = null;
+        return null;
       }
     }
 
-    async function loadPlaylists(token, silent = false) {
-      if (!token || !currentUserId) return;
+    async function loadPlaylists(token, userId, silent = false) {
+      if (!token) return;
       try {
-        // Paginate up to 200
         let items = [];
         let url = `${API}/me/playlists?limit=50`;
         while (url && items.length < 200) {
           const res = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
           if (res.status === 401) { handleLogout(); return; }
-          if (!res.ok) throw new Error();
+          if (!res.ok) {
+            console.warn('Playlist fetch failed with status', res.status);
+            break;
+          }
           const data = await res.json();
-          items.push(...(data.items || []));
-          url = data.next;
+          const pageItems = Array.isArray(data.items) ? data.items : [];
+          items.push(...pageItems);
+          url = (typeof data.next === 'string') ? data.next : null;
         }
 
-        // Keep only playlists the current user OWNS
-        const owned = items.filter(pl => pl.owner.id === currentUserId);
+        let owned = items;
+        if (typeof userId === 'string') {
+          owned = items.filter(pl => pl && pl.owner && pl.owner.id === userId);
+        }
+
         renderGrid(owned);
       } catch (e) {
         console.error('playlist load error', e);
@@ -611,7 +621,7 @@
 
     function renderGrid(items) {
       playlistGrid.innerHTML = '';
-      if (!items.length) {
+      if (!Array.isArray(items) || items.length === 0) {
         emptyState.style.display = 'block';
         return;
       }
@@ -620,11 +630,16 @@
       items.forEach(pl => {
         const card = document.createElement('div');
         card.className = 'playlist-card';
-        const imgUrl = (pl.images && pl.images.length) ? pl.images[0].url : 'https://via.placeholder.com/300x300/181818/b3b3b3?text=Playlist';
+        const imgUrl = (pl.images && pl.images.length && pl.images[0].url)
+          ? pl.images[0].url
+          : 'https://via.placeholder.com/300x300/181818/b3b3b3?text=Playlist';
+        const trackCount = (pl.tracks && typeof pl.tracks.total === 'number')
+          ? `${pl.tracks.total} tracks`
+          : 'Playlist';
         card.innerHTML = `
-          <img class="playlist-img" src="${imgUrl}" alt="${pl.name}" loading="lazy">
-          <div class="playlist-name">${pl.name}</div>
-          <div class="playlist-meta">${pl.tracks.total} tracks</div>
+          <img class="playlist-img" src="${imgUrl}" alt="${pl.name || 'Playlist'}" loading="lazy">
+          <div class="playlist-name">${pl.name || 'Untitled'}</div>
+          <div class="playlist-meta">${trackCount}</div>
         `;
         card.addEventListener('click', () => openPlaylist(pl));
         playlistGrid.appendChild(card);
@@ -638,18 +653,19 @@
       content.scrollTop = 0;
       playlistDetail.scrollTop = 0;
 
-      const imgUrl = (pl.images && pl.images.length) ? pl.images[0].url : 'https://via.placeholder.com/300x300/181818/b3b3b3?text=Playlist';
+      const imgUrl = (pl.images && pl.images.length && pl.images[0].url)
+        ? pl.images[0].url
+        : 'https://via.placeholder.com/300x300/181818/b3b3b3?text=Playlist';
       detailImg.src = imgUrl;
       detailHeroBg.style.backgroundImage = `url('${imgUrl}')`;
-      detailTitle.textContent = pl.name;
-      detailType.textContent = pl.public === false ? 'Private Playlist' : 'Public Playlist';
+      detailTitle.textContent = pl.name || 'Untitled';
+      detailType.textContent = (pl.public === false) ? 'Private Playlist' : 'Public Playlist';
 
       const ownerImg = currentUserImage ? `<img src="${currentUserImage}" alt="">` : '';
       detailSub.innerHTML = `${ownerImg}<span>${currentUserName}</span>`;
 
       detailList.innerHTML = '<div class="tracks-loading">Loading tracks…</div>';
 
-      // Fetch all tracks (paginate)
       let tracks = [];
       let url = `${API}/playlists/${pl.id}/tracks?limit=100`;
       try {
@@ -657,24 +673,24 @@
           const res = await fetch(url, { headers: { Authorization: 'Bearer ' + currentToken } });
           if (!res.ok) break;
           const data = await res.json();
-          tracks.push(...(data.items || []));
-          url = data.next;
+          tracks.push(...(Array.isArray(data.items) ? data.items : []));
+          url = (typeof data.next === 'string') ? data.next : null;
         }
       } catch (e) {
         console.error(e);
       }
 
-      renderTracks(tracks);
+      renderTracks(tracks, pl);
     }
 
-    function renderTracks(items) {
+    function renderTracks(items, plContext) {
       let totalMs = 0;
       const rows = items.map((item, idx) => {
         const t = item.track;
         if (!t) return '';
-        totalMs += t.duration_ms || 0;
+        totalMs += (t.duration_ms || 0);
         const num = idx + 1;
-        const art = t.album && t.album.images && t.album.images.length
+        const art = (t.album && t.album.images && t.album.images.length)
           ? (t.album.images[2] || t.album.images[1] || t.album.images[0]).url
           : 'https://via.placeholder.com/40/181818/b3b3b3?text=♪';
         const name = t.name || 'Unknown';
@@ -716,11 +732,9 @@
 
       detailList.innerHTML = header + rows;
 
-      // Update subtitle with count and total duration
       const count = items.filter(i => i.track).length;
       const durText = formatTotalDuration(totalMs);
       const existingSub = detailSub.innerHTML;
-      // Append count and duration to existing owner info
       detailSub.innerHTML = `${existingSub} &nbsp;•&nbsp; ${count} song${count !== 1 ? 's' : ''}, ${durText}`;
     }
 
