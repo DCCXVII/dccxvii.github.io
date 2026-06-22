@@ -4,8 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
   <title>Spotify — Your Library</title>
   <style>
     :root {
@@ -53,21 +51,10 @@
     .btn:hover { background: var(--accent-hover); transform: scale(1.04); }
     .btn:active { transform: scale(0.98); }
 
-    #main-screen {
-      display: none;
-      height: 100vh;
-      flex-direction: column;
-      overflow: hidden;
-    }
+    #main-screen { display: none; height: 100vh; flex-direction: column; overflow: hidden; }
     .topbar {
-      height: 64px;
-      background: #000;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 32px;
-      border-bottom: 1px solid #282828;
-      flex-shrink: 0;
+      height: 64px; background: #000; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 32px; border-bottom: 1px solid #282828; flex-shrink: 0;
     }
     .topbar-left { display: flex; align-items: center; gap: 10px; font-size: 1.25rem; font-weight: 700; }
     .topbar-left svg { width: 32px; height: 32px; fill: var(--accent); }
@@ -80,9 +67,7 @@
     .logout-btn:hover { border-color: var(--text); }
 
     .content {
-      flex: 1;
-      position: relative;
-      overflow-y: auto;
+      flex: 1; position: relative; overflow-y: auto;
       background: linear-gradient(180deg, #1e1e1e 0%, var(--surface) 320px);
       padding: 32px;
     }
@@ -153,8 +138,7 @@
     .track-artist-txt { font-size: 0.8125rem; color: var(--subtext); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .track-album, .track-date { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .track-dur { text-align: right; font-variant-numeric: tabular-nums; }
-    .tracks-loading { padding: 24px 0; color: var(--subtext); }
-    .tracks-empty { padding: 24px 0; color: var(--subtext); }
+    .tracks-loading, .tracks-empty { padding: 24px 0; color: var(--subtext); }
 
     ::-webkit-scrollbar { width: 12px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -200,9 +184,7 @@
       <div class="playlist-detail" id="playlist-detail">
         <div class="detail-header">
           <button class="back-btn" id="back-btn" aria-label="Back">
-            <svg viewBox="0 0 24 24">
-              <path d="M19 12H5M12 19l-7-7 7-7"/>
-            </svg>
+            <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
           </button>
           <div class="detail-hero-bg" id="detail-hero-bg"></div>
           <div class="detail-hero">
@@ -233,11 +215,6 @@
     const TOKEN_URL = 'https://accounts.spotify.com/api/token';
     const API = 'https://api.spotify.com/v1';
 
-    // Wipe any old token that might lack the right scopes so we start truly fresh
-    // Remove these two lines only after you are sure every user has a modern token
-    // localStorage.removeItem('spotify_access_token');
-    // localStorage.removeItem('spotify_refresh_token');
-
     const loginScreen = document.getElementById('login-screen');
     const mainScreen = document.getElementById('main-screen');
     const playlistGrid = document.getElementById('playlist-grid');
@@ -259,24 +236,24 @@
     let currentUserId = null;
     let currentUserName = '';
     let currentUserImage = null;
-    let gridPollInterval = null;
-    let detailPollInterval = null;
+    let gridPoll = null;
+    let detailPoll = null;
     let currentDetailPl = null;
 
     function showLogin() { loginScreen.style.display = 'flex'; mainScreen.style.display = 'none'; liveDot.style.display = 'none'; }
     function showMain() { loginScreen.style.display = 'none'; mainScreen.style.display = 'flex'; liveDot.style.display = 'block'; }
 
-    function startGridPolling() { stopGridPolling(); if (!currentToken || playlistDetail.style.display === 'flex') return; gridPollInterval = setInterval(() => loadPlaylists(currentToken, currentUserId, true), 3000); }
-    function stopGridPolling() { if (gridPollInterval) { clearInterval(gridPollInterval); gridPollInterval = null; } }
+    function startGridPoll() { stopGridPoll(); if (!currentToken || playlistDetail.style.display === 'flex') return; gridPoll = setInterval(() => loadPlaylists(currentToken, true), 3000); }
+    function stopGridPoll() { if (gridPoll) { clearInterval(gridPoll); gridPoll = null; } }
 
-    function startDetailPolling(pl) { stopDetailPolling(); if (!currentToken || !pl) return; currentDetailPl = pl; detailPollInterval = setInterval(() => loadTracksLive(pl), 3000); }
-    function stopDetailPolling() { if (detailPollInterval) { clearInterval(detailPollInterval); detailPollInterval = null; } currentDetailPl = null; }
+    function startDetailPoll(pl) { stopDetailPoll(); if (!currentToken) return; currentDetailPl = pl; detailPoll = setInterval(() => refreshDetail(pl), 3000); }
+    function stopDetailPoll() { if (detailPoll) { clearInterval(detailPoll); detailPoll = null; } currentDetailPl = null; }
 
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible' && currentToken) {
-        if (playlistDetail.style.display === 'flex' && currentDetailPl) { loadTracksLive(currentDetailPl); startDetailPolling(currentDetailPl); }
-        else { loadPlaylists(currentToken, currentUserId, true); startGridPolling(); }
-      } else { stopGridPolling(); stopDetailPolling(); }
+        if (playlistDetail.style.display === 'flex' && currentDetailPl) { refreshDetail(currentDetailPl); startDetailPoll(currentDetailPl); }
+        else { loadPlaylists(currentToken, true); startGridPoll(); }
+      } else { stopGridPoll(); stopDetailPoll(); }
     });
 
     function genRandom(length) { const c = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~'; let t = ''; for (let i = 0; i < length; i++) t += c.charAt(Math.floor(Math.random() * c.length)); return t; }
@@ -286,17 +263,11 @@
 
     document.getElementById('connect-btn').addEventListener('click', async () => {
       const verifier = genRandom(128);
-      localStorage.setItem('spotify_code_verifier', verifier);
+      localStorage.setItem('verifier', verifier);
       const ch = await challenge(verifier);
-      const state = genRandom(32);
       const p = new URLSearchParams({
-        client_id: CLIENT_ID,
-        response_type: 'code',
-        redirect_uri: REDIRECT_URI,
-        code_challenge_method: 'S256',
-        code_challenge: ch,
-        state: state,
-        show_dialog: 'true',
+        client_id: CLIENT_ID, response_type: 'code', redirect_uri: REDIRECT_URI,
+        code_challenge_method: 'S256', code_challenge: ch, show_dialog: 'true',
         scope: 'user-read-private user-read-email playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public'
       });
       window.location.href = `${AUTH_URL}?${p.toString()}`;
@@ -305,62 +276,67 @@
     window.addEventListener('DOMContentLoaded', async () => {
       const up = new URLSearchParams(window.location.search);
       const code = up.get('code');
-      const error = up.get('error');
-      if (error) { showLogin(); return; }
-      const stored = localStorage.getItem('spotify_access_token');
+      const err = up.get('error');
+      if (err) { showLogin(); return; }
+      let token = localStorage.getItem('token');
 
-      if (code && !stored) {
-        const verifier = localStorage.getItem('spotify_code_verifier');
+      if (code && !token) {
+        const verifier = localStorage.getItem('verifier');
         if (!verifier) { showLogin(); return; }
         try {
-          const res = await fetch(TOKEN_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ client_id: CLIENT_ID, grant_type: 'authorization_code', code: code, redirect_uri: REDIRECT_URI, code_verifier: verifier }) });
+          const res = await fetch(TOKEN_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ client_id: CLIENT_ID, grant_type: 'authorization_code', code, redirect_uri: REDIRECT_URI, code_verifier: verifier })
+          });
           if (!res.ok) throw new Error('token exchange failed');
           const data = await res.json();
-          const token = data.access_token;
-          localStorage.setItem('spotify_access_token', token);
-          if (data.refresh_token) localStorage.setItem('spotify_refresh_token', data.refresh_token);
-          localStorage.removeItem('spotify_code_verifier');
+          token = data.access_token;
+          localStorage.setItem('token', token);
+          if (data.refresh_token) localStorage.setItem('refresh', data.refresh_token);
+          localStorage.removeItem('verifier');
           window.history.replaceState({}, document.title, REDIRECT_URI);
-          currentToken = token;
-          showMain();
-          await initDashboard(token);
-        } catch (e) { console.error(e); localStorage.removeItem('spotify_code_verifier'); showLogin(); }
-      } else if (stored) { currentToken = stored; showMain(); await initDashboard(stored); }
-      else { showLogin(); }
+        } catch (e) { console.error(e); localStorage.removeItem('verifier'); showLogin(); return; }
+      }
+
+      if (token) {
+        currentToken = token;
+        showMain();
+        currentUserId = await loadUser(token);
+        await loadPlaylists(token, false);
+        startGridPoll();
+      } else { showLogin(); }
     });
 
-    async function initDashboard(token) { const userId = await loadUser(token); await loadPlaylists(token, userId, false); startGridPolling(); }
     async function loadUser(token) {
       try {
         const res = await fetch(`${API}/me`, { headers: { Authorization: 'Bearer ' + token } });
-        if (!res.ok) throw new Error('User fetch failed: ' + res.status);
+        if (!res.ok) return null;
         const data = await res.json();
-        currentUserId = data.id || null;
-        currentUserName = data.display_name || data.id || 'Listener';
+        currentUserId = data.id;
+        currentUserName = data.display_name || data.id;
         currentUserImage = (data.images && data.images.length) ? data.images[0].url : null;
         userNameEl.textContent = currentUserName;
-        return currentUserId;
-      } catch (e) { console.error(e); userNameEl.textContent = 'Listener'; currentUserId = null; return null; }
+        return data.id;
+      } catch (e) { console.error(e); return null; }
     }
 
-    async function loadPlaylists(token, userId, silent = false) {
+    async function loadPlaylists(token, silent) {
       if (!token) return;
       try {
-        let items = [];
+        let all = [];
         let url = `${API}/me/playlists?limit=50`;
-        while (url && items.length < 200) {
+        while (url && all.length < 200) {
           const res = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
           if (res.status === 401) { handleLogout(); return; }
-          if (!res.ok) { console.warn('Playlist page fetch status', res.status); break; }
+          if (!res.ok) break;
           const data = await res.json();
-          const pageItems = Array.isArray(data.items) ? data.items : [];
-          items.push(...pageItems);
-          url = (typeof data.next === 'string') ? data.next : null;
+          all.push(...(data.items || []));
+          url = data.next || null;
         }
-        let owned = items;
-        if (typeof userId === 'string') owned = items.filter(pl => pl && pl.owner && pl.owner.id === userId);
-        renderGrid(owned);
-      } catch (e) { console.error('playlist load error', e); if (!silent) playlistGrid.innerHTML = '<div class="empty-state">Unable to load playlists.</div>'; }
+        if (currentUserId) all = all.filter(pl => pl && pl.owner && pl.owner.id === currentUserId);
+        renderGrid(all);
+      } catch (e) { console.error(e); }
     }
 
     function renderGrid(items) {
@@ -368,15 +344,14 @@
       if (!Array.isArray(items) || items.length === 0) { emptyState.style.display = 'block'; return; }
       emptyState.style.display = 'none';
       items.forEach(pl => {
-        if (!pl || !pl.id) return;
+        const img = (pl.images && pl.images.length && pl.images[0].url) ? pl.images[0].url : 'https://via.placeholder.com/300x300/181818/b3b3b3?text=Playlist';
+        const count = (pl.tracks && typeof pl.tracks.total === 'number') ? `${pl.tracks.total} tracks` : 'Playlist';
         const card = document.createElement('div');
         card.className = 'playlist-card';
-        const imgUrl = (pl.images && pl.images.length && pl.images[0].url) ? pl.images[0].url : 'https://via.placeholder.com/300x300/181818/b3b3b3?text=Playlist';
-        const trackCount = (pl.tracks && typeof pl.tracks.total === 'number') ? `${pl.tracks.total} tracks` : 'Playlist';
         card.innerHTML = `
-          <img class="playlist-img" src="${imgUrl}" alt="${pl.name || 'Playlist'}" loading="lazy">
+          <img class="playlist-img" src="${img}" alt="${pl.name || 'Playlist'}" loading="lazy">
           <div class="playlist-name">${pl.name || 'Untitled'}</div>
-          <div class="playlist-meta">${trackCount}</div>
+          <div class="playlist-meta">${count}</div>
         `;
         card.addEventListener('click', () => openPlaylist(pl));
         playlistGrid.appendChild(card);
@@ -384,63 +359,71 @@
     }
 
     async function openPlaylist(pl) {
-      if (!pl || !pl.id) return;
-      stopGridPolling();
+      currentDetailPl = pl;
+      stopGridPoll();
       playlistDetail.style.display = 'flex';
       content.scrollTop = 0; playlistDetail.scrollTop = 0;
-      const imgUrl = (pl.images && pl.images.length && pl.images[0].url) ? pl.images[0].url : 'https://via.placeholder.com/300x300/181818/b3b3b3?text=Playlist';
-      detailImg.src = imgUrl;
-      detailHeroBg.style.backgroundImage = `url('${imgUrl}')`;
+
+      const img = (pl.images && pl.images.length && pl.images[0].url) ? pl.images[0].url : 'https://via.placeholder.com/300x300/181818/b3b3b3?text=Playlist';
+      detailImg.src = img;
+      detailHeroBg.style.backgroundImage = `url('${img}')`;
       detailTitle.textContent = pl.name || 'Untitled';
       detailType.textContent = (pl.public === false) ? 'Private Playlist' : 'Public Playlist';
-      const ownerImg = currentUserImage ? `<img src="${currentUserImage}" alt="">` : '';
-      detailSub.innerHTML = ownerImg + `<span>${currentUserName}</span>`;
+
+      const oImg = currentUserImage ? `<img src="${currentUserImage}" alt="">` : '';
+      detailSub.innerHTML = `${oImg}<span>${currentUserName}</span>`;
+
       detailList.innerHTML = '<div class="tracks-loading">Loading tracks…</div>';
-      await loadTracksLive(pl);
-      startDetailPolling(pl);
+      const tracks = await fetchTracks(pl.id);
+      renderTracks(tracks);
+      startDetailPoll(pl);
     }
 
-    async function loadTracksLive(pl) {
-      let tracks = [];
-      let url = `${API}/playlists/${pl.id}/tracks?limit=100`;
-      let ok = false;
+    async function refreshDetail(pl) {
+      const tracks = await fetchTracks(pl.id);
+      // only repaint if we successfully fetched; leave existing rows on failure
+      if (tracks !== null) renderTracks(tracks);
+    }
+
+    async function fetchTracks(playlistId) {
+      if (!currentToken) return null;
+      let items = [];
+      let url = `${API}/playlists/${playlistId}/tracks?limit=100&market=from_token`;
       try {
-        while (url && tracks.length < 10000) {
+        while (url && items.length < 10000) {
           const res = await fetch(url, { headers: { Authorization: 'Bearer ' + currentToken } });
-          if (res.status === 401) { handleLogout(); return; }
-          if (!res.ok) { url = null; break; }
+          if (res.status === 401) { handleLogout(); return null; }
+          if (!res.ok) { console.warn('tracks fetch status', res.status); return null; }
           const data = await res.json();
-          tracks.push(...(Array.isArray(data.items) ? data.items : []));
-          url = (typeof data.next === 'string') ? data.next : null;
-          ok = true;
+          items.push(...(data.items || []));
+          url = data.next || null;
         }
-      } catch (e) { console.error(e); }
-
-      // Fallback: if the direct tracks endpoint fails, try the playlist object itself
-      // which embeds the first page of tracks under the "tracks" property.
-      if (!ok && tracks.length === 0) {
-        try {
-          const res = await fetch(`${API}/playlists/${pl.id}`, { headers: { Authorization: 'Bearer ' + currentToken } });
-          if (res.ok) {
-            const data = await res.json();
-            if (data && data.tracks && Array.isArray(data.tracks.items)) {
-              tracks = data.tracks.items;
-              ok = true;
-            }
-          }
-        } catch (e) { console.error(e); }
-      }
-
-      renderTracks(tracks, pl);
+        return items;
+      } catch (e) { console.error(e); return null; }
     }
 
-    function renderTracks(items, plContext) {
+    function renderTracks(items) {
       let totalMs = 0;
-      const validItems = items.filter(it => it && it.track);
-      const rows = validItems.map((item, idx) => {
+      const rows = items.map((item, idx) => {
         const t = item.track;
+        if (!t) {
+          return `
+            <div class="track-row">
+              <div class="track-num">${idx + 1}</div>
+              <div class="track-info">
+                <img src="https://via.placeholder.com/40/181818/b3b3b3?text=%E2%99%AA" alt="">
+                <div class="track-name-col">
+                  <div class="track-name-txt" style="color:var(--subtext);font-style:italic">Unavailable in your region</div>
+                  <div class="track-artist-txt">—</div>
+                </div>
+              </div>
+              <div class="track-album">—</div>
+              <div class="track-date">${item.added_at ? relativeDate(item.added_at) : ''}</div>
+              <div class="track-dur">—</div>
+            </div>`;
+        }
         totalMs += (t.duration_ms || 0);
-        const art = (t.album && t.album.images && t.album.images.length) ? (t.album.images[2] || t.album.images[1] || t.album.images[0]).url : 'https://via.placeholder.com/40/181818/b3b3b3?text=♪';
+        const art = (t.album && t.album.images && t.album.images.length) ? (t.album.images[2] || t.album.images[1] || t.album.images[0]).url : 'https://via.placeholder.com/40/181818/b3b3b3?text=%E2%99%AA';
         const name = t.name || 'Unknown';
         const artist = t.artists ? t.artists.map(a => a.name).join(', ') : 'Unknown Artist';
         const album = (t.album && t.album.name) ? t.album.name : '';
@@ -468,17 +451,16 @@
           <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></span>
         </div>`;
 
-      let body = rows;
-      if (body === '') body = `<div class="tracks-empty">This playlist is empty.</div>`;
+      const body = rows === '' ? '<div class="tracks-empty">This playlist is empty.</div>' : rows;
       detailList.innerHTML = header + body;
 
-      const count = validItems.length;
+      const count = items.filter(it => it && it.track).length;
       const durText = formatTotalDuration(totalMs);
-      const ownerImg = currentUserImage ? `<img src="${currentUserImage}" alt="">` : '';
-      detailSub.innerHTML = `${ownerImg}<span>${currentUserName}</span> &nbsp;•&nbsp; ${count} song${count !== 1 ? 's' : ''}, ${durText}`;
+      const oImg = currentUserImage ? `<img src="${currentUserImage}" alt="">` : '';
+      detailSub.innerHTML = `${oImg}<span>${currentUserName}</span> &nbsp;•&nbsp; ${count} song${count !== 1 ? 's' : ''}, ${durText}`;
     }
 
-    backBtn.addEventListener('click', () => { stopDetailPolling(); playlistDetail.style.display = 'none'; startGridPolling(); });
+    backBtn.addEventListener('click', () => { stopDetailPoll(); playlistDetail.style.display = 'none'; currentDetailPl = null; startGridPoll(); });
 
     function formatTime(ms) { const s = Math.floor(ms / 1000); const m = Math.floor(s / 60); const sec = s % 60; return `${m}:${sec.toString().padStart(2, '0')}`; }
     function formatTotalDuration(ms) {
@@ -487,15 +469,15 @@
     }
     function relativeDate(isoString) {
       const date = new Date(isoString); const now = new Date(); const diff = Math.floor((now - date) / 1000);
-      if (diff < 60) return `${diff} seconds ago`; if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`; if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`; if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`;
+      if (diff < 60) return 'just now'; if (diff < 3600) return `${Math.floor(diff / 60)} min ago`; if (diff < 86400) return `${Math.floor(diff / 3600)} hr ago`; if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`;
       return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
     }
 
     document.getElementById('logout-btn').addEventListener('click', handleLogout);
     function handleLogout() {
-      stopGridPolling(); stopDetailPolling();
+      stopGridPoll(); stopDetailPoll();
       currentToken = null; currentUserId = null; currentDetailPl = null;
-      localStorage.removeItem('spotify_access_token'); localStorage.removeItem('spotify_refresh_token'); localStorage.removeItem('spotify_code_verifier');
+      localStorage.removeItem('token'); localStorage.removeItem('refresh'); localStorage.removeItem('verifier');
       playlistGrid.innerHTML = ''; userNameEl.textContent = ''; playlistDetail.style.display = 'none'; showLogin();
     }
   </script>
