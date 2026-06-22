@@ -99,7 +99,31 @@
       background: linear-gradient(180deg, #1e1e1e 0%, var(--surface) 280px);
       padding: 32px;
     }
-    .section-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 20px; }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .section-title { font-size: 1.5rem; font-weight: 700; }
+
+    .refresh-btn {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid #535353;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .refresh-btn:hover { border-color: var(--text); background: rgba(255,255,255,0.05); }
+    .refresh-btn svg { width: 18px; height: 18px; fill: currentColor; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .refresh-btn.spin svg { animation: spin 0.6s linear; }
 
     .playlist-grid {
       display: grid;
@@ -177,9 +201,17 @@
     </div>
 
     <div class="content">
-      <div class="section-title">Your Playlists</div>
+      <div class="section-header">
+        <div class="section-title">Your Playlists</div>
+        <button class="refresh-btn" id="refresh-btn" title="Refresh playlists">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+          </svg>
+        </button>
+      </div>
       <div id="playlist-grid" class="playlist-grid"></div>
       <div class="empty-state" id="empty-state" style="display:none;">No playlists found.</div>
+      <div id="status-msg" style="color: var(--subtext); font-size: 0.85rem; margin-top: 8px; min-height: 1.2em;"></div>
     </div>
   </div>
 
@@ -218,12 +250,18 @@
       return base64urlencode(await sha256(v));
     }
 
-    // DOM
+    // DOM Refs
     const loginScreen = document.getElementById('login-screen');
     const mainScreen = document.getElementById('main-screen');
     const playlistGrid = document.getElementById('playlist-grid');
     const emptyState = document.getElementById('empty-state');
     const userNameEl = document.getElementById('user-name');
+    const refreshBtn = document.getElementById('refresh-btn');
+    const statusMsg = document.getElementById('status-msg');
+
+    // State
+    let currentToken = null;
+    let pollInterval = null;
 
     function showLogin() {
       loginScreen.style.display = 'flex';
@@ -235,7 +273,32 @@
       mainScreen.style.display = 'block';
     }
 
-    // 1) Connect button -> redirect to Spotify
+    function startPolling() {
+      stopPolling();
+      if (!currentToken) return;
+      pollInterval = setInterval(() => {
+        loadPlaylists(currentToken, true);
+      }, 5000); // Live-ish update every 5 seconds
+    }
+
+    function stopPolling() {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+      }
+    }
+
+    // Pause polling when tab hidden, resume when visible
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && currentToken) {
+        loadPlaylists(currentToken, true); // instant catch-up
+        startPolling();
+      } else {
+        stopPolling();
+      }
+    });
+
+    // AUTH: Connect button
     document.getElementById('connect-btn').addEventListener('click', async () => {
       const verifier = generateRandomString(128);
       localStorage.setItem('spotify_code_verifier', verifier);
@@ -246,12 +309,13 @@
         redirect_uri: REDIRECT_URI,
         code_challenge_method: 'S256',
         code_challenge: challenge,
+        show_dialog: 'true', // Force user to see Spotify approval screen every time
         scope: 'user-read-private playlist-read-private playlist-read-collaborative'
       });
       window.location.href = `${AUTH_URL}?${params.toString()}`;
     });
 
-    // 2) On load, handle OAuth callback or existing token
+    // Handle OAuth callback / existing session on load
     window.addEventListener('DOMContentLoaded', async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get('code');
@@ -263,9 +327,9 @@
         return;
       }
 
-      let token = localStorage.getItem('spotify_access_token');
+      const storedToken = localStorage.getItem('spotify_access_token');
 
-      if (code && !token) {
+      if (code && !storedToken) {
         const verifier = localStorage.getItem('spotify_code_verifier');
         if (!verifier) { showLogin(); return; }
 
@@ -283,12 +347,11 @@
           });
           if (!res.ok) throw new Error('Token exchange failed: ' + res.status);
           const data = await res.json();
-          token = data.access_token;
+          const token = data.access_token;
           localStorage.setItem('spotify_access_token', token);
-          if (data.refresh_token) localStorage.setItem('spotify_refresh_token', data.refresh_token);
-
-          // Clean the URL
+          localStorage.removeItem('spotify_code_verifier');
           window.history.replaceState({}, document.title, REDIRECT_URI);
+          currentToken = token;
           showMain();
           initDashboard(token);
         } catch (e) {
@@ -296,18 +359,19 @@
           localStorage.removeItem('spotify_code_verifier');
           showLogin();
         }
-      } else if (token) {
+      } else if (storedToken) {
+        currentToken = storedToken;
         showMain();
-        initDashboard(token);
+        initDashboard(storedToken);
       } else {
         showLogin();
       }
     });
 
-    // 3) Load user + playlists
     async function initDashboard(token) {
       await loadUser(token);
       await loadPlaylists(token);
+      if (document.visibilityState === 'visible') startPolling();
     }
 
     async function loadUser(token) {
@@ -323,23 +387,28 @@
       }
     }
 
-    async function loadPlaylists(token) {
+    async function loadPlaylists(token, silent = false) {
+      if (!token) return;
       try {
+        if (!silent) statusMsg.textContent = 'Loading…';
         const res = await fetch(`${API_URL}/me/playlists?limit=50`, {
           headers: { 'Authorization': 'Bearer ' + token }
         });
+
         if (res.status === 401) {
-          localStorage.removeItem('spotify_access_token');
-          localStorage.removeItem('spotify_refresh_token');
-          showLogin();
+          // Token expired / revoked
+          handleLogout();
           return;
         }
+
         if (!res.ok) throw new Error();
 
         const data = await res.json();
         playlistGrid.innerHTML = '';
+
         if (!data.items || data.items.length === 0) {
           emptyState.style.display = 'block';
+          statusMsg.textContent = '';
           return;
         }
         emptyState.style.display = 'none';
@@ -355,19 +424,38 @@
           `;
           playlistGrid.appendChild(card);
         });
+
+        statusMsg.textContent = silent ? '' : 'Updated just now';
+        setTimeout(() => { if (statusMsg.textContent === 'Updated just now') statusMsg.textContent = ''; }, 2000);
       } catch (e) {
         console.error(e);
-        playlistGrid.innerHTML = '<div class="empty-state">Unable to load playlists.</div>';
+        if (!silent) statusMsg.textContent = 'Unable to load playlists.';
       }
     }
 
-    // 4) Logout
-    document.getElementById('logout-btn').addEventListener('click', () => {
-      localStorage.removeItem('spotify_access_token');
-      localStorage.removeItem('spotify_refresh_token');
-      localStorage.removeItem('spotify_code_verifier');
-      showLogin();
+    // Manual refresh button
+    refreshBtn.addEventListener('click', () => {
+      if (currentToken) {
+        refreshBtn.classList.add('spin');
+        loadPlaylists(currentToken).then(() => {
+          setTimeout(() => refreshBtn.classList.remove('spin'), 600);
+        });
+      }
     });
+
+    // Logout
+    document.getElementById('logout-btn').addEventListener('click', handleLogout);
+
+    function handleLogout() {
+      stopPolling();
+      currentToken = null;
+      localStorage.removeItem('spotify_access_token');
+      localStorage.removeItem('spotify_code_verifier');
+      playlistGrid.innerHTML = '';
+      userNameEl.textContent = '';
+      statusMsg.textContent = '';
+      showLogin();
+    }
   </script>
 </body>
 </html>
