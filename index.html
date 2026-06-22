@@ -246,7 +246,7 @@
     function startGridPoll() { stopGridPoll(); if (!currentToken || playlistDetail.style.display === 'flex') return; gridPoll = setInterval(() => loadPlaylists(currentToken, true), 3000); }
     function stopGridPoll() { if (gridPoll) { clearInterval(gridPoll); gridPoll = null; } }
 
-    function startDetailPoll(pl) { stopDetailPoll(); if (!currentToken) return; currentDetailPl = pl; detailPoll = setInterval(() => refreshDetail(pl), 3000); }
+    function startDetailPoll(pl) { stopDetailPoll(); if (!currentToken || !pl) return; currentDetailPl = pl; detailPoll = setInterval(() => refreshDetail(pl), 3000); }
     function stopDetailPoll() { if (detailPoll) { clearInterval(detailPoll); detailPoll = null; } currentDetailPl = null; }
 
     document.addEventListener('visibilitychange', () => {
@@ -374,15 +374,27 @@
       detailSub.innerHTML = `${oImg}<span>${currentUserName}</span>`;
 
       detailList.innerHTML = '<div class="tracks-loading">Loading tracks…</div>';
-      const tracks = await fetchTracks(pl.id);
-      renderTracks(tracks);
+
+      let tracks = await fetchTracks(pl.id);
+      // Fallback: if the separate tracks endpoint fails, fetch the playlist object itself which embeds tracks
+      if (!tracks) {
+        try {
+          const r = await fetch(`${API}/playlists/${pl.id}?market=from_token`, { headers: { Authorization: 'Bearer ' + currentToken } });
+          if (r.ok) {
+            const d = await r.json();
+            tracks = (d.tracks && d.tracks.items) ? d.tracks.items : [];
+          }
+        } catch (e) { console.error(e); }
+      }
+
+      renderTracks(tracks || []);
       startDetailPoll(pl);
     }
 
     async function refreshDetail(pl) {
       const tracks = await fetchTracks(pl.id);
-      // only repaint if we successfully fetched; leave existing rows on failure
-      if (tracks !== null) renderTracks(tracks);
+      if (!tracks) return; // keep existing rows if fetch fails
+      renderTracks(tracks);
     }
 
     async function fetchTracks(playlistId) {
@@ -403,6 +415,7 @@
     }
 
     function renderTracks(items) {
+      items = items || [];
       let totalMs = 0;
       const rows = items.map((item, idx) => {
         const t = item.track;
@@ -413,7 +426,7 @@
               <div class="track-info">
                 <img src="https://via.placeholder.com/40/181818/b3b3b3?text=%E2%99%AA" alt="">
                 <div class="track-name-col">
-                  <div class="track-name-txt" style="color:var(--subtext);font-style:italic">Unavailable in your region</div>
+                  <div class="track-name-txt" style="color:var(--subtext);font-style:italic">Unavailable</div>
                   <div class="track-artist-txt">—</div>
                 </div>
               </div>
